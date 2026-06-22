@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Lịch sử đơn hàng - FOODELICIOUS</title>
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+
+    <link href="logo.jpg" rel="icon">
+    <link href="client/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Amatic+SC:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link href="admin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+
+    <link href="client/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="client/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="client/assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="client/assets/css/main.css" rel="stylesheet">
+
+    <style>
+        .cart-container {
+            min-height: 70vh;
+            padding: 40px 0;
+        }
+
+        .search-box {
+            margin-bottom: 30px;
+        }
+
+        .search-box input {
+            border-radius: 5px;
+            border: 2px solid #ce1126;
+            padding: 10px 15px;
+        }
+
+        .search-box button {
+            background-color: #ce1126;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-box button:hover {
+            background-color: #a00d20;
+        }
+
+        .order-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s;
+        }
+
+        .order-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .order-header {
+            border-bottom: 2px solid #f4f4f4;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .order-id {
+            color: #ce1126;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .order-date {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-section {
+            background-color: #fcfcfc;
+            border: 1px dashed #e5e5e5;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 5px;
+        }
+
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f4f4f4;
+        }
+
+        .product-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-name {
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+        }
+
+        .product-qty {
+            color: #666;
+            margin: 0 10px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .product-price {
+            color: #ce1126;
+            font-weight: bold;
+            min-width: 100px;
+            text-align: right;
+        }
+
+        .order-footer {
+            border-top: 2px solid #f4f4f4;
+            padding-top: 15px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .order-total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ce1126;
+        }
+
+        .payment-method {
+            background-color: #f4f4f4;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #ce1126;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .back-btn:hover {
+            color: #a00d20;
+        }
+
+        .section-title {
+            color: #ce1126;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #ce1126;
+            padding-bottom: 15px;
+        }
+
+        /* Hệ thống chọn sao đánh giá */
+        .star-rating {
+            direction: rtl;
+            display: inline-block;
+            font-size: 30px;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .star-rating label:hover,
+        .star-rating label:hover~label,
+        .star-rating input:checked~label {
+            color: #f5b301;
+        }
+
+        @media (max-width: 768px) {
+            .product-item {
+                flex-wrap: wrap;
+            }
+
+            .product-qty,
+            .product-price {
+                min-width: auto;
+                margin-top: 5px;
+            }
+
+            .search-box {
+                display: flex;
+                gap: 10px;
+            }
+
+            .search-box input {
+                flex: 1;
+            }
+
+            .order-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .action-buttons {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body class="index-page">
+    <header id="header" class="header d-flex align-items-center sticky-top">
+        <div class="container position-relative d-flex align-items-center justify-content-between">
+            <a href="#" class="logo d-flex align-items-center me-auto me-xl-0">
+                <img src="logo.jpg" alt="">
+                <h1 class="sitename">FOODELICIOUS</h1><span>.</span>
+            </a>
+    </header>
+    <main class="main">
+        <div class="cart-container">
+            <div class="container">
+                <a href="{{ route('trangchu_dangnhap') }}" class="back-btn"><i class="bi bi-arrow-left"></i> Quay lại
+                    cửa hàng</a>
+                <h1 class="section-title"><i class="bi bi-cart-fill"></i> Lịch sử đơn hàng của tôi</h1>
+
+                <!-- Search Box -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="search-box">
+                            <form action="#" class="d-flex gap-2">
+                                <input type="text" class="form-control"
+                                    placeholder="Tìm kiếm đơn hàng (mã đơn, nơi giao, sản phẩm)...">
+                                <button type="button" class="btn"><i class="bi bi-search"></i> Tìm</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ĐƠN HÀNG 1: TRẠNG THÁI CHỜ XÁC NHẬN (TÍCH HỢP HỦY ĐƠN) -->
+                <div class="order-card" id="order-card-9901">
+                    <div class="order-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="order-id">Đơn hàng: #FDL-9901</div>
+                                <div class="order-date">Ngày đặt: Hôm nay, 08:00</div>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <span class="badge bg-secondary text-white"><i class="bi bi-hourglass-split mr-1"></i>
+                                    Chờ xác nhận</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-section">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="info-title"><i class="bi bi-geo-alt-fill text-danger mr-1"></i> Nơi giao
+                                    hàng:</div>
+                                <div class="text-secondary">Dương Bá Tùng - 0901234567<br>Trường Cao đẳng Công nghệ
+                                    Thông tin TP.HCM (ITC), Quận Tân Phú</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-title"><i class="bi bi-cash-stack text-success mr-1"></i> Hình thức:
+                                </div>
+                                <div class="text-secondary">Tiền mặt khi nhận hàng (COD)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="products-list">
+                        <div class="product-item">
+                            <span class="product-name">Bún bò Huế giò gân chả lụa</span>
+                            <span class="product-qty">x1</span>
+                            <span class="product-price">50.000 đ</span>
+                        </div>
+                        <div class="order-total text-success">Điểm tích lũy: 500</div>
+                    </div>
+                    <div class="order-footer">
+                        <div class="order-total">Tổng cộng: 50.000 đ</div>
+                        <div class="action-buttons">
+                            <!-- Nút hủy kích hoạt Modal chọn lý do hủy -->
+                            <button type="button" class="btn btn-outline-danger btn-sm px-3" data-bs-toggle="modal"
+                                data-bs-target="#cancelOrderModal" data-order-id="#FDL-9901">
+                                <i class="bi bi-trash3 me-1"></i> Hủy đơn hàng này
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ĐƠN HÀNG 2: ĐÃ HOÀN THÀNH (TÍCH HỢP ĐÁNH GIÁ & HOÀN TIỀN) -->
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="order-id">Đơn hàng: #FDL-7531</div>
+                                <div class="order-date">Ngày đặt: 12/06/2026 18:30</div>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <span class="badge bg-success"><i class="bi bi-check-circle mr-1"></i> Đã hoàn
+                                    thành</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-section">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="info-title"><i class="bi bi-geo-alt-fill text-danger mr-1"></i> Địa chỉ giao
+                                    hàng:</div>
+                                <div class="text-secondary">Dương Bá Tùng - 0901234567<br>180 Cao Thắng, Phường 12, Quận
+                                    10, Ho Chi Minh City</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-title"><i class="bi bi-credit-card-2-back-fill text-primary mr-1"></i>
+                                    Hình thức:</div>
+                                <div class="text-secondary">Ví điện tử MoMo <span class="badge bg-success text-white">Đã
+                                        thanh toán</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="products-list">
+                        <div class="product-item">
+                            <span class="product-name">Phở bò tái nạm chín</span>
+                            <span class="product-qty">x1</span>
+                            <span class="product-price">45.000 đ</span>
+                        </div>
+                        <div class="order-total text-success">Điểm tích lũy: 450</div>
+                    </div>
+                    <div class="order-footer">
+                        <div class="order-total">Tổng cộng: 45.000 đ</div>
+                        <div class="action-buttons d-flex gap-2">
+                            <!-- Tính năng gửi Đánh giá dịch vụ -->
+                            <button type="button" class="btn btn-warning text-dark btn-sm fw-bold px-3"
+                                data-bs-toggle="modal" data-bs-target="#reviewOrderModal" data-order-id="#FDL-7531">
+                                <i class="bi bi-star-fill me-1"></i> Viết đánh giá
+                            </button>
+                            <!-- Tính năng gửi đơn khiếu nại hoàn trả tiền -->
+                            <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-toggle="modal"
+                                data-bs-target="#refundOrderModal" data-order-id="#FDL-7531" data-amount="45.000 đ">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i> Yêu cầu hoàn tiền
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- ======================================================= -->
+    <!-- KHU VỰC CÁC MODAL THAO TÁC (HỦY ĐƠN / ĐÁNH GIÁ / HOÀN TIỀN) -->
+    <!-- ======================================================= -->
+
+    <!-- MODAL 1: HỦY ĐƠN HÀNG -->
+    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-dark">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Xác nhận hủy đơn
+                        hàng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="#" method="POST">
+                    <div class="modal-body text-start">
+                        <p>Bạn đang yêu cầu hủy đơn hàng <strong id="cancel-order-id-display"
+                                class="text-danger">#</strong>. Vui lòng cho biết lý do hủy để cửa hàng cải thiện dịch
+                            vụ:</p>
+                        <div class="form-group mb-3">
+                            <select class="form-select" name="cancel_reason" required>
+                                <option value="" selected disabled>-- Chọn lý do hủy đơn --</option>
+                                <option value="change_mind">Tôi muốn thay đổi món ăn/thêm bớt sản phẩm</option>
+                                <option value="wrong_info">Nhập sai thông tin liên lạc hoặc sai địa chỉ nhận</option>
+                                <option value="long_delivery">Thời gian xử lý/dự kiến giao hàng quá lâu</option>
+                                <option value="other">Lý do khác (Vui lòng ghi chi tiết bên dưới)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Chi tiết lý do (Nếu có):</label>
+                            <textarea class="form-control" name="cancel_detail" rows="2"
+                                placeholder="Nhập thêm nội dung chi tiết..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-danger shadow-sm px-4">Xác nhận hủy đơn</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ĐÁNH GIÁ MÓN ĂN -->
+    <div class="modal fade" id="reviewOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-dark">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-chat-heart-fill me-2"></i>Đánh giá chất lượng đơn
+                        hàng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="#" method="POST">
+                    <div class="modal-body text-center">
+                        <p class="text-start">Đánh giá của bạn về đơn hàng <strong
+                                id="review-order-id-display">#</strong> giúp nhà bếp nâng cao tay nghề nấu nướng:</p>
+
+                        <!-- Chọn số lượng sao -->
+                        <div class="star-rating my-3">
+                            <input type="radio" id="star5" name="rating_stars" value="5" /><label for="star5"
+                                class="bi bi-star-fill"></label>
+                            <input type="radio" id="star4" name="rating_stars" value="4" /><label for="star4"
+                                class="bi bi-star-fill"></label>
+                            <input type="radio" id="star3" name="rating_stars" value="3" /><label for="star3"
+                                class="bi bi-star-fill"></label>
+                            <input type="radio" id="star2" name="rating_stars" value="2" /><label for="star2"
+                                class="bi bi-star-fill"></label>
+                            <input type="radio" id="star1" name="rating_stars" value="1" required /><label for="star1"
+                                class="bi bi-star-fill"></label>
+                        </div>
+
+                        <div class="form-group text-start">
+                            <label for="review_comment" class="form-label small fw-bold">Nội dung nhận xét:</label>
+                            <textarea class="form-control" id="review_comment" name="review_comment" rows="3"
+                                placeholder="Món ăn vừa vị, đóng gói sạch sẽ, shipper nhiệt tình..."
+                                required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal">Trở
+                            về</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold shadow-sm px-4">Gửi đánh
+                            giá</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: YÊU CẦU HOÀN TIỀN (CẬP NHẬT CHỌN PHƯƠNG THỨC) -->
+    <div class="modal fade" id="refundOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content text-dark">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-arrow-counterclockwise me-2"></i>Yêu cầu hoàn trả
+                        tiền
+                        đơn hàng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="#" method="POST">
+                    <div class="modal-body text-start">
+                        <div class="alert alert-info py-2 small border-0">
+                            Số tiền dự kiến hoàn trả: <strong id="refund-amount-display" class="text-danger">0
+                                đ</strong>
+                        </div>
+                        <p>Hệ thống hỗ trợ gửi yêu cầu hoàn tiền cho đơn hàng <strong
+                                id="refund-order-id-display">#</strong>. Vui lòng hoàn thiện các thông tin khiếu nại
+                            dưới
+                            đây:</p>
+
+                        <div class="row">
+                            <!-- Lý do khiếu nại -->
+                            <div class="form-group col-md-6 mb-3">
+                                <label class="form-label small fw-bold">Lý do yêu cầu hoàn tiền <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select" name="refund_reason" required>
+                                    <option value="" selected disabled>-- Chọn nguyên do khiếu nại --</option>
+                                    <option value="wrong_dish">Giao sai món ăn / Nhầm lẫn thực đơn</option>
+                                    <option value="damaged_food">Thực phẩm biến chất, rơi đổ do vận chuyển</option>
+                                    <option value="not_delivered">Tài xế không giao hàng nhưng bấm hoàn thành</option>
+                                </select>
+                            </div>
+
+                            <!-- BỔ SUNG: Chọn phương thức hoàn tiền -->
+                            <div class="form-group col-md-6 mb-3">
+                                <label for="refund_method" class="form-label small fw-bold">Phương thức nhận tiền hoàn
+                                    <span class="text-danger">*</span></label>
+                                <select class="form-select fw-bold text-primary" id="refund_method" name="refund_method"
+                                    required onchange="toggleRefundFields(this.value)">
+                                    <option value="bank" selected>Chuyển khoản Ngân hàng nội địa</option>
+                                    <option value="momo">Chuyển về Ví điện tử MoMo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- KHU VỰC ĐIỀN THÔNG TIN TÀI KHOẢN NHẬN TIỀN (Sẽ thay đổi theo Javascript) -->
+                        <div class="card bg-light border-0 p-3 mb-3">
+                            <h6 class="fw-bold small text-secondary mb-2"><i class="bi bi-wallet2 me-1"></i> Thông tin
+                                tài
+                                khoản đích</h6>
+
+                            <!-- Trường nhập cho Ngân Hàng (Mặc định hiển thị) -->
+                            <div id="bank_fields_group">
+                                <div class="row">
+                                    <div class="form-group col-md-4 mb-2">
+                                        <label class="small">Tên Ngân hàng <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-sm bank-input"
+                                            name="bank_name" placeholder="Ví dụ: Vietcombank, Techcombank..." required>
+                                    </div>
+                                    <div class="form-group col-md-4 mb-2">
+                                        <label class="small">Số tài khoản <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-sm bank-input"
+                                            name="bank_account" placeholder="Nhập số tài khoản" required>
+                                    </div>
+                                    <div class="form-group col-md-4 mb-2">
+                                        <label class="small">Tên chủ thẻ <span class="text-danger">*</span></label>
+                                        <input type="text"
+                                            class="form-control form-control-sm bank-input text-uppercase"
+                                            name="bank_user" placeholder="NGUYEN VAN A" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Trường nhập cho MoMo (Mặc định ẩn) -->
+                            <div id="momo_fields_group" class="d-none">
+                                <div class="row">
+                                    <div class="form-group col-md-6 mb-2">
+                                        <label class="small">Số điện thoại đăng ký MoMo <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-sm momo-input"
+                                            id="momo_phone" name="momo_phone" placeholder="09xxxxxxxx">
+                                    </div>
+                                    <div class="form-group col-md-6 mb-2">
+                                        <label class="small">Tên chủ tài khoản MoMo <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text"
+                                            class="form-control form-control-sm momo-input text-uppercase"
+                                            id="momo_user" name="momo_user" placeholder="NGUYEN VAN A">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Miêu tả sự cố -->
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Chi tiết sự cố gặp phải:</label>
+                            <textarea class="form-control" name="refund_detail" rows="2"
+                                placeholder="Vui lòng miêu tả ngắn gọn tình huống đơn hàng để hệ thống đối chiếu camera/shipper..."
+                                required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal">Hủy
+                            bỏ</button>
+                        <button type="submit" class="btn btn-primary shadow-sm px-4">Gửi đơn khiếu nại</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="footer dark-background">
+        <div class="container copyright text-center mt-4">
+            <p>© <span>2026</span> <strong class="px-1">FOODELICIOUS</strong>. Tất cả quyền được bảo lưu.</p>
+        </div>
+    </footer>
+
+    <!-- Vendor JS Files -->
+    <script src="client/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="client/assets/vendor/aos/aos.js"></script>
+
+    <!-- Script điều phối gán Mã đơn hàng tương ứng vào từng cửa sổ Modal động -->
+    <script>
+        function toggleRefundFields(method) {
+            const bankGroup = document.getElementById('bank_fields_group');
+            const momoGroup = document.getElementById('momo_fields_group');
+            const bankInputs = document.querySelectorAll('.bank-input');
+            const momoInputs = document.querySelectorAll('.momo-input');
+
+            if (method === 'momo') {
+                // Hiện khung MoMo, ẩn khung Ngân hàng
+                momoGroup.classList.remove('d-none');
+                bankGroup.classList.add('d-none');
+
+                // Bật bắt buộc nhập cho MoMo, tắt Ngân hàng
+                momoInputs.forEach(input => input.setAttribute('required', 'required'));
+                bankInputs.forEach(input => input.removeAttribute('required'));
+            } else {
+                // Hiện khung Ngân hàng, ẩn khung MoMo
+                bankGroup.classList.remove('d-none');
+                momoGroup.classList.add('d-none');
+
+                // Bật bắt buộc nhập cho Ngân hàng, tắt MoMo
+                bankInputs.forEach(input => input.setAttribute('required', 'required'));
+                momoInputs.forEach(input => input.removeAttribute('required'));
+            }
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. Ánh xạ dữ liệu cho Modal Hủy đơn
+            const cancelModal = document.getElementById('cancelOrderModal');
+            if (cancelModal) {
+                cancelModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const orderId = button.getAttribute('data-order-id');
+                    document.getElementById('cancel-order-id-display').innerText = orderId;
+                });
+            }
+
+            // 2. Ánh xạ dữ liệu cho Modal Đánh giá
+            const reviewModal = document.getElementById('reviewOrderModal');
+            if (reviewModal) {
+                reviewModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const orderId = button.getAttribute('data-order-id');
+                    document.getElementById('review-order-id-display').innerText = orderId;
+                });
+            }
+
+            // 3. Ánh xạ dữ liệu cho Modal Hoàn tiền
+            const refundModal = document.getElementById('refundOrderModal');
+            if (refundModal) {
+                refundModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const orderId = button.getAttribute('data-order-id');
+                    const amount = button.getAttribute('data-amount');
+                    document.getElementById('refund-order-id-display').innerText = orderId;
+                    document.getElementById('refund-amount-display').innerText = amount;
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
