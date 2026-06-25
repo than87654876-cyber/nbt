@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:Inter:wght@100;200;300;400;500;600;700;800;900&family=Amatic+SC:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Amatic+SC:wght@400;700&display=swap"
         rel="stylesheet">
     <link href="{{ asset('admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
 
@@ -111,7 +111,7 @@
                 <button type="submit" class="btn btn-auth w-100 rounded shadow-sm mb-3">TIẾP TỤC XÁC MINH</button>
 
                 <div class="text-center small mt-2">
-                    <a href="login_client.html" class="auth-link"><i class="bi bi-arrow-left me-1"></i> Quay lại Đăng
+                    <a href="{{ route('trangchu/dangnhap') }}" class="auth-link"><i class="bi bi-arrow-left me-1"></i> Quay lại Đăng
                         nhập</a>
                 </div>
             </form>

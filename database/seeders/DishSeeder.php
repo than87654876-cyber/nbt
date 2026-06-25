@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Dish;
+use Illuminate\Database\Seeder;
 
 class DishSeeder extends Seeder
 {

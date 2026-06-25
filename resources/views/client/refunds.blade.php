@@ -140,71 +140,92 @@
                     </div>
                 </div>
 
-                <!-- YÊU CẦU 1: TRẠNG THÁI ĐANG CHỜ DUYỆT -->
-                <div class="refund-card text-dark">
-                    <div class="refund-header">
-                        <div class="row align-items-center">
-                            <div class="col-md-6">
-                                <div class="order-id"><i class="bi bi-receipt me-1"></i> Mã đơn hàng: #FDL-7531</div>
-                                <div class="refund-date mt-1"><i class="bi bi-calendar-event me-1"></i> Ngày yêu cầu:
-                                    17/06/2026 10:15</div>
-                            </div>
-                            <div class="col-md-6 text-md-end mt-2 mt-md-0">
-                                <span class="badge bg-warning text-dark shadow-sm"><i
-                                        class="bi bi-clock-history me-1"></i> Đang chờ xác nhận</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="refund-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="detail-item"><strong>Số tiền yêu cầu:</strong> <span
-                                        class="text-danger fw-bold">45.000 đ</span></div>
-                                <div class="detail-item"><strong>Lý do:</strong> Giao sai món ăn / Nhầm lẫn thực đơn
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="detail-item"><strong>Nhận tiền qua:</strong> Ví điện tử MoMo (0901234567)
-                                </div>
-                                <div class="detail-item text-muted font-italic"><strong>Ghi chú sự cố:</strong> "Giao
-                                    nhầm bún bò giò heo..."</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @forelse($orders as $order)
+                    @php
+                        $notes = $order->health_notes;
+                        
+                        $reason = '';
+                        if (preg_match('/Lý do: ([^,\]]+)/', $notes, $matches)) {
+                            $reason = $matches[1];
+                        }
+                        
+                        if ($reason === 'wrong_dish') {
+                            $reasonText = 'Giao sai món ăn / Nhầm lẫn thực đơn';
+                        } elseif ($reason === 'damaged_food') {
+                            $reasonText = 'Thực phẩm biến chất, rơi đổ do vận chuyển';
+                        } elseif ($reason === 'not_delivered') {
+                            $reasonText = 'Tài xế không giao hàng nhưng bấm hoàn thành';
+                        } else {
+                            $reasonText = $reason ?: 'Khác';
+                        }
 
-                <!-- YÊU CẦU 2: TRẠNG THÁI ĐÃ HOÀN TIỀN THÀNH CÔNG -->
-                <div class="refund-card text-dark">
-                    <div class="refund-header">
-                        <div class="row align-items-center">
-                            <div class="col-md-6">
-                                <div class="order-id"><i class="bi bi-receipt me-1"></i> Mã đơn hàng: #FDL-6102</div>
-                                <div class="refund-date mt-1"><i class="bi bi-calendar-event me-1"></i> Ngày yêu cầu:
-                                    05/06/2026 09:20</div>
+                        $method = 'bank';
+                        if (preg_match('/Phương thức: ([^, \]]+)/', $notes, $matches)) {
+                            $method = $matches[1];
+                        }
+
+                        $detail = '';
+                        if (preg_match('/Chi tiết: ([^\]]+)/', $notes, $matches)) {
+                            $detail = $matches[1];
+                        }
+
+                        $methodText = 'Chuyển khoản ATM';
+                        if ($method === 'momo') {
+                            $momoPhone = '';
+                            if (preg_match('/SĐT MoMo: ([^,]+)/', $notes, $matches)) { $momoPhone = $matches[1]; }
+                            $methodText = 'Ví điện tử MoMo (' . $momoPhone . ')';
+                        } else {
+                            $bankName = '';
+                            if (preg_match('/Ngân hàng: ([^,]+)/', $notes, $matches)) { $bankName = $matches[1]; }
+                            $methodText = 'Chuyển khoản Ngân hàng ' . $bankName;
+                        }
+
+                        // Parse Admin Response if any
+                        $adminResponse = '';
+                        if (preg_match('/\[Admin Phản hồi: ([^\]\)]+)/', $notes, $matches)) {
+                            $adminResponse = $matches[1];
+                        }
+                    @endphp
+                    <div class="refund-card text-dark">
+                        <div class="refund-header">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="order-id"><i class="bi bi-receipt me-1"></i> Mã đơn hàng: #FDL-{{ $order->id }}</div>
+                                    <div class="refund-date mt-1"><i class="bi bi-calendar-event me-1"></i> Ngày yêu cầu: {{ $order->updated_at->format('d/m/Y H:i') }}</div>
+                                </div>
+                                <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                                    @if($order->payment_status === 'refunded')
+                                        <span class="badge bg-success shadow-sm"><i class="bi bi-check-circle-fill me-1"></i> Đã hoàn tiền</span>
+                                    @elseif(strpos($order->health_notes, '[Admin Phản hồi:') !== false)
+                                        <span class="badge bg-danger shadow-sm"><i class="bi bi-x-circle-fill me-1"></i> Từ chối</span>
+                                    @else
+                                        <span class="badge bg-warning text-dark shadow-sm"><i class="bi bi-clock-history me-1"></i> Đang chờ xác nhận</span>
+                                    @endif
+                                </div>
                             </div>
-                            <div class="col-md-6 text-md-end mt-2 mt-md-0">
-                                <span class="badge bg-success shadow-sm"><i class="bi bi-check-circle-fill me-1"></i> Đã
-                                    hoàn tiền</span>
+                        </div>
+                        <div class="refund-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="detail-item"><strong>Số tiền yêu cầu:</strong> <span class="text-danger fw-bold">{{ number_format($order->final_amount, 0, ',', '.') }} đ</span></div>
+                                    <div class="detail-item"><strong>Lý do:</strong> {{ $reasonText }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-item"><strong>Nhận tiền qua:</strong> {{ $methodText }}</div>
+                                    <div class="detail-item text-muted font-italic"><strong>Ghi chú sự cố:</strong> "{{ $detail }}"</div>
+                                    @if($adminResponse)
+                                        <div class="detail-item text-primary font-weight-bold"><strong>Phản hồi từ Admin:</strong> "{{ $adminResponse }}"</div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="refund-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="detail-item"><strong>Số tiền yêu cầu:</strong> <span
-                                        class="text-danger fw-bold">89.000 đ</span></div>
-                                <div class="detail-item"><strong>Lý do:</strong> Khách hàng yêu cầu chấm dứt gói dịch vụ
-                                    dài hạn</div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="detail-item"><strong>Nhận tiền qua:</strong> Ngân hàng Techcombank
-                                    (19034***11)</div>
-                                <div class="detail-item text-success font-weight-bold"><strong>Phản hồi từ
-                                        Admin:</strong> "Đã hoàn trả 95% giá trị gói thành công."</div>
-                            </div>
-                        </div>
+                @empty
+                    <div class="text-center py-5 bg-white rounded border text-muted">
+                        <i class="bi bi-journal-x fs-1"></i>
+                        <p class="mt-2 mb-0">Bạn chưa gửi yêu cầu hoàn tiền nào.</p>
                     </div>
-                </div>
+                @endforelse
 
             </div>
         </div>

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('dish_id');
             $table->enum('delivery_status', ['pending', 'delivered', 'skipped', 'failed'])->default('pending');
             $table->boolean('is_locked')->default(false);
+            $table->text('delivery_notes')->nullable();
             $table->timestamps();
             $table->foreign('subscription_id')->references('id')->on('subscriptions')->onDelete('cascade');
             $table->foreign('dish_id')->references('id')->on('dishes')->onDelete('restrict');

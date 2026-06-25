@@ -1,343 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.admin')
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Chỉnh sửa Khách hàng - FOODELICIOUS</title>
+@section('title', 'Chỉnh sửa Khách hàng - FOODELICIOUS')
 
-    <link href="{{ asset('admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
-    <link
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-        rel="stylesheet">
-    <link href="{{ asset('logo.jpg') }}" rel="icon">
-    <link href="{{ asset('admin/css/sb-admin-2.min.css') }}" rel="stylesheet">
-</head>
+@section('content')
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Cập nhật hồ sơ khách hàng</h1>
+        <a href="{{ route('quanly_khachhang') }}" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-undo fa-sm"></i> Hủy thay đổi
+        </a>
+    </div>
 
-<body id="page-top">
-    <div id="wrapper">
-        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+    @if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show text-dark" role="alert">
+        <strong><i class="fas fa-exclamation-triangle mr-1"></i> Có lỗi xảy ra:</strong> {{ $errors->first() }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    @endif
 
-            <!-- Sidebar - Brand -->
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('quanly') }}">
-                <div class="sidebar-brand-text mx-3 fs-1">FOODELICIOUS</div>
-            </a>
-
-            <!-- Divider -->
-            <hr class="sidebar-divider my-0">
-
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('quanly') }}">
-                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Báo cáo doanh thu</span></a>
-            </li>
-
-            <!-- Divider -->
-            <hr class="sidebar-divider">
-
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Dịch vụ
-            </div>
-
-            <!-- Nav Item - Pages Collapse Menu -->
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                    aria-expanded="true" aria-controls="collapseTwo">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Thực đơn</span>
-                </a>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Quản lý thực đơn</h6>
-                        <a class="collapse-item" href="{{ route('quanly_danhmuc') }}">Danh sách món ăn</a>
-                        <a class="collapse-item" href="{{ route('quanly_monandon') }}">Món ăn đơn</a>
-                        <a class="collapse-item" href="{{ route('quanly_goidichvu') }}">Gói dịch vụ</a>
-                        <a class="collapse-item" href="{{ route('quanly_khuyenmai') }}">Chương trình khuyến mãi</a>
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Biểu mẫu điều chỉnh thông tin thành viên</h6>
+        </div>
+        <div class="card-body text-dark">
+            <form action="{{ route('khachhang_chinhsua.post', $customer->id) }}" method="POST">
+                @csrf
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        <label class="font-weight-bold">Mã khách hàng (Cố định)</label>
+                        <input type="text" class="form-control bg-light" value="KH-{{ sprintf('%03d', $customer->id) }}" readonly>
+                    </div>
+                    <div class="form-group col-md-8">
+                        <label for="fullname" class="font-weight-bold">Họ và Tên khách hàng <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="fullname" name="fullname" value="{{ old('fullname', $customer->fullname) }}" required>
                     </div>
                 </div>
-            </li>
 
-            <!-- Nav Item - Utilities Collapse Menu -->
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities"
-                    aria-expanded="true" aria-controls="collapseUtilities">
-                    <i class="fas fa-fw fa-list"></i>
-                    <span>Đơn hàng</span>
-                </a>
-                <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities"
-                    data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Quản lý đơn hàng</h6>
-                        <a class="collapse-item" href="{{ route('quanly_donhang') }}">Đơn hàng</a>
-                        <a class="collapse-item" href="{{ route('quanly_goidangky') }}">Gói dịch vụ</a>
-                        <a class="collapse-item" href="{{ route('quanly_yeucauhoan') }}">Yêu cầu hoàn tiền</a>
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <label for="phone" class="font-weight-bold">Số điện thoại liên lạc <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="phone" name="phone" value="{{ old('phone', $customer->phone) }}" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="email" class="font-weight-bold">Địa chỉ Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $customer->email) }}" required>
                     </div>
                 </div>
-            </li>
 
-            <!-- Divider -->
-            <hr class="sidebar-divider">
-
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Tài khoản
-            </div>
-
-            <!-- Nav Item - Pages Collapse Menu -->
-            <li class="nav-item active">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages"
-                    aria-expanded="true" aria-controls="collapsePages">
-                    <i class="fas fa-fw fa-user"></i>
-                    <span>Khách hàng</span>
-                </a>
-                <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Quản lý khách hàng</h6>
-                        <a class="collapse-item active" href="{{ route('quanly_khachhang') }}">Danh sách</a>
-                        <a class="collapse-item" href="{{ route('quanly_guima') }}">Gửi mã khuyến mãi</a>
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <label for="points" class="font-weight-bold">Điểm số tích lũy hệ thống</label>
+                        <input type="number" class="form-control" id="points" name="points" value="{{ old('points', $customer->points) }}" min="0">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="membership" class="font-weight-bold">Phân hạng thành viên</label>
+                        <select class="form-control font-weight-bold" id="membership" name="membership">
+                            <option value="bronze" {{ old('membership', $customer->membership) === 'bronze' ? 'selected' : '' }}>Đồng (Bronze)</option>
+                            <option value="silver" {{ old('membership', $customer->membership) === 'silver' ? 'selected' : '' }}>Bạc (Silver)</option>
+                            <option value="gold" {{ old('membership', $customer->membership) === 'gold' ? 'selected' : '' }}>Vàng (Gold)</option>
+                            <option value="diamond" {{ old('membership', $customer->membership) === 'diamond' ? 'selected' : '' }}>Kim Cương (Diamond)</option>
+                        </select>
                     </div>
                 </div>
-            </li>
 
-            <!-- Nav Item - Charts -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('quanly_nhanvien') }}">
-                    <i class="fas fa-fw fa-address-book"></i>
-                    <span>Nhân viên</span></a>
-            </li>
-
-            <!-- Nav Item - Tables -->
-
-            <!-- Divider -->
-            <hr class="sidebar-divider d-none d-md-block">
-
-            <!-- Sidebar Toggler (Sidebar) -->
-            <div class="text-center d-none d-md-inline">
-                <button class="rounded-circle border-0" id="sidebarToggle"></button>
-            </div>
-
-            <!-- Sidebar Message -->
-
-        </ul>
-        <!-- End of Sidebar -->
-
-        <!-- Content Wrapper -->
-        <div id="content-wrapper" class="d-flex flex-column">
-
-            <!-- Main Content -->
-            <div id="content">
-
-                <!-- Topbar -->
-                <div id="content-wrapper" class="d-flex flex-column">
-
-                    <!-- Main Content -->
-                    <div class="modal fade" id="userProfileModal" tabindex="-1" role="dialog"
-                        aria-labelledby="userProfileModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content border-0 shadow">
-                                <div class="modal-header text-white text-center d-block position-relative"
-                                    style="background-color: #ce1126; border-top-left-radius: 8px; border-top-right-radius: 8px;">
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                    <h5 class="modal-title fw-bold" id="userProfileModalLabel"><i
-                                            class="bi bi-person-circle me-2"></i>Hồ sơ
-                                        tài khoản</h5>
-                                </div>
-                                <div class="modal-body text-dark p-4">
-                                    <div class="text-center mb-4">
-                                        <div class="display-5 text-muted mb-2"><i class="bi bi-user-circle"></i></div>
-                                        <h4 class="fw-bold text-dark mb-1">Dương Chí Bá</h4>
-                                        <span class="badge badge-danger px-3 py-2 fw-bold"><i
-                                                class="bi bi-crown-fill me-1"></i>Administrator</span>
-                                    </div>
-
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-borderless mb-0">
-                                            <tbody>
-                                                <tr>
-                                                    <td class="text-muted py-2">Chức vụ</td>
-                                                    <td class="fw-bold py-2">Quản lý tổng</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted py-2" style="width: 40%;">Số điện thoại:</td>
-                                                    <td class="fw-bold py-2">0901234567</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted py-2">Địa chỉ Email:</td>
-                                                    <td class="fw-bold py-2">tung.db@gmail.com</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="modal-footer bg-light border-0">
-                                    <button type="button" class="btn btn-secondary w-100" data-dismiss="modal">Đóng cửa
-                                        sổ</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="content">
-
-                        <!-- Topbar -->
-                        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-
-                            <!-- Sidebar Toggle (Topbar) -->
-                            <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                                <i class="fa fa-bars"></i>
-                            </button>
-
-                            <!-- Topbar Search -->
-
-                            <!-- Topbar Navbar -->
-                            <ul class="navbar-nav ml-auto">
-
-                                <!-- Nav Item - User Information -->
-                                <li class="nav-item dropdown no-arrow">
-                                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="mr-2 d-none d-lg-inline text-gray-600 small">Dương Chí Bá</span>
-                                        <img class="img-profile rounded-circle" src="{{ asset('logo.jpg') }}">
-                                    </a>
-                                    <!-- Dropdown - User Information -->
-                                    <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                        aria-labelledby="userMenu">
-                                        <a class="dropdown-item py-2" href="#" data-toggle="modal"
-                                            data-target="#userProfileModal">
-                                            <i class="bi bi-person-badge me-2 text-primary"></i>Hồ sơ thông tin
-                                        </a>
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item" href="{{ route('dangnhap') }}" data-toggle="modal"
-                                            data-target="#logoutModal">
-                                            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                            Đăng xuất
-                                        </a>
-                                    </div>
-                                </li>
-
-                            </ul>
-
-                        </nav>
-                        <!-- Logout Modal-->
-                        <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog"
-                            aria-labelledby="exampleModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLabel">Bạn có muốn đăng xuất?</h5>
-                                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">×</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-secondary" type="button"
-                                            data-dismiss="modal">Hủy</button>
-                                        <a class="btn btn-primary" href="{{ route('dangnhap') }}">Đăng xuất</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="container-fluid">
-                            <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                                <h1 class="h3 mb-0 text-gray-800">Cập nhật hồ sơ khách hàng</h1>
-                                <a href="#" class="btn btn-sm btn-secondary shadow-sm">
-                                    <i class="fas fa-undo fa-sm"></i> Hủy thay đổi
-                                </a>
-                            </div>
-
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Biểu mẫu điều chỉnh thông tin thành
-                                        viên</h6>
-                                </div>
-                                <div class="card-body text-dark">
-                                    <form action="#" method="POST">
-                                        <div class="row">
-                                            <div class="form-group col-md-4">
-                                                <label class="font-weight-bold">Mã khách hàng (Cố định)</label>
-                                                <input type="text" class="form-control bg-light" value="KH-001"
-                                                    readonly>
-                                            </div>
-                                            <div class="form-group col-md-8">
-                                                <label for="fullname" class="font-weight-bold">Họ và Tên khách hàng
-                                                    <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="fullname" name="fullname"
-                                                    value="Dương Bá Tùng" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="row">
-                                            <div class="form-group col-md-6">
-                                                <label for="phone" class="font-weight-bold">Số điện thoại liên lạc <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="phone" name="phone"
-                                                    value="0901234567" required>
-                                            </div>
-                                            <div class="form-group col-md-6">
-                                                <label for="email" class="font-weight-bold">Địa chỉ Email <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="email" class="form-control" id="email" name="email"
-                                                    value="tung.db@gmail.com" required>
-                                            </div>
-                                        </div>
-
-                                        <div class="row">
-                                            <div class="form-group col-md-6">
-                                                <label for="points" class="font-weight-bold">Điểm số tích lũy hệ
-                                                    thống</label>
-                                                <input type="number" class="form-control" id="points" name="points"
-                                                    value="2450" min="0">
-                                            </div>
-                                            <div class="form-group col-md-6">
-                                                <label for="membership" class="font-weight-bold">Phân hạng thành
-                                                    viên</label>
-                                                <select class="form-control font-weight-bold" id="membership"
-                                                    name="membership">
-                                                    <option value="bronze">Đồng (Bronze)</option>
-                                                    <option value="silver">Bạc (Silver)</option>
-                                                    <option value="gold">Vàng (Gold)</option>
-                                                    <option value="diamond" selected>Kim Cương (Diamond)</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label for="notes" class="font-weight-bold">Ghi chú quản lý</label>
-                                            <textarea class="form-control" id="notes" name="notes"
-                                                rows="3">Khách quen phân hiệu, thường dùng dịch vụ giao hàng Grab nội thành Ho Chi Minh City.</textarea>
-                                        </div>
-
-                                        <hr>
-                                        <div class="d-flex justify-content-start">
-                                            <button type="submit" class="btn btn-primary shadow-sm px-4 mr-2">
-                                                <i class="fas fa-save fa-sm mr-1"></i> Lưu thông tin khách hàng
-                                            </button>
-                                            <a href="#" class="btn btn-secondary shadow-sm px-3">Quay lại</a>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <footer class="sticky-footer bg-white">
-                        <div class="container my-auto">
-                            <div class="copyright text-center my-auto">
-                                <span>Copyright &copy; Cà phê 2026</span>
-                            </div>
-                        </div>
-                    </footer>
+                <div class="form-group">
+                    <label for="notes" class="font-weight-bold">Ghi chú quản lý</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3">{{ old('notes', $customer->notes) }}</textarea>
                 </div>
-            </div>
 
-            <script src="{{ asset('admin/vendor/jquery/jquery.min.js') }}"></script>
-            <script src="{{ asset('admin/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-            <script src="{{ asset('admin/js/sb-admin-2.min.js') }}"></script>
-</body>
-
-</html>
+                <hr>
+                <div class="d-flex justify-content-start">
+                    <button type="submit" class="btn btn-primary shadow-sm px-4 mr-2">
+                        <i class="fas fa-save fa-sm mr-1"></i> Lưu thông tin khách hàng
+                    </button>
+                    <a href="{{ route('quanly_khachhang') }}" class="btn btn-secondary shadow-sm px-3">Quay lại</a>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection

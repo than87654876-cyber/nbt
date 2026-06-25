@@ -6,18 +6,16 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Thanh toán Đơn hàng - FOODELICIOUS</title>
 
-    <link href="logo.jpg" rel="icon">
+    <link href="{{ asset('logo.jpg') }}" rel="icon">
 
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-    <link href="admin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="{{ asset('admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
 
-    <link href="client/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="client/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-    <link href="client/assets/css/main.css" rel="stylesheet">
+    <link href="{{ asset('client/assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('client/assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="{{ asset('client/assets/css/main.css') }}" rel="stylesheet">
 
     <style>
         .momo-brand-color {
@@ -28,7 +26,6 @@
             color: #004B87;
         }
 
-        /* Custom kiểu tab chọn cổng */
         .nav-pills .nav-link {
             border: 2px solid #dee2e6;
             color: #495057;
@@ -81,12 +78,11 @@
 
     <header id="header" class="header d-flex align-items-center sticky-top bg-white shadow-sm">
         <div class="container d-flex align-items-center justify-content-between">
-            <a href="#" class="logo d-flex align-items-center me-auto">
-                <img src="logo.jpg" alt="">
-                <h1 class="sitename text-danger">FOODELICIOUS</h1>
+            <a href="{{ route('trangchu') }}" class="logo d-flex align-items-center me-auto" style="text-decoration: none;">
+                <img src="{{ asset('logo.jpg') }}" alt="">
+                <h1 class="sitename text-danger m-0" style="font-size: 28px;">FOODELICIOUS</h1>
             </a>
-            <span class="navbar-text fw-bold text-muted"><i class="bi bi-shield-check text-success"></i> Hệ thống thanh
-                toán mã QR bảo mật</span>
+            <span class="navbar-text fw-bold text-muted"><i class="bi bi-shield-check text-success"></i> Hệ thống thanh toán mã QR giả lập</span>
         </div>
     </header>
 
@@ -97,18 +93,22 @@
                 <div class="card shadow border-0 p-4 text-center">
                     <h5 class="fw-bold mb-4">Chọn phương thức quét mã QR</h5>
 
+                    @php
+                        $isMomo = (isset($payment_type) && $payment_type === 'momo') || !isset($payment_type);
+                    @endphp
+
                     <ul class="nav nav-pills row g-2 mb-4" id="pills-tab" role="tablist">
                         <li class="nav-item col-6" role="presentation">
-                            <button class="nav-link w-100 py-2.5 tab-momo active" id="pills-momo-tab"
+                            <button class="nav-link w-100 py-2.5 tab-momo {{ $isMomo ? 'active' : '' }}" id="pills-momo-tab"
                                 data-bs-toggle="pill" data-bs-target="#pills-momo" type="button" role="tab"
-                                aria-controls="pills-momo" aria-selected="true">
+                                aria-controls="pills-momo" aria-selected="{{ $isMomo ? 'true' : 'false' }}">
                                 <i class="bi bi-wallet2 me-2"></i>Ví MoMo
                             </button>
                         </li>
                         <li class="nav-item col-6" role="presentation">
-                            <button class="nav-link w-100 py-2.5 tab-bank" id="pills-bank-tab" data-bs-toggle="pill"
+                            <button class="nav-link w-100 py-2.5 tab-bank {{ !$isMomo ? 'active' : '' }}" id="pills-bank-tab" data-bs-toggle="pill"
                                 data-bs-target="#pills-bank" type="button" role="tab" aria-controls="pills-bank"
-                                aria-selected="false">
+                                aria-selected="{{ !$isMomo ? 'true' : 'false' }}">
                                 <i class="bi bi-bank me-2"></i>Ngân hàng (VietQR)
                             </button>
                         </li>
@@ -116,19 +116,19 @@
 
                     <div class="tab-content" id="pills-tabContent">
 
-                        <div class="tab-pane fade show active" id="pills-momo" role="tabpanel"
+                        <div class="tab-pane fade {{ $isMomo ? 'show active' : '' }}" id="pills-momo" role="tabpanel"
                             aria-labelledby="pills-momo-tab">
                             <div class="qr-box box-momo shadow-sm mb-3">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=MomoIntegratedPaymentSample"
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=Momo_Order_{{ $order_id }}_Amount_{{ $amount }}"
                                     alt="Mã QR MoMo" class="img-fluid">
                             </div>
                             <p class="small text-muted mb-3"><i class="bi bi-phone-vibrate me-1"></i> Mở ứng dụng
                                 <strong>MoMo</strong> để quét mã chuyển tiền</p>
                         </div>
 
-                        <div class="tab-pane fade" id="pills-bank" role="tabpanel" aria-labelledby="pills-bank-tab">
+                        <div class="tab-pane fade {{ !$isMomo ? 'show active' : '' }}" id="pills-bank" role="tabpanel" aria-labelledby="pills-bank-tab">
                             <div class="qr-box box-bank shadow-sm mb-3">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=VietQRBankingIntegratedPaymentSample"
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=VietQR_Order_{{ $order_id }}_Amount_{{ $amount }}"
                                     alt="Mã VietQR" class="img-fluid">
                             </div>
                             <p class="small text-muted mb-3"><i class="bi bi-phone-vibrate me-1"></i> Sử dụng
@@ -137,20 +137,19 @@
 
                     </div>
 
-                    <div class="mb-2 mt-2 small text-secondary">Thời gian giữ giữ mã giao dịch còn lại:</div>
+                    <div class="mb-2 mt-2 small text-secondary">Thời gian giữ mã giao dịch còn lại:</div>
                     <div class="countdown-timer mb-2 shadow-sm"><i class="bi bi-clock-history me-2"></i><span
                             id="timer">10:00</span></div>
                 </div>
             </div>
 
             <div class="col-lg-5 col-md-10">
-                <div class="card shadow border-0 p-4">
-                    <h5 class="fw-bold border-bottom pb-2 text-dark"><i class="bi bi-receipt me-2 text-danger"></i>Thông
-                        tin đơn hàng</h5>
+                <div class="card shadow border-0 p-4 text-dark">
+                    <h5 class="fw-bold border-bottom pb-2 text-dark"><i class="bi bi-receipt me-2 text-danger"></i>Thông tin đơn hàng</h5>
 
                     <div class="py-2 d-flex justify-content-between">
                         <span class="text-muted">Mã đơn hàng:</span>
-                        <strong class="text-dark">#FDL-8892</strong>
+                        <strong class="text-dark">#FDL-{{ $order_id }}</strong>
                     </div>
                     <div class="py-2 d-flex justify-content-between">
                         <span class="text-muted">Nhà cung cấp:</span>
@@ -158,22 +157,21 @@
                     </div>
                     <div class="py-2 d-flex justify-content-between align-items-center">
                         <span class="text-muted">Số tiền cần thanh toán:</span>
-                        <span class="fs-4 fw-bold text-danger">148.000 đ</span>
+                        <span class="fs-4 fw-bold text-danger">{{ number_format($amount, 0, ',', '.') }} đ</span>
                     </div>
 
                     <div class="alert alert-warning small mt-3 border-0">
-                        <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Lưu ý đối soát hệ
-                            thống:</h6>
-                        Mã QR đã tích hợp sẵn số tiền **148.000 đ** và nội dung chuyển khoản tự động. Vui lòng không tự
-                        ý thay đổi thông tin để đơn hàng được duyệt ngay lập tức.
+                        <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Lưu ý đối soát hệ thống:</h6>
+                        Mã QR đã tích hợp sẵn số tiền **{{ number_format($amount, 0, ',', '.') }} đ** và nội dung chuyển khoản tự động. Vui lòng không tự ý thay đổi thông tin để đơn hàng được duyệt ngay lập tức.
                     </div>
 
                     <div class="mt-4 pt-2 border-top">
-                        <button type="button" class="btn btn-danger w-100 py-2.5 fw-bold shadow-sm mb-2"
-                            style="background-color: #ce1126;"><i class="bi bi-check2-circle me-1"></i> Tôi đã hoàn tất
-                            chuyển khoản</button>
-                        <a href="#" class="btn btn-outline-secondary w-100 py-2.5 btn-sm">Quay lại chỉnh sửa giỏ
-                            hàng</a>
+                        <form action="{{ route('thanhtoan_hoantat', $order_id) }}" method="GET">
+                            <button type="submit" class="btn btn-danger w-100 py-2.5 fw-bold shadow-sm mb-2" style="background-color: #ce1126;">
+                                <i class="bi bi-check2-circle me-1"></i> Tôi đã hoàn tất chuyển khoản
+                            </button>
+                        </form>
+                        <a href="{{ route('trangchu_dangnhap') }}" class="btn btn-outline-secondary w-100 py-2.5 btn-sm">Quay lại trang chủ</a>
                     </div>
                 </div>
             </div>
@@ -184,7 +182,7 @@
     <script>
         function startTimer(duration, display) {
             var timer = duration, minutes, seconds;
-            setInterval(function () {
+            var interval = setInterval(function () {
                 minutes = parseInt(timer / 60, 10);
                 seconds = parseInt(timer % 60, 10);
 
@@ -194,7 +192,7 @@
                 display.textContent = minutes + ":" + seconds;
 
                 if (--timer < 0) {
-                    timer = 0;
+                    clearInterval(interval);
                     display.textContent = "Hết hạn";
                 }
             }, 1000);
@@ -206,7 +204,7 @@
         };
     </script>
 
-    <script src="client/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('client/assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 </body>
 
 </html>

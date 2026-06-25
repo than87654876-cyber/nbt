@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:Inter:wght@100;200;300;400;500;600;700;800;900&family=Amatic+SC:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Amatic+SC:wght@400;700&display=swap"
         rel="stylesheet">
     <link href="{{ asset('admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
 
@@ -143,7 +143,7 @@
                     <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button"
                         id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-user-circle fs-4 text-dark"></i>
-                        <span class="fw-bold text-dark d-none d-md-inline">Dương Bá Tùng</span>
+                        <span class="fw-bold text-dark d-none d-md-inline">{{ Auth::user()->fullname }}</span>
                         <i class="bi bi-chevron-down small text-muted"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end mt-2" aria-labelledby="userMenu">
@@ -172,14 +172,13 @@
                             <hr class="dropdown-divider">
                         </li>
                         <li>
-                            <a class="dropdown-item py-2 text-danger" href="{{ route('trangchu') }}">
+                            <a class="dropdown-item py-2 text-danger" href="{{ route('dangxuat') }}">
                                 <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
                             </a>
                         </li>
                     </ul>
                 </div>
             </div>
-        </div>
         </div>
 
     </header>
@@ -196,7 +195,8 @@
                         aria-label="Close"></button>
                 </div>
 
-                <form action="#" method="POST">
+                <form action="{{ route('goidichvu.buy') }}" method="POST">
+                    @csrf
                     <div class="modal-body text-dark text-start p-4" style="font-family: 'Roboto', sans-serif;">
 
                         <div class="alert alert-warning py-2 small border-0 mb-3">
@@ -274,19 +274,18 @@
                         </div>
 
                         <div class="form-group mb-2">
-                            <label class="form-label fw-bold d-block">Phương thức thanh toán trả trước gói dịch
-                                vụ</label>
+                            <label class="form-label fw-bold d-block">Phương thức thanh toán trả trước gói dịch vụ</label>
                             <div class="form-check form-check-inline me-4">
-                                <input class="form-check-input" type="radio" name="sub_payment_method" id="sub_pay_momo"
-                                    value="momo" checked>
-                                <label class="form-check-label" for="sub_pay_momo"><i
-                                        class="bi bi-wallet2 text-primary me-1"></i> Tiền mặt (COD)</label>
+                                <input class="form-check-input" type="radio" name="sub_payment_method" id="sub_pay_cod"
+                                    value="cash" checked>
+                                <label class="form-check-label" for="sub_pay_cod"><i
+                                        class="bi bi-cash text-primary me-1"></i> Tiền mặt (COD)</label>
                             </div>
                             <div class="form-check form-check-inline me-4">
-                                <input class="form-check-input" type="radio" name="sub_payment_method" id="sub_pay_momo"
-                                    value="momo" checked>
-                                <label class="form-check-label" for="sub_pay_momo"><i
-                                        class="bi bi-wallet2 text-primary me-1"></i> Chuyển khoản</label>
+                                <input class="form-check-input" type="radio" name="sub_payment_method" id="sub_pay_transfer"
+                                    value="bank_transfer">
+                                <label class="form-check-label" for="sub_pay_transfer"><i
+                                        class="bi bi-bank text-primary me-1"></i> Chuyển khoản</label>
                             </div>
                         </div>
                     </div>
@@ -317,10 +316,8 @@
                     <div class="modal-body text-dark p-4">
                         <div class="text-center mb-4">
                             <div class="display-5 text-muted mb-2"><i class="bi bi-user-circle"></i></div>
-                            <h4 class="fw-bold text-dark mb-1">Dương Bá Tùng</h4>
-                            <span class="badge badge-diamond px-3 py-2 fw-bold"><i class="bi bi-crown-fill me-1"></i>Hội
-                                viên
-                                Kim Cương</span>
+                            <h4 class="fw-bold text-dark mb-1">{{ Auth::user()->fullname }}</h4>
+                            <span class="badge badge-{{ Auth::user()->membership }} px-3 py-2 fw-bold"><i class="bi bi-crown-fill me-1"></i>Thành viên {{ strtoupper(Auth::user()->membership) }}</span>
                         </div>
 
                         <div class="table-responsive">
@@ -328,23 +325,23 @@
                                 <tbody>
                                     <tr>
                                         <td class="text-muted py-2" style="width: 40%;">Số điện thoại:</td>
-                                        <td class="fw-bold py-2">0901234567</td>
+                                        <td class="fw-bold py-2">{{ Auth::user()->phone }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-muted py-2">Địa chỉ Email:</td>
-                                        <td class="fw-bold py-2">tung.db@gmail.com</td>
+                                        <td class="fw-bold py-2">{{ Auth::user()->email }}</td>
                                     </tr>
                                     <tr>
-                                        <td class="text-muted py-2">Địa chỉ:</td>
-                                        <td class="fw-bold py-2">123 Đường ABC, Quận XYZ, TP. HCM</td>
+                                        <td class="text-muted py-2">Thông tin ghi chú:</td>
+                                        <td class="fw-bold py-2">{{ Auth::user()->notes ?? 'Chưa cập nhật' }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-muted py-2">Ngày đăng ký:</td>
-                                        <td class="fw-bold py-2 text-secondary">24/09/2025</td>
+                                        <td class="fw-bold py-2 text-secondary">{{ Auth::user()->created_at ? Auth::user()->created_at->format('d/m/Y') : 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-muted py-2">Điểm tích lũy:</td>
-                                        <td class="fw-bold py-2 text-success">2.450 Điểm</td>
+                                        <td class="fw-bold py-2 text-success">{{ number_format(Auth::user()->points) }} Điểm</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -369,7 +366,8 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                             aria-label="Close"></button>
                     </div>
-                    <form action="#" method="POST">
+                    <form id="quickBuyModalForm" method="POST">
+                        <input type="hidden" id="modal-product-id" name="product_id">
                         <div class="modal-body text-dark text-start" style="font-family: 'Roboto', sans-serif;">
                             <div
                                 class="alert alert-secondary d-flex justify-content-between align-items-center py-2 mb-3">
@@ -397,6 +395,20 @@
                 </div>
             </div>
         </div>
+        <div class="container mt-4 pt-2">
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ $errors->first() }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+        </div>
         <section id="hero" class="hero section light-background">
             <div class="container">
                 <div class="row gy-4 justify-content-center justify-content-lg-between">
@@ -421,19 +433,20 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                             aria-label="Close"></button>
                     </div>
-                    <form action="#" method="POST">
+                    <form action="{{ route('muahang.process') }}" method="POST" id="cartForm">
+                        @csrf
+                        <input type="hidden" name="cart_items" id="cartItemsInput">
                         <div class="modal-body text-start" style="font-family: 'Roboto', sans-serif;">
                             <h6 class="fw-bold border-bottom pb-2 text-danger"><i class="bi bi-list-stars"></i> 1. Danh
                                 sách món
                                 ăn trong giỏ</h6>
-                            <div class="p-2 mb-3 bg-light rounded">
-                                <div class="d-flex justify-content-between small py-1 px-2 border-bottom">
-                                    <span>Magnam Tiste (Món ăn đơn) x1</span>
-                                    <span class="fw-bold text-danger">$5.95</span>
+                            <div class="p-2 mb-3 bg-light rounded text-dark">
+                                <div id="cart-items-container">
+                                    <!-- Sẽ được tải động bằng JS -->
                                 </div>
-                                <div class="d-flex justify-content-between small pt-2 px-2">
+                                <div class="d-flex justify-content-between small pt-2 px-2 border-top">
                                     <span class="fw-bold">Tổng tiền hàng tạm tính:</span>
-                                    <span class="fw-bold text-danger fs-5">$5.95</span>
+                                    <span class="fw-bold text-danger fs-5" id="cart-total-price">$0.00</span>
                                 </div>
                             </div>
 
@@ -444,13 +457,13 @@
                                 <div class="form-group col-md-4 mb-3">
                                     <label for="cart_phone" class="form-label small fw-bold">Số điện thoại <span
                                             class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control form-control-sm" id="cart_phone"
-                                        value="0901234567" required>
+                                    <input type="tel" class="form-control form-control-sm" id="cart_phone" name="cart_phone"
+                                        value="{{ Auth::user()->phone }}" required>
                                 </div>
                                 <div class="form-group col-md-8 mb-3">
                                     <label for="cart_time" class="form-label small fw-bold">Thời gian nhận hàng <span
                                             class="text-danger">*</span></label>
-                                    <select class="form-select form-select-sm" id="cart_time" required>
+                                    <select class="form-select form-select-sm" id="cart_time" name="cart_time" required>
                                         <option value="now" selected>Ngay bây giờ (Giao hàng hỏa tốc)</option>
                                         <option value="tomorrow_morning">Ngày mai - Buổi sáng (07:00 - 11:00)</option>
                                         <option value="tomorrow_afternoon">Ngày mai - Buổi chiều (13:00 - 18:00)
@@ -461,7 +474,7 @@
                             <div class="form-group mb-3">
                                 <label for="cart_address" class="form-label small fw-bold">Địa chỉ nhận hàng cụ thể
                                     <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-sm" id="cart_address"
+                                <input type="text" class="form-control form-control-sm" id="cart_address" name="cart_address"
                                     value="Trường Cao đẳng Công nghệ Thông tin TP.HCM (ITC), Quận Tân Phú" required>
                             </div>
 
@@ -632,167 +645,67 @@
             <div class="row mb-4 d-flex justify-content-center">
                 <div class="col-md-8">
                     <div class="search-box">
-                        <form action="#" class="d-flex gap-2">
-                            <input type="text" class="form-control" placeholder="Tìm kiếm món ăn...">
-                            <button type="button" class="btn"><i class="bi bi-search"></i> Tìm</button>
+                        <form action="" method="GET" class="d-flex gap-2">
+                            <input type="text" name="search" class="form-control" value="{{ $query ?? '' }}" placeholder="Tìm kiếm món ăn...">
+                            <button type="submit" class="btn"><i class="bi bi-search"></i> Tìm</button>
+                            @if($query)
+                                <a href="{{ route('trangchu_dangnhap') }}" class="btn btn-secondary d-flex align-items-center justify-content-center" style="border-radius: 5px; color: #fff; background-color: #6c757d; padding: 10px 15px; border: none; text-decoration: none;"><i class="bi bi-x-lg"></i></a>
+                            @endif
                         </form>
                     </div>
                 </div>
             </div>
             <div class="container">
-                <ul class="nav nav-tabs d-flex justify-content-center" data-aos="fade-up" data-aos-delay="100">
-                    <li class="nav-item">
-                        <a class="nav-link active show" data-bs-toggle="tab" data-bs-target="#menu-starters">
-                            <h4>Ăn sáng</h4>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link show" data-bs-toggle="tab" data-bs-target="#menu-desserts">
-                            <h4>Tráng miệng</h4>
-                        </a>
-                    </li>
-                </ul>
-
-                <div class="tab-content" data-aos="fade-up" data-aos-delay="200">
-                    <div class="tab-pane fade active show" id="menu-starters">
-                        <div class="tab-header text-center">
-                            <p>Thực đơn</p>
-                            <h3>Ăn sáng</h3>
-                        </div>
-
-                        <div class="row gy-5">
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Magnam Tiste" data-product-price="5.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-1.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Magnam Tiste</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$5.95</p>
-                            </div>
-
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Aut Luia" data-product-price="14.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-2.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Aut Luia</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$14.95</p>
-                            </div>
-
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Est Eligendi" data-product-price="8.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-3.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Est Eligendi</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$8.95</p>
-                            </div>
-
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Eos Luibusdam" data-product-price="12.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-4.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Eos Luibusdam</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$12.95</p>
-                            </div>
-
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Eos Luibusdam II" data-product-price="12.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-5.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Eos Luibusdam II</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$12.95</p>
-                            </div>
-
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Laboriosam Direva" data-product-price="9.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-6.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Laboriosam Direva</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$9.95</p>
-                            </div>
-                        </div>
+                @if($categories->isEmpty() || $categories->pluck('dishes')->flatten()->isEmpty())
+                    <div class="text-center py-5">
+                        <p class="text-muted fs-4">Không tìm thấy món ăn nào phù hợp với từ khóa "{{ $query }}".</p>
+                        <a href="{{ route('trangchu_dangnhap') }}" class="btn text-white px-4 py-2 mt-3" style="background-color: #ce1126; border-radius: 5px; text-decoration: none;">Quay lại thực đơn</a>
                     </div>
-                </div>
-                <div class="tab-content" data-aos="fade-up" data-aos-delay="200">
-                    <div class="tab-pane fade active show" id="menu-dessert">
-                        <div class="tab-header text-center">
-                            <p>Thực đơn</p>
-                            <h3>Tráng miệng</h3>
-                        </div>
+                @else
+                    @php $firstActive = true; @endphp
+                    <ul class="nav nav-tabs d-flex justify-content-center" data-aos="fade-up" data-aos-delay="100">
+                        @foreach($categories as $category)
+                            @if($category->dishes->isNotEmpty())
+                                <li class="nav-item">
+                                    <a class="nav-link {{ $firstActive ? 'active show' : '' }}" data-bs-toggle="tab" data-bs-target="#menu-{{ $category->id }}">
+                                        <h4>{{ $category->category_name }}</h4>
+                                    </a>
+                                </li>
+                                @php $firstActive = false; @endphp
+                            @endif
+                        @endforeach
+                    </ul>
 
-                        <div class="row gy-5">
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Magnam Tiste" data-product-price="5.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-1.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Magnam Tiste</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$5.95</p>
-                            </div>
+                    @php $firstActive = true; @endphp
+                    <div class="tab-content" data-aos="fade-up" data-aos-delay="200">
+                        @foreach($categories as $category)
+                            @if($category->dishes->isNotEmpty())
+                                <div class="tab-pane fade {{ $firstActive ? 'active show' : '' }}" id="menu-{{ $category->id }}">
+                                    <div class="tab-header text-center">
+                                        <p>Thực đơn</p>
+                                        <h3>{{ $category->category_name }}</h3>
+                                    </div>
 
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Aut Luia" data-product-price="14.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-2.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Aut Luia</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$14.95</p>
-                            </div>
-
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Est Eligendi" data-product-price="8.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-3.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Est Eligendi</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$8.95</p>
-                            </div>
-
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Eos Luibusdam" data-product-price="12.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-4.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Eos Luibusdam</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$12.95</p>
-                            </div>
-
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Eos Luibusdam II" data-product-price="12.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-5.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Eos Luibusdam II</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$12.95</p>
-                            </div>
-
-                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
-                                data-product-name="Laboriosam Direva" data-product-price="9.95">
-                                <a href="javascript:void(0)"><img
-                                        src="{{ asset('client/assets/img/menu/menu-item-6.png') }}"
-                                        class="menu-img img-fluid" alt=""></a>
-                                <h4>Laboriosam Direva</h4>
-                                <p class="ingredients">Lorem, deren, trataro, filede, nerada</p>
-                                <p class="price">$9.95</p>
-                            </div>
-                        </div>
+                                    <div class="row gy-5">
+                                        @foreach($category->dishes as $dish)
+                                            <div class="col-lg-4 menu-item" data-bs-toggle="modal" data-bs-target="#quickBuyModal"
+                                                data-product-id="{{ $dish->id }}" data-product-name="{{ $dish->dish_name }}" data-product-price="{{ $dish->price }}">
+                                                <a href="javascript:void(0)">
+                                                    <img src="{{ $dish->image_url ? (Str::startsWith($dish->image_url, 'http') ? $dish->image_url : asset($dish->image_url)) : asset('client/assets/img/menu/menu-item-1.png') }}"
+                                                        class="menu-img img-fluid" alt="{{ $dish->dish_name }}">
+                                                </a>
+                                                <h4>{{ $dish->dish_name }}</h4>
+                                                <p class="ingredients">{{ $dish->description }}</p>
+                                                <p class="price">${{ number_format($dish->price, 2) }}</p>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @php $firstActive = false; @endphp
+                            @endif
+                        @endforeach
                     </div>
-                </div>
+                @endif
             </div>
         </section>
         <!-- Events Section -->
@@ -939,25 +852,143 @@
     <script src="{{ asset('client/assets/js/main.js') }}"></script>
 
     <script>
+        // Phân hệ giỏ hàng dùng localStorage
+        const isLoggedIn = true;
+
+        function getCart() {
+            const cart = localStorage.getItem('fdl_cart');
+            return cart ? JSON.parse(cart) : [];
+        }
+
+        function saveCart(cart) {
+            localStorage.setItem('fdl_cart', JSON.stringify(cart));
+            updateCartCount();
+        }
+
+        function updateCartCount() {
+            const cart = getCart();
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            const cartBadges = document.querySelectorAll('.btn-cart .badge-count');
+            cartBadges.forEach(badge => {
+                badge.innerText = count;
+                badge.style.display = count > 0 ? 'inline-block' : 'none';
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
+            // Thêm badge đếm số lượng giỏ hàng vào icon giỏ hàng
+            const cartBtns = document.querySelectorAll('.btn-cart');
+            cartBtns.forEach(btn => {
+                if (!btn.querySelector('.badge-count')) {
+                    btn.style.position = 'relative';
+                    const badge = document.createElement('span');
+                    badge.className = 'badge-count position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                    badge.style.fontSize = '0.65rem';
+                    badge.style.padding = '0.25em 0.5em';
+                    badge.style.display = 'none';
+                    btn.appendChild(badge);
+                }
+            });
+            updateCartCount();
+
             // 1. Xử lý nạp dữ liệu cho Modal Đặt Mua Nhanh Món Đơn
             const menuItems = document.querySelectorAll(".menu-item");
             menuItems.forEach(item => {
                 item.addEventListener("click", function () {
+                    const productId = this.getAttribute("data-product-id");
                     const productName = this.getAttribute("data-product-name") || "Món ăn";
                     const productPrice = this.getAttribute("data-product-price") || "0";
+                    
+                    document.getElementById("modal-product-id").value = productId;
                     document.getElementById("modal-product-name").innerText = productName;
-                    document.getElementById("modal-product-price").innerText = "$" + productPrice;
+                    document.getElementById("modal-product-price").innerText = "$" + parseFloat(productPrice).toFixed(2);
+                    document.getElementById("quantity").value = 1;
+                    document.getElementById("order_notes").value = "";
                 });
             });
 
-            // 2. Xử lý Modal & Swipe - Cho phép Swiper hoạt động, click riêng biệt sẽ mở modal
+            // Form submission trong Quick Buy Modal
+            const quickBuyForm = document.getElementById("quickBuyModalForm");
+            if (quickBuyForm) {
+                quickBuyForm.addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    const productId = document.getElementById("modal-product-id").value;
+                    const productName = document.getElementById("modal-product-name").innerText;
+                    const productPrice = parseFloat(document.getElementById("modal-product-price").innerText.replace('$', ''));
+                    const quantity = parseInt(document.getElementById("quantity").value) || 1;
+                    const notes = document.getElementById("order_notes").value;
+
+                    let cart = getCart();
+                    const existingIndex = cart.findIndex(item => item.id == productId);
+                    if (existingIndex > -1) {
+                        cart[existingIndex].quantity += quantity;
+                        if (notes) {
+                            cart[existingIndex].notes = cart[existingIndex].notes ? (cart[existingIndex].notes + "; " + notes) : notes;
+                        }
+                    } else {
+                        cart.push({
+                            id: productId,
+                            name: productName,
+                            price: productPrice,
+                            quantity: quantity,
+                            notes: notes
+                        });
+                    }
+
+                    saveCart(cart);
+
+                    const modalEl = document.getElementById('quickBuyModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) {
+                        modal.hide();
+                    }
+                    alert("Đã thêm món ăn vào giỏ hàng thành công!");
+                });
+            }
+
+            // Khi mở Modal giỏ hàng, hiển thị danh sách sản phẩm
+            const cartModalEl = document.getElementById('cartModal');
+            if (cartModalEl) {
+                cartModalEl.addEventListener('show.bs.modal', function () {
+                    renderCartItems();
+                });
+            }
+
+            // Gửi biểu mẫu đặt hàng
+            const cartForm = document.getElementById('cartForm');
+            if (cartForm) {
+                cartForm.addEventListener('submit', function (e) {
+                    const cart = getCart();
+                    if (cart.length === 0) {
+                        e.preventDefault();
+                        alert("Giỏ hàng của bạn đang trống!");
+                        return;
+                    }
+
+                    if (!isLoggedIn) {
+                        e.preventDefault();
+                        alert("Bạn cần đăng nhập để đặt hàng. Hệ thống sẽ chuyển hướng bạn đến trang đăng nhập.");
+                        window.location.href = "{{ route('trangchu/dangnhap') }}";
+                        return;
+                    }
+
+                    // Populate the hidden input with JSON cart items
+                    document.getElementById('cartItemsInput').value = JSON.stringify(cart);
+                    
+                    // Xóa giỏ hàng khi submit thành công
+                    setTimeout(() => {
+                        localStorage.removeItem('fdl_cart');
+                    }, 100);
+                });
+            }
+
+            // 2. Xử lý Modal & Swipe - Gói dịch vụ
             const packageSelectElement = document.getElementById("package_type");
             const myModal = new bootstrap.Modal(document.getElementById('subscribePackageModal'));
             const swiperWrapper = document.querySelector(".events .swiper-wrapper");
 
             if (swiperWrapper) {
-                const SWIPE_THRESHOLD = 30; // Ngưỡng swipe nhỏ hơn
+                const SWIPE_THRESHOLD = 30;
                 let startX = 0;
                 let startY = 0;
                 let isSwiping = false;
@@ -987,7 +1018,6 @@
                         return;
                     }
 
-                    // Chỉ mở modal nếu là click
                     const packageValue = currentItem.getAttribute("data-package-select");
                     if (packageSelectElement && packageValue) {
                         packageSelectElement.value = packageValue;
@@ -997,6 +1027,69 @@
                 });
             }
         });
+
+        function renderCartItems() {
+            const container = document.getElementById('cart-items-container');
+            if (!container) return;
+
+            const cart = getCart();
+            if (cart.length === 0) {
+                container.innerHTML = `<div class="p-3 text-center text-muted">Giỏ hàng trống. Hãy chọn món ăn ngon từ thực đơn!</div>`;
+                document.getElementById('cart-total-price').innerText = "$0.00";
+                return;
+            }
+
+            let html = '';
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+
+                html += `
+                <div class="cart-item-row d-flex justify-content-between align-items-center py-2 px-2 border-bottom text-dark">
+                    <div style="flex: 1;">
+                        <div class="fw-bold">${item.name}</div>
+                        <small class="text-muted">${item.notes ? 'Ghi chú: ' + item.notes : ''}</small>
+                        <div class="small text-secondary">$${item.price.toFixed(2)} x ${item.quantity}</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="changeQty(${index}, -1)">-</button>
+                        <span class="fw-bold px-1">${item.quantity}</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="changeQty(${index}, 1)">+</button>
+                        <button type="button" class="btn btn-sm btn-danger ms-2 py-0 px-2" onclick="removeCartItem(${index})"><i class="bi bi-trash"></i></button>
+                    </div>
+                    <div class="text-end fw-bold text-danger ms-3" style="min-width: 70px;">
+                        $${itemTotal.toFixed(2)}
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            document.getElementById('cart-total-price').innerText = "$" + total.toFixed(2);
+        }
+
+        function changeQty(index, delta) {
+            let cart = getCart();
+            if (cart[index]) {
+                cart[index].quantity += delta;
+                if (cart[index].quantity <= 0) {
+                    cart.splice(index, 1);
+                }
+                saveCart(cart);
+                renderCartItems();
+            }
+        }
+
+        function removeCartItem(index) {
+            let cart = getCart();
+            if (cart[index]) {
+                cart.splice(index, 1);
+                saveCart(cart);
+                renderCartItems();
+            }
+        }
     </script>
 </body>
 

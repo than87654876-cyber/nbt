@@ -18,6 +18,7 @@ class DailySchedule extends Model
         'dish_id',
         'delivery_status',
         'is_locked',
+        'delivery_notes',
     ];
 
     protected $casts = [

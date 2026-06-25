@@ -1,403 +1,151 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.admin')
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Thẩm định đơn hoàn tiền - FOODELICIOUS</title>
+@section('title', 'Thẩm định đơn hoàn tiền - FOODELICIOUS')
 
-    <link href="admin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-        rel="stylesheet">
-    <link href="logo.jpg" rel="icon">
-    <link href="admin/css/sb-admin-2.min.css" rel="stylesheet">
-</head>
+@section('content')
+    @php
+        $notes = $order->health_notes;
+        
+        $reason = '';
+        if (preg_match('/Lý do: ([^,\]]+)/', $notes, $matches)) {
+            $reason = $matches[1];
+        }
+        
+        if ($reason === 'wrong_dish') {
+            $reasonText = 'Giao sai món ăn / Nhầm lẫn thực đơn';
+        } elseif ($reason === 'damaged_food') {
+            $reasonText = 'Thực phẩm biến chất, rơi đổ do vận chuyển';
+        } elseif ($reason === 'not_delivered') {
+            $reasonText = 'Tài xế không giao hàng nhưng bấm hoàn thành';
+        } else {
+            $reasonText = $reason ?: 'Khác';
+        }
 
-<body id="page-top">
-    <div id="wrapper">
-        <!-- Sidebar -->
-        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+        $method = 'bank';
+        if (preg_match('/Phương thức: ([^, \]]+)/', $notes, $matches)) {
+            $method = $matches[1];
+        }
 
-            <!-- Sidebar - Brand -->
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('quanly') }}">
-                <div class="sidebar-brand-text mx-3 fs-1">FOODELICIOUS</div>
-            </a>
+        $detail = '';
+        if (preg_match('/Chi tiết: ([^\]]+)/', $notes, $matches)) {
+            $detail = $matches[1];
+        }
 
-            <!-- Divider -->
-            <hr class="sidebar-divider my-0">
+        // bank details
+        $bankName = '';
+        if (preg_match('/Ngân hàng: ([^,]+)/', $notes, $matches)) { $bankName = $matches[1]; }
+        $bankAccount = '';
+        if (preg_match('/STK: ([^,]+)/', $notes, $matches)) { $bankAccount = $matches[1]; }
+        $bankUser = '';
+        if (preg_match('/Chủ tài khoản: ([^\)]+)/', $notes, $matches)) { $bankUser = $matches[1]; }
 
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('quanly') }}">
-                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Báo cáo doanh thu</span></a>
-            </li>
+        // momo details
+        $momoPhone = '';
+        if (preg_match('/SĐT MoMo: ([^,]+)/', $notes, $matches)) { $momoPhone = $matches[1]; }
+        $momoUser = '';
+        if (preg_match('/Chủ tài khoản MoMo: ([^\)]+)/', $notes, $matches)) { $momoUser = $matches[1]; }
+    @endphp
 
-            <!-- Divider -->
-            <hr class="sidebar-divider">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-3">
+        <h1 class="h3 mb-0 text-gray-800">Hồ sơ kiểm định hoàn tiền chi tiết</h1>
+        <a href="{{ route('quanly_yeucauhoan') }}" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại danh sách
+        </a>
+    </div>
 
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Dịch vụ
-            </div>
-
-            <!-- Nav Item - Pages Collapse Menu -->
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                    aria-expanded="true" aria-controls="collapseTwo">
-                    <i class="fas fa-fw fa-book"></i>
-                    <span>Thực đơn</span>
-                </a>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Quản lý thực đơn</h6>
-                        <a class="collapse-item" href="{{ route('quanly_danhmuc') }}">Danh sách món ăn</a>
-                        <a class="collapse-item" href="{{ route('quanly_monandon') }}">Món ăn đơn</a>
-                        <a class="collapse-item" href="{{ route('quanly_goidichvu') }}">Gói dịch vụ</a>
-                        <a class="collapse-item" href="{{ route('quanly_khuyenmai') }}">Chương trình khuyến mãi</a>
-                    </div>
+    <div class="row">
+        <!-- Cột hiển thị Lý do & Nội dung khiếu nại sự cố -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 bg-light">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle me-1"></i>Nội dung khiếu nại đơn hàng
+                    </h6>
                 </div>
-            </li>
+                <div class="card-body text-dark">
+                    <p class="mb-2"><strong>Mã đơn hàng gốc liên kết:</strong> <a href="{{ route('donhang_xem', $order->id) }}"
+                            class="font-weight-bold text-underline">#FDL-{{ $order->id }}</a></p>
+                    <p class="mb-2"><strong>Khách hàng gửi đơn:</strong> {{ $order->user->fullname ?? 'Khách vãng lai' }} (Mã số: KH-{{ $order->user_id ?? 'N/A' }})</p>
+                    <p class="mb-2"><strong>Số điện thoại:</strong> {{ $order->user->phone ?? 'N/A' }}</p>
+                    <p class="mb-3"><strong>Ngày gửi yêu cầu lên hệ thống:</strong> {{ $order->updated_at->format('d/m/Y H:i') }}</p>
 
-            <!-- Nav Item - Utilities Collapse Menu -->
-            <li class="nav-item active">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities"
-                    aria-expanded="true" aria-controls="collapseUtilities">
-                    <i class="fas fa-fw fa-list"></i>
-                    <span>Đơn hàng</span>
-                </a>
-                <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities"
-                    data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Quản lý đơn hàng</h6>
-                        <a class="collapse-item" href="{{ route('quanly_donhang') }}">Đơn hàng</a>
-                        <a class="collapse-item" href="{{ route('quanly_goidangky') }}">Gói dịch vụ</a>
-                        <a class="collapse-item active" href="{{ route('quanly_yeucauhoan') }}">Yêu cầu hoàn tiền</a>
-                    </div>
-                </div>
-            </li>
+                    <div class="border-top pt-3">
+                        <div class="text-muted small font-weight-bold mb-1">Lý do hoàn tiền phân loại:</div>
+                        <h6 class="font-weight-bold text-danger"><i
+                                class="fas fa-exclamation-circle me-1"></i>{{ $reasonText }}</h6>
 
-            <!-- Divider -->
-            <hr class="sidebar-divider">
-
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Tài khoản
-            </div>
-
-            <!-- Nav Item - Pages Collapse Menu -->
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages"
-                    aria-expanded="true" aria-controls="collapsePages">
-                    <i class="fas fa-fw fa-user"></i>
-                    <span>Khách hàng</span>
-                </a>
-                <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">Quản lý khách hàng</h6>
-                        <a class="collapse-item" href="{{ route('quanly_khachhang') }}">Danh sách</a>
-                        <a class="collapse-item" href="{{ route('quanly_guima') }}">Gửi mã khuyến mãi</a>
-                    </div>
-                </div>
-            </li>
-
-            <!-- Nav Item - Charts -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('quanly_nhanvien') }}">
-                    <i class="fas fa-fw fa-address-book"></i>
-                    <span>Nhân viên</span></a>
-            </li>
-
-            <!-- Nav Item - Tables -->
-
-            <!-- Divider -->
-            <hr class="sidebar-divider d-none d-md-block">
-
-            <!-- Sidebar Toggler (Sidebar) -->
-            <div class="text-center d-none d-md-inline">
-                <button class="rounded-circle border-0" id="sidebarToggle"></button>
-            </div>
-
-            <!-- Sidebar Message -->
-
-        </ul>
-        <!-- End of Sidebar -->
-
-        <!-- Content Wrapper -->
-        <div id="content-wrapper" class="d-flex flex-column">
-
-            <!-- Main Content -->
-            <div id="content">
-
-                <!-- Topbar -->
-                <div id="content-wrapper" class="d-flex flex-column">
-
-                    <!-- Main Content -->
-                    <div class="modal fade" id="userProfileModal" tabindex="-1" role="dialog"
-                        aria-labelledby="userProfileModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content border-0 shadow">
-                                <div class="modal-header text-white text-center d-block position-relative"
-                                    style="background-color: #ce1126; border-top-left-radius: 8px; border-top-right-radius: 8px;">
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                    <h5 class="modal-title fw-bold" id="userProfileModalLabel"><i
-                                            class="bi bi-person-circle me-2"></i>Hồ sơ
-                                        tài khoản</h5>
-                                </div>
-                                <div class="modal-body text-dark p-4">
-                                    <div class="text-center mb-4">
-                                        <div class="display-5 text-muted mb-2"><i class="bi bi-user-circle"></i></div>
-                                        <h4 class="fw-bold text-dark mb-1">Dương Chí Bá</h4>
-                                        <span class="badge badge-danger px-3 py-2 fw-bold"><i
-                                                class="bi bi-crown-fill me-1"></i>Administrator</span>
-                                    </div>
-
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-borderless mb-0">
-                                            <tbody>
-                                                <tr>
-                                                    <td class="text-muted py-2">Chức vụ</td>
-                                                    <td class="fw-bold py-2">Quản lý tổng</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted py-2" style="width: 40%;">Số điện thoại:</td>
-                                                    <td class="fw-bold py-2">0901234567</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-muted py-2">Địa chỉ Email:</td>
-                                                    <td class="fw-bold py-2">tung.db@gmail.com</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="modal-footer bg-light border-0">
-                                    <button type="button" class="btn btn-secondary w-100" data-dismiss="modal">Đóng cửa
-                                        sổ</button>
-                                </div>
-                            </div>
+                        <div class="text-muted small font-weight-bold mt-3 mb-1">Miêu tả chi tiết từ khách hàng:</div>
+                        <div class="p-3 bg-light rounded text-dark font-italic">
+                            "{{ $detail }}"
                         </div>
                     </div>
-                    <div id="content">
-
-                        <!-- Topbar -->
-                        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-
-                            <!-- Sidebar Toggle (Topbar) -->
-                            <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                                <i class="fa fa-bars"></i>
-                            </button>
-
-                            <!-- Topbar Search -->
-
-                            <!-- Topbar Navbar -->
-                            <ul class="navbar-nav ml-auto">
-
-                                <!-- Nav Item - User Information -->
-                                <li class="nav-item dropdown no-arrow">
-                                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="mr-2 d-none d-lg-inline text-gray-600 small">Dương Chí Bá</span>
-                                        <img class="img-profile rounded-circle" src="{{ asset('logo.jpg') }}">
-                                    </a>
-                                    <!-- Dropdown - User Information -->
-                                    <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                        aria-labelledby="userMenu">
-                                        <a class="dropdown-item py-2" href="#" data-toggle="modal"
-                                            data-target="#userProfileModal">
-                                            <i class="bi bi-person-badge me-2 text-primary"></i>Hồ sơ thông tin
-                                        </a>
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item" href="{{ route('dangnhap') }}" data-toggle="modal"
-                                            data-target="#logoutModal">
-                                            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                            Đăng xuất
-                                        </a>
-                                    </div>
-                                </li>
-
-                            </ul>
-
-                        </nav>
-                        <!-- Logout Modal-->
-                        <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog"
-                            aria-labelledby="exampleModalLabel" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLabel">Bạn có muốn đăng xuất?</h5>
-                                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">×</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-secondary" type="button"
-                                            data-dismiss="modal">Hủy</button>
-                                        <a class="btn btn-primary" href="{{ route('dangnhap') }}">Đăng xuất</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Begin Page Content -->
-                        <div class="container-fluid">
-                            <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                                <h1 class="h3 mb-0 text-gray-800">Hồ sơ kiểm định hoàn tiền chi tiết</h1>
-                                <a href="{{ route('quanly_yeucauhoan') }}" class="btn btn-sm btn-secondary shadow-sm"><i
-                                        class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại danh sách</a>
-                            </div>
-
-                            <div class="row">
-                                <!-- Cột hiển thị Lý do & Nội dung khiếu nại sự cố -->
-                                <div class="col-lg-6 mb-4">
-                                    <div class="card shadow h-100">
-                                        <div class="card-header py-3 bg-light">
-                                            <h6 class="m-0 font-weight-bold text-primary"><i
-                                                    class="fas fa-info-circle me-1"></i>Nội dung khiếu nại đơn hàng</h6>
-                                        </div>
-                                        <div class="card-body text-dark">
-                                            <p class="mb-2"><strong>Mã đơn hàng gốc liên kết:</strong> <a href="#"
-                                                    class="font-weight-bold text-underline">#FDL-7531</a></p>
-                                            <p class="mb-2"><strong>Khách hàng gửi đơn:</strong> Dương Bá Tùng (Mã số:
-                                                KH-001)
-                                            </p>
-                                            <p class="mb-2"><strong>Số điện thoại:</strong> 0901234567</p>
-                                            <p class="mb-3"><strong>Ngày gửi yêu cầu lên hệ thống:</strong> 17/06/2026
-                                                10:15</p>
-
-                                            <div class="border-top pt-3">
-                                                <div class="text-muted small font-weight-bold mb-1">Lý do hoàn tiền phân
-                                                    loại:
-                                                </div>
-                                                <h6 class="font-weight-bold text-danger"><i
-                                                        class="fas fa-exclamation-circle me-1"></i>Giao sai món ăn /
-                                                    Nhầm lẫn
-                                                    thực đơn</h6>
-
-                                                <div class="text-muted small font-weight-bold mt-3 mb-1">Miêu tả chi
-                                                    tiết từ
-                                                    khách hàng:</div>
-                                                <div class="p-3 bg-light rounded text-dark font-italic">
-                                                    "Tôi đặt Phở bò tái nạm chín nhưng khi shipper giao tới lại là bún
-                                                    bò giò
-                                                    heo. Do tôi bị dị ứng thịt heo nên không thể sử dụng được món này,
-                                                    mong cửa
-                                                    hàng kiểm tra và hoàn trả lại tiền đơn vào ví MoMo giúp tôi. Xin cảm
-                                                    ơn."
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Cột hiển thị Phương thức nhận tiền và Form thao tác xử lý của Admin -->
-                                <div class="col-lg-6 mb-4">
-                                    <div class="card shadow h-100 d-flex flex-column justify-content-between">
-                                        <div>
-                                            <div class="card-header py-3 bg-light">
-                                                <h6 class="m-0 font-weight-bold text-primary"><i
-                                                        class="fas fa-money-check-alt me-1"></i>Tài khoản đích nhận tiền
-                                                    hoàn
-                                                </h6>
-                                            </div>
-                                            <div class="card-body text-dark">
-                                                <!-- MẪU HIỂN THỊ 1: NẾU KHÁCH CHỌN PHƯƠNG THỨC VÍ MOMO -->
-                                                <div class="p-3 rounded mb-3 border-left-info"
-                                                    style="background-color: #fbf0f6; border-left: 5px solid #A50064 !important;">
-                                                    <h6 class="font-weight-bold mb-2" style="color: #A50064;"><i
-                                                            class="fas fa-wallet me-1"></i>Phương thức chọn: Ví điện tử
-                                                        MoMo
-                                                    </h6>
-                                                    <p class="mb-1 small"><strong>Số điện thoại đăng ký ví
-                                                            MoMo:</strong>
-                                                        0901234567</p>
-                                                    <p class="mb-0 small"><strong>Tên chủ tài khoản ví:</strong> DUONG
-                                                        BA TUNG
-                                                    </p>
-                                                </div>
-
-                                                <!-- MẪU HIỂN THỊ 2: NẾU KHÁCH CHỌN NGÂN HÀNG NỘI ĐỊA (Để ẩn hoặc hiện tùy logic dữ liệu) -->
-                                                <div class="p-3 bg-light rounded border-left-primary d-none">
-                                                    <h6 class="font-weight-bold text-primary mb-2"><i
-                                                            class="fas fa-university me-1"></i>Phương thức chọn: Ngân
-                                                        hàng nội
-                                                        địa</h6>
-                                                    <p class="mb-1 small"><strong>Tên ngân hàng:</strong> Techcombank
-                                                        (Ngân hàng
-                                                        Kỹ Thương)</p>
-                                                    <p class="mb-1 small"><strong>Số tài khoản ngân hàng:</strong>
-                                                        19034567891011</p>
-                                                    <p class="mb-0 small"><strong>Tên chủ thẻ thụ hưởng:</strong> DUONG
-                                                        BA TUNG
-                                                    </p>
-                                                </div>
-
-                                                <div class="mt-3 p-3 bg-gradient-light rounded border text-right">
-                                                    <div class="text-muted small">Tổng giá trị thụ hưởng hoàn trả chi
-                                                        chiết:
-                                                    </div>
-                                                    <h3 class="font-weight-bold text-danger mb-0">45.000 đ</h3>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- FORM THAO TÁC XÁC NHẬN HOÀN TIỀN CỦA QUẢN TRỊ VIÊN -->
-                                        <div class="card-footer bg-white border-top-0 p-4">
-                                            <form action="#" method="POST">
-                                                <div class="form-group mb-3">
-                                                    <label for="refund_action"
-                                                        class="font-weight-bold text-dark small"><i
-                                                            class="fas fa-gavel me-1"></i>Quyết định phê duyệt hồ
-                                                        sơ:</label>
-                                                    <select class="form-control font-weight-bold text-primary"
-                                                        id="refund_action" name="refund_action" required>
-                                                        <option value="pending" selected>Đang kiểm định dữ liệu (Chờ
-                                                            duyệt)
-                                                        </option>
-                                                        <option value="approved" class="text-success">Phê duyệt khiếu
-                                                            nại - Xác
-                                                            nhận đã hoàn tiền</option>
-                                                        <option value="rejected" class="text-danger">Từ chối khiếu nại
-                                                            hoàn tiền
-                                                            (Ghi rõ lý do dưới)</option>
-                                                    </select>
-                                                </div>
-                                                <div class="form-group mb-3">
-                                                    <label for="admin_comment"
-                                                        class="font-weight-bold text-dark small">Ghi chú
-                                                        phản hồi cho khách hàng:</label>
-                                                    <textarea class="form-control text-dark" id="admin_comment"
-                                                        name="admin_comment" rows="2"
-                                                        placeholder="Hệ thống đã thực hiện hoàn tiền thành công qua MoMo..."></textarea>
-                                                </div>
-                                                <button type="submit"
-                                                    class="btn btn-success btn-block font-weight-bold shadow-sm py-2"><i
-                                                        class="fas fa-save"></i> Cập nhật & Đóng hồ sơ khiếu
-                                                    nại</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <footer class="sticky-footer bg-white">
-                        <div class="container my-auto">
-                            <div class="copyright text-center my-auto"><span>Copyright &copy; Cà phê 2026</span></div>
-                        </div>
-                    </footer>
                 </div>
             </div>
+        </div>
 
-            <script src="admin/vendor/jquery/jquery.min.js"></script>
-            <script src="admin/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-            <script src="admin/js/sb-admin-2.min.js"></script>
-</body>
+        <!-- Cột hiển thị Phương thức nhận tiền và Form thao tác xử lý của Admin -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="card-header py-3 bg-light">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-money-check-alt me-1"></i>Tài khoản đích nhận tiền hoàn
+                        </h6>
+                    </div>
+                    <div class="card-body text-dark">
+                        @if($method === 'momo')
+                            <!-- MẪU HIỂN THỊ 1: NẾU KHÁCH CHỌN PHƯƠNG THỨC VÍ MOMO -->
+                            <div class="p-3 rounded mb-3 border-left-info"
+                                style="background-color: #fbf0f6; border-left: 5px solid #A50064 !important;">
+                                <h6 class="font-weight-bold mb-2" style="color: #A50064;">
+                                    <i class="fas fa-wallet me-1"></i>Phương thức chọn: Ví điện tử MoMo
+                                </h6>
+                                <p class="mb-1 small"><strong>Số điện thoại đăng ký ví MoMo:</strong> {{ $momoPhone }}</p>
+                                <p class="mb-0 small"><strong>Tên chủ tài khoản ví:</strong> {{ $momoUser }}</p>
+                            </div>
+                        @else
+                            <!-- MẪU HIỂN THỊ 2: NẾU KHÁCH CHỌN NGÂN HÀNG NỘI ĐỊA -->
+                            <div class="p-3 bg-light rounded border-left-primary">
+                                <h6 class="font-weight-bold text-primary mb-2">
+                                    <i class="fas fa-university me-1"></i>Phương thức chọn: Ngân hàng nội địa
+                                </h6>
+                                <p class="mb-1 small"><strong>Tên ngân hàng:</strong> {{ $bankName }}</p>
+                                <p class="mb-1 small"><strong>Số tài khoản ngân hàng:</strong> {{ $bankAccount }}</p>
+                                <p class="mb-0 small"><strong>Tên chủ thẻ thụ hưởng:</strong> {{ $bankUser }}</p>
+                            </div>
+                        @endif
 
-</html>
+                        <div class="mt-3 p-3 bg-gradient-light rounded border text-right">
+                            <div class="text-muted small">Tổng giá trị thụ hưởng hoàn trả chi tiết:</div>
+                            <h3 class="font-weight-bold text-danger mb-0">{{ number_format($order->final_amount, 0, ',', '.') }} đ</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FORM THAO TÁC XÁC NHẬN HOÀN TIỀN CỦA QUẢN TRỊ VIÊN -->
+                <div class="card-footer bg-white border-top-0 p-4">
+                    <form action="{{ route('yeucauhoan_duyet', $order->id) }}" method="POST">
+                        @csrf
+                        <div class="form-group mb-3">
+                            <label for="action" class="font-weight-bold text-dark small">
+                                <i class="fas fa-gavel me-1"></i>Quyết định phê duyệt hồ sơ:
+                            </label>
+                            <select class="form-control font-weight-bold text-primary" id="action" name="action" required>
+                                <option value="approve" class="text-success">Phê duyệt khiếu nại - Xác nhận đã hoàn tiền</option>
+                                <option value="reject" class="text-danger">Từ chối khiếu nại hoàn tiền</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="admin_response" class="font-weight-bold text-dark small">Ghi chú phản hồi cho khách hàng:</label>
+                            <textarea class="form-control text-dark" id="admin_response" name="admin_response" rows="2"
+                                placeholder="Hệ thống đã thực hiện hoàn tiền thành công..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-block font-weight-bold shadow-sm py-2">
+                            <i class="fas fa-save"></i> Cập nhật & Đóng hồ sơ khiếu nại
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection

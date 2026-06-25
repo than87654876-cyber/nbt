@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:Inter:wght@100;200;300;400;500;600;700;800;900&family=Amatic+SC:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Amatic+SC:wght@400;700&display=swap"
         rel="stylesheet">
     <link href="{{ asset('admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
 
@@ -91,13 +91,24 @@
                 <p class="text-muted small mb-0">Trở thành thành viên hệ thống để nhận nhiều ưu đãi tích điểm</p>
             </div>
 
-            <form action="#" method="POST">
+            @if ($errors->any())
+                <div class="alert alert-danger py-2 small">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form action="{{ route('trangchu/dangky.post') }}" method="POST">
+                @csrf
                 <div class="mb-3">
-                    <label for="name" class="form-label small fw-bold">Họ và Tên <span
+                    <label for="fullname" class="form-label small fw-bold">Họ và Tên <span
                             class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" id="name" name="name" placeholder="Ví dụ: Dương Bá Tùng"
+                        <input type="text" class="form-control" id="fullname" name="fullname" value="{{ old('fullname') }}" placeholder="Ví dụ: Dương Bá Tùng"
                             required>
                     </div>
                 </div>
@@ -106,13 +117,13 @@
                     <div class="form-group col-md-6 mb-3">
                         <label for="phone" class="form-label small fw-bold">Số điện thoại <span
                                 class="text-danger">*</span></label>
-                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="09xxxxxxxx"
+                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ old('phone') }}" placeholder="09xxxxxxxx"
                             required>
                     </div>
                     <div class="form-group col-md-6 mb-3">
                         <label for="email" class="form-label small fw-bold">Địa chỉ Email <span
                                 class="text-danger">*</span></label>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com"
+                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" placeholder="name@example.com"
                             required>
                     </div>
                 </div>
@@ -121,7 +132,7 @@
                     <label for="address" class="form-label small fw-bold">Địa chỉ giao hàng mặc định <span
                             class="text-danger">*</span></label>
                     <textarea class="form-control" id="address" name="address" rows="2"
-                        placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." required></textarea>
+                        placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." required>{{ old('address') }}</textarea>
                 </div>
 
                 <div class="row">
@@ -149,7 +160,7 @@
 
                 <div class="text-center small mt-1">
                     <span class="text-muted">Bạn đã có tài khoản sẵn?</span>
-                    <a href="login_client.html" class="auth-link ms-1">Quay lại Đăng nhập</a>
+                    <a href="{{ route('trangchu/dangnhap') }}" class="auth-link ms-1">Quay lại Đăng nhập</a>
                 </div>
             </form>
         </div>

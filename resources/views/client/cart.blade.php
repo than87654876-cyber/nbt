@@ -253,119 +253,147 @@
                 <div class="row mb-4">
                     <div class="col-md-8">
                         <div class="search-box">
-                            <form action="#" class="d-flex gap-2">
-                                <input type="text" class="form-control"
+                            <form action="{{ route('giohang') }}" method="GET" class="d-flex gap-2">
+                                <input type="text" class="form-control" name="search" value="{{ $search }}"
                                     placeholder="Tìm kiếm đơn hàng (mã đơn, nơi giao, sản phẩm)...">
-                                <button type="button" class="btn"><i class="bi bi-search"></i> Tìm</button>
+                                <button type="submit" class="btn"><i class="bi bi-search"></i> Tìm</button>
                             </form>
                         </div>
                     </div>
                 </div>
 
-                <!-- ĐƠN HÀNG 1: TRẠNG THÁI CHỜ XÁC NHẬN (TÍCH HỢP HỦY ĐƠN) -->
-                <div class="order-card" id="order-card-9901">
-                    <div class="order-header">
-                        <div class="row align-items-center">
-                            <div class="col-md-6">
-                                <div class="order-id">Đơn hàng: #FDL-9901</div>
-                                <div class="order-date">Ngày đặt: Hôm nay, 08:00</div>
-                            </div>
-                            <div class="col-md-6 text-md-end">
-                                <span class="badge bg-secondary text-white"><i class="bi bi-hourglass-split mr-1"></i>
-                                    Chờ xác nhận</span>
-                            </div>
-                        </div>
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-                    <div class="info-section">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="info-title"><i class="bi bi-geo-alt-fill text-danger mr-1"></i> Nơi giao
-                                    hàng:</div>
-                                <div class="text-secondary">Dương Bá Tùng - 0901234567<br>Trường Cao đẳng Công nghệ
-                                    Thông tin TP.HCM (ITC), Quận Tân Phú</div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="info-title"><i class="bi bi-cash-stack text-success mr-1"></i> Hình thức:
+                @endif
+                @if($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ $errors->first() }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @forelse($orders as $order)
+                    @php
+                        $paymentMethodText = 'Tiền mặt khi nhận (COD)';
+                        if ($order->payment_method === 'bank_transfer') {
+                            $paymentMethodText = 'Chuyển khoản ATM';
+                        } elseif ($order->payment_method === 'momo') {
+                            $paymentMethodText = 'Ví điện tử MoMo';
+                        } elseif ($order->payment_method === 'vnpay') {
+                            $paymentMethodText = 'Cổng VNPay';
+                        } elseif ($order->payment_method === 'zalopay') {
+                            $paymentMethodText = 'Ví ZaloPay';
+                        }
+                    @endphp
+                    <div class="order-card text-dark" id="order-card-{{ $order->id }}">
+                        <div class="order-header">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="order-id">Đơn hàng: #FDL-{{ $order->id }}</div>
+                                    <div class="order-date">Ngày đặt: {{ $order->created_at->format('d/m/Y H:i') }}</div>
                                 </div>
-                                <div class="text-secondary">Tiền mặt khi nhận hàng (COD)</div>
+                                <div class="col-md-6 text-md-end">
+                                    @if($order->order_status === 'pending')
+                                        <span class="badge bg-secondary text-white"><i class="bi bi-hourglass-split me-1"></i> Chờ xác nhận</span>
+                                    @elseif($order->order_status === 'confirmed')
+                                        <span class="badge bg-info text-white"><i class="bi bi-check-circle me-1"></i> Đã xác nhận</span>
+                                    @elseif($order->order_status === 'preparing')
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-fire me-1"></i> Đang chuẩn bị</span>
+                                    @elseif($order->order_status === 'delivering')
+                                        <span class="badge bg-primary text-white"><i class="bi bi-truck me-1"></i> Đang giao</span>
+                                    @elseif($order->order_status === 'completed')
+                                        <span class="badge bg-success text-white"><i class="bi bi-check2-all me-1"></i> Đã hoàn thành</span>
+                                    @elseif($order->order_status === 'cancelled')
+                                        <span class="badge bg-danger text-white"><i class="bi bi-x-circle me-1"></i> Đã hủy</span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="products-list">
-                        <div class="product-item">
-                            <span class="product-name">Bún bò Huế giò gân chả lụa</span>
-                            <span class="product-qty">x1</span>
-                            <span class="product-price">50.000 đ</span>
+                        <div class="info-section">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="info-title"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Thông tin giao hàng:</div>
+                                    <div class="text-secondary">
+                                        {{ $order->user->fullname ?? 'Khách hàng' }}<br>
+                                        {{ $order->health_notes }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-title"><i class="bi bi-cash-stack text-success me-1"></i> Thanh toán:</div>
+                                    <div class="text-secondary">
+                                        {{ $paymentMethodText }}<br>
+                                        @if($order->payment_status === 'pending')
+                                            <span class="badge bg-warning text-dark">Chờ thanh toán</span>
+                                        @elseif($order->payment_status === 'paid')
+                                            <span class="badge bg-success text-white">Đã thanh toán</span>
+                                        @elseif($order->payment_status === 'failed')
+                                            <span class="badge bg-danger text-white">Thất bại</span>
+                                        @elseif($order->payment_status === 'refunded')
+                                            <span class="badge bg-info text-dark">Đã hoàn tiền</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="order-total text-success">Điểm tích lũy: 500</div>
-                    </div>
-                    <div class="order-footer">
-                        <div class="order-total">Tổng cộng: 50.000 đ</div>
-                        <div class="action-buttons">
-                            <!-- Nút hủy kích hoạt Modal chọn lý do hủy -->
-                            <button type="button" class="btn btn-outline-danger btn-sm px-3" data-bs-toggle="modal"
-                                data-bs-target="#cancelOrderModal" data-order-id="#FDL-9901">
-                                <i class="bi bi-trash3 me-1"></i> Hủy đơn hàng này
-                            </button>
+                        <div class="products-list text-dark">
+                            @foreach($order->orderItems as $item)
+                                <div class="product-item">
+                                    <span class="product-name">{{ $item->dish->dish_name ?? 'Món ăn không tồn tại' }}</span>
+                                    <span class="product-qty">x{{ $item->quantity }}</span>
+                                    <span class="product-price">{{ number_format($item->price, 0, ',', '.') }} đ</span>
+                                </div>
+                            @endforeach
+                            <div class="order-total text-success">Điểm tích lũy: {{ number_format($order->final_amount / 100, 0, ',', '.') }}</div>
                         </div>
-                    </div>
-                </div>
+                        <div class="order-footer">
+                            <div class="order-total">Tổng cộng: {{ number_format($order->final_amount, 0, ',', '.') }} đ</div>
+                            <div class="action-buttons d-flex gap-2">
+                                @if($order->order_status === 'pending')
+                                    <button type="button" class="btn btn-outline-danger btn-sm px-3" data-bs-toggle="modal"
+                                        data-bs-target="#cancelOrderModal" data-order-id="{{ $order->id }}">
+                                        <i class="bi bi-trash3 me-1"></i> Hủy đơn hàng này
+                                    </button>
+                                @endif
+                                
+                                @if($order->order_status === 'completed')
+                                    @php
+                                        $isReviewed = \App\Models\Review::where('order_id', $order->id)->exists();
+                                    @endphp
+                                    @if(!$isReviewed)
+                                        <button type="button" class="btn btn-warning text-dark btn-sm fw-bold px-3"
+                                            data-bs-toggle="modal" data-bs-target="#reviewOrderModal" data-order-id="{{ $order->id }}">
+                                            <i class="bi bi-star-fill me-1"></i> Viết đánh giá
+                                        </button>
+                                    @else
+                                        <button type="button" class="btn btn-outline-success btn-sm px-3" disabled>
+                                            <i class="bi bi-check-circle-fill me-1"></i> Đã đánh giá
+                                        </button>
+                                    @endif
 
-                <!-- ĐƠN HÀNG 2: ĐÃ HOÀN THÀNH (TÍCH HỢP ĐÁNH GIÁ & HOÀN TIỀN) -->
-                <div class="order-card">
-                    <div class="order-header">
-                        <div class="row align-items-center">
-                            <div class="col-md-6">
-                                <div class="order-id">Đơn hàng: #FDL-7531</div>
-                                <div class="order-date">Ngày đặt: 12/06/2026 18:30</div>
-                            </div>
-                            <div class="col-md-6 text-md-end">
-                                <span class="badge bg-success"><i class="bi bi-check-circle mr-1"></i> Đã hoàn
-                                    thành</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="info-section">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="info-title"><i class="bi bi-geo-alt-fill text-danger mr-1"></i> Địa chỉ giao
-                                    hàng:</div>
-                                <div class="text-secondary">Dương Bá Tùng - 0901234567<br>180 Cao Thắng, Phường 12, Quận
-                                    10, Ho Chi Minh City</div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="info-title"><i class="bi bi-credit-card-2-back-fill text-primary mr-1"></i>
-                                    Hình thức:</div>
-                                <div class="text-secondary">Ví điện tử MoMo <span class="badge bg-success text-white">Đã
-                                        thanh toán</span></div>
+                                    @php
+                                        $hasRefundRequest = strpos($order->health_notes, '[Yêu cầu hoàn tiền') !== false;
+                                    @endphp
+                                    @if(!$hasRefundRequest)
+                                        <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-toggle="modal"
+                                            data-bs-target="#refundOrderModal" data-order-id="{{ $order->id }}" data-amount="{{ number_format($order->final_amount, 0, ',', '.') }} đ">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i> Yêu cầu hoàn tiền
+                                        </button>
+                                    @else
+                                        <span class="badge bg-secondary text-white d-flex align-items-center px-3"><i class="bi bi-clock me-1"></i> Đã yêu cầu hoàn tiền</span>
+                                    @endif
+                                @endif
                             </div>
                         </div>
                     </div>
-                    <div class="products-list">
-                        <div class="product-item">
-                            <span class="product-name">Phở bò tái nạm chín</span>
-                            <span class="product-qty">x1</span>
-                            <span class="product-price">45.000 đ</span>
-                        </div>
-                        <div class="order-total text-success">Điểm tích lũy: 450</div>
+                @empty
+                    <div class="text-center py-5 bg-white rounded border text-muted">
+                        <i class="bi bi-journal-x fs-1"></i>
+                        <p class="mt-2 mb-0">Bạn chưa có đơn hàng nào.</p>
                     </div>
-                    <div class="order-footer">
-                        <div class="order-total">Tổng cộng: 45.000 đ</div>
-                        <div class="action-buttons d-flex gap-2">
-                            <!-- Tính năng gửi Đánh giá dịch vụ -->
-                            <button type="button" class="btn btn-warning text-dark btn-sm fw-bold px-3"
-                                data-bs-toggle="modal" data-bs-target="#reviewOrderModal" data-order-id="#FDL-7531">
-                                <i class="bi bi-star-fill me-1"></i> Viết đánh giá
-                            </button>
-                            <!-- Tính năng gửi đơn khiếu nại hoàn trả tiền -->
-                            <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-toggle="modal"
-                                data-bs-target="#refundOrderModal" data-order-id="#FDL-7531" data-amount="45.000 đ">
-                                <i class="bi bi-arrow-counterclockwise me-1"></i> Yêu cầu hoàn tiền
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
+                @endforelse
             </div>
         </div>
     </main>
@@ -383,7 +411,9 @@
                         hàng</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="#" method="POST">
+                <form action="{{ route('order.cancel') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="order_id" id="cancel_order_id_input">
                     <div class="modal-body text-start">
                         <p>Bạn đang yêu cầu hủy đơn hàng <strong id="cancel-order-id-display"
                                 class="text-danger">#</strong>. Vui lòng cho biết lý do hủy để cửa hàng cải thiện dịch
@@ -421,7 +451,9 @@
                         hàng</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="#" method="POST">
+                <form action="{{ route('order.review') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="order_id" id="review_order_id_input">
                     <div class="modal-body text-center">
                         <p class="text-start">Đánh giá của bạn về đơn hàng <strong
                                 id="review-order-id-display">#</strong> giúp nhà bếp nâng cao tay nghề nấu nướng:</p>
@@ -468,7 +500,9 @@
                         đơn hàng</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="#" method="POST">
+                <form action="{{ route('order.refund') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="order_id" id="refund_order_id_input">
                     <div class="modal-body text-start">
                         <div class="alert alert-info py-2 small border-0">
                             Số tiền dự kiến hoàn trả: <strong id="refund-amount-display" class="text-danger">0
@@ -614,7 +648,8 @@
                 cancelModal.addEventListener('show.bs.modal', function (event) {
                     const button = event.relatedTarget;
                     const orderId = button.getAttribute('data-order-id');
-                    document.getElementById('cancel-order-id-display').innerText = orderId;
+                    document.getElementById('cancel-order-id-display').innerText = '#FDL-' + orderId;
+                    document.getElementById('cancel_order_id_input').value = orderId;
                 });
             }
 
@@ -624,7 +659,8 @@
                 reviewModal.addEventListener('show.bs.modal', function (event) {
                     const button = event.relatedTarget;
                     const orderId = button.getAttribute('data-order-id');
-                    document.getElementById('review-order-id-display').innerText = orderId;
+                    document.getElementById('review-order-id-display').innerText = '#FDL-' + orderId;
+                    document.getElementById('review_order_id_input').value = orderId;
                 });
             }
 
@@ -635,7 +671,8 @@
                     const button = event.relatedTarget;
                     const orderId = button.getAttribute('data-order-id');
                     const amount = button.getAttribute('data-amount');
-                    document.getElementById('refund-order-id-display').innerText = orderId;
+                    document.getElementById('refund-order-id-display').innerText = '#FDL-' + orderId;
+                    document.getElementById('refund_order_id_input').value = orderId;
                     document.getElementById('refund-amount-display').innerText = amount;
                 });
             }

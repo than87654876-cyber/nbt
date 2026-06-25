@@ -28,6 +28,10 @@ return new class extends Migration
             $table->rememberToken();
 
             $table->tinyInteger('status')->default(1);
+            $table->string('role')->default('customer'); // customer, staff, admin
+            $table->integer('points')->default(0);
+            $table->string('membership')->default('bronze'); // bronze, silver, gold, diamond
+            $table->text('notes')->nullable();
 
             $table->timestamps();
         });

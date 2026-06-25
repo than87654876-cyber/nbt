@@ -43,26 +43,43 @@
                                     <div class="text-center">
                                         <h1 class="h4 text-gray-900 mb-4">ĐĂNG NHẬP</h1>
                                     </div>
-                                    <form class="user">
+                                    @if ($errors->any())
+                                        <div class="alert alert-danger py-2 small">
+                                            <ul class="mb-0">
+                                                @foreach ($errors->all() as $error)
+                                                    <li>{{ $error }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
+                                    @if (session('success'))
+                                        <div class="alert alert-success py-2 small">
+                                            {{ session('success') }}
+                                        </div>
+                                    @endif
+
+                                    <form class="user" action="{{ route('dangnhap.post') }}" method="POST">
+                                        @csrf
                                         <div class="form-group">
                                             <input type="email" class="form-control form-control-user"
                                                 id="exampleInputEmail" aria-describedby="emailHelp"
-                                                placeholder="Nhập email của bạn...">
+                                                name="email" value="{{ old('email') }}"
+                                                placeholder="Nhập email của bạn..." required>
                                         </div>
                                         <div class="form-group">
                                             <input type="password" class="form-control form-control-user"
-                                                id="exampleInputPassword" placeholder="Nhập mật khẩu...">
+                                                id="exampleInputPassword" name="password" placeholder="Nhập mật khẩu..." required>
                                         </div>
                                         <div class="form-group">
                                             <div class="custom-control custom-checkbox small">
-                                                <input type="checkbox" class="custom-control-input" id="customCheck">
+                                                <input type="checkbox" class="custom-control-input" id="customCheck" name="remember">
                                                 <label class="custom-control-label" for="customCheck">Nhớ tài khoản
                                                     này</label>
                                             </div>
                                         </div>
-                                        <a href="{{ route('quanly') }}" class="btn btn-primary btn-user btn-block">
+                                        <button type="submit" class="btn btn-primary btn-user btn-block">
                                             Đăng nhập
-                                        </a>
+                                        </button>
                                     </form>
                                     <hr>
                                     <div class="text-center">

@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:Inter:wght@100;200;300;400;500;600;700;800;900&family=Amatic+SC:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Amatic+SC:wght@400;700&display=swap"
         rel="stylesheet">
     <link href="{{ asset('admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
 
@@ -97,13 +97,29 @@
                 <p class="text-muted small mb-0">Đăng nhập tài khoản để đặt món ăn ngay</p>
             </div>
 
-            <form action="#" method="POST">
+            @if ($errors->any())
+                <div class="alert alert-danger py-2 small">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+            @if (session('success'))
+                <div class="alert alert-success py-2 small">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            <form action="{{ route('trangchu/dangnhap.post') }}" method="POST">
+                @csrf
                 <div class="mb-3">
                     <label for="phone" class="form-label small fw-bold">Số điện thoại <span
                             class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text bg-light text-muted"><i class="bi bi-telephone"></i></span>
-                        <input type="tel" class="form-control" id="phone" name="phone"
+                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ old('phone') }}"
                             placeholder="Nhập số điện thoại của bạn" required>
                     </div>
                 </div>
@@ -112,7 +128,7 @@
                     <div class="d-flex justify-content-between mb-1">
                         <label for="password" class="form-label small fw-bold mb-0">Mật khẩu <span
                                 class="text-danger">*</span></label>
-                        <a href="forgot_password_client.html" class="small auth-link">Quên mật khẩu?</a>
+                        <a href="{{ route('trangchu/quenmatkhau') }}" class="small auth-link">Quên mật khẩu?</a>
                     </div>
                     <div class="input-group">
                         <span class="input-group-text bg-light text-muted"><i class="bi bi-lock"></i></span>
@@ -135,7 +151,7 @@
 
                 <div class="text-center small mt-2">
                     <span class="text-muted">Bạn chưa có tài khoản?</span>
-                    <a href="register_client.html" class="auth-link ms-1">Đăng ký thành viên mới</a>
+                    <a href="{{ route('trangchu/dangky') }}" class="auth-link ms-1">Đăng ký thành viên mới</a>
                 </div>
             </form>
         </div>

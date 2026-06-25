@@ -9,8 +9,8 @@
     <meta name="keywords" content="">
 
     <!-- Favicons -->
-    <link href="logo.jpg" rel="icon">
-    <link href="client/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="{{ asset('logo.jpg') }}" rel="icon">
+    <link href="{{ asset('client/assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -18,13 +18,13 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Amatic+SC:wght@400;700&display=swap"
         rel="stylesheet">
-    <link href="admin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="{{ asset('admin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
 
     <!-- Vendor CSS Files -->
-    <link href="client/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="client/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-    <link href="client/assets/vendor/aos/aos.css" rel="stylesheet">
-    <link href="client/assets/css/main.css" rel="stylesheet">
+    <link href="{{ asset('client/assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('client/assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="{{ asset('client/assets/vendor/aos/aos.css') }}" rel="stylesheet">
+    <link href="{{ asset('client/assets/css/main.css') }}" rel="stylesheet">
 
     <style>
         .cart-container {
@@ -121,29 +121,73 @@
 <body class="index-page">
     <header id="header" class="header d-flex align-items-center sticky-top">
         <div class="container position-relative d-flex align-items-center justify-content-between">
-            <a href="#" class="logo d-flex align-items-center me-auto me-xl-0">
-                <img src="logo.jpg" alt="">
+            <a href="{{ route('trangchu_dangnhap') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+                <img src="{{ asset('logo.jpg') }}" alt="">
                 <h1 class="sitename">FOODELICIOUS</h1><span>.</span>
             </a>
+            <nav id="navmenu" class="navmenu">
+                <ul>
+                    <li><a href="{{ route('trangchu_dangnhap') }}#hero">Trang chủ</a></li>
+                    <li><a href="{{ route('trangchu_dangnhap') }}#about">Giới thiệu</a></li>
+                    <li><a href="{{ route('trangchu_dangnhap') }}#menu">Thực đơn</a></li>
+                    <li><a href="{{ route('trangchu_dangnhap') }}#events">Sự kiện</a></li>
+                    <li><a href="{{ route('trangchu_dangnhap') }}#chefs">Đầu bếp</a></li>
+                    <li><a href="{{ route('trangchu_dangnhap') }}#contact">Liên hệ</a></li>
+                </ul>
+            </nav>
+            <div class="dropdown me-3">
+                <a href="#" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle"></i> {{ Auth::user()->fullname }}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item py-2" href="{{ route('giohang') }}"><i class="bi bi-clock-history me-2 text-danger"></i>Lịch sử đơn hàng</a></li>
+                    <li><a class="dropdown-item py-2" href="{{ route('goidichvu') }}"><i class="bi bi-box-seam me-2 text-danger"></i>Gói của tôi</a></li>
+                    <li><a class="dropdown-item py-2" href="{{ route('yeucauhoan') }}"><i class="bi bi-wallet2 me-2 text-danger"></i>Yêu cầu hoàn tiền</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger py-2" href="{{ route('dangxuat') }}"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+                </ul>
+            </div>
+        </div>
     </header>
     <main class="main">
         <div class="cart-container">
             <div class="container">
-                <a href="{{ route('trangchu_dangnhap') }}" class="back-btn"><i class="bi bi-arrow-left"></i> Quay lại
-                    cửa hàng</a>
+                <a href="{{ route('trangchu_dangnhap') }}" class="back-btn"><i class="bi bi-arrow-left"></i> Quay lại cửa hàng</a>
+                
+                @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                @endif
+                @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ $errors->first() }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                @endif
+
                 <h1 class="section-title"><i class="bi bi-box-seam-fill"></i> Gói dịch vụ ăn uống của tôi</h1>
 
-                <!-- ĐƠN GÓI DỊCH VỤ 1 -->
-                <div class="order-card text-dark">
+                @forelse($subscriptions as $subscription)
+                <!-- ĐƠN GÓI DỊCH VỤ -->
+                <div class="order-card text-dark mb-4">
                     <div class="order-header">
                         <div class="row align-items-center">
                             <div class="col-md-6">
-                                <div class="order-id">Gói đăng ký: GÓI GIA ĐÌNH HÀNG NGÀY (30 Ngày)</div>
-                                <div class="order-date">Mã đơn mua: <strong>#FDL-6102</strong></div>
+                                <div class="order-id">Gói đăng ký: {{ $subscription->package->package_name }} ({{ $subscription->package->duration_days }} Ngày)</div>
+                                <div class="order-date">Mã đơn mua: <strong>#FDL-{{ $subscription->order_id }}</strong></div>
                             </div>
                             <div class="col-md-6 text-md-end">
-                                <span class="badge bg-success"><i class="bi bi-play-circle-fill me-1"></i> Đang hoạt
-                                    động</span>
+                                @if($subscription->status === 'active')
+                                <span class="badge bg-success"><i class="bi bi-play-circle-fill me-1"></i> Đang hoạt động</span>
+                                @elseif($subscription->status === 'paused')
+                                <span class="badge bg-warning text-dark"><i class="bi bi-pause-circle-fill me-1"></i> Tạm ngưng</span>
+                                @elseif($subscription->status === 'expired')
+                                <span class="badge bg-secondary"><i class="bi bi-exclamation-circle-fill me-1"></i> Hết hạn</span>
+                                @else
+                                <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i> Đã hủy</span>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -151,14 +195,14 @@
                     <!-- Tiến độ dịch vụ (Ngày hiện tại, Ngày kết thúc) -->
                     <div class="timeline-container mb-3 shadow-sm border">
                         <div class="d-flex justify-content-between font-weight-bold small mb-2">
-                            <span><i class="bi bi-calendar-check text-success"></i> Ngày bắt đầu: 01/06/2026</span>
-                            <span class="text-primary">Tiến độ: Ngày 18 / 30</span>
-                            <span><i class="bi bi-calendar-x text-danger"></i> Ngày kết thúc: 30/06/2026</span>
+                            <span><i class="bi bi-calendar-check text-success"></i> Ngày bắt đầu: {{ $subscription->start_date->format('d/m/Y') }}</span>
+                            <span class="text-primary font-weight-bold">Tiến độ: Ngày {{ $subscription->completed_days }} / {{ $subscription->schedules_list->count() }}</span>
+                            <span><i class="bi bi-calendar-x text-danger"></i> Ngày kết thúc: {{ $subscription->end_date->format('d/m/Y') }}</span>
                         </div>
                         <div class="progress" style="height: 12px;">
                             <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                                role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0"
-                                aria-valuemax="100">60%</div>
+                                role="progressbar" style="width: {{ $subscription->progress_percent }}%;" aria-valuenow="{{ $subscription->progress_percent }}" aria-valuemin="0"
+                                aria-valuemax="100">{{ $subscription->progress_percent }}%</div>
                         </div>
                     </div>
 
@@ -166,40 +210,60 @@
                     <div class="info-section">
                         <div class="row">
                             <div class="col-md-6 border-end">
-                                <div class="info-title text-primary"><i class="bi bi-egg-fried"></i> Thực đơn ngày mai
-                                    (Ngày 19 - 18/06):</div>
-                                <div class="fw-bold mb-2">Phở Bò Đặc Biệt + Cà phê sữa đá pha phin</div>
+                                @if($subscription->tomorrow_schedule)
+                                <div class="info-title text-primary"><i class="bi bi-egg-fried"></i> Thực đơn ngày tiếp theo (Ngày {{ $subscription->tomorrow_day_number }} - {{ $subscription->tomorrow_schedule->delivery_date->format('d/m/Y') }}):</div>
+                                <div class="fw-bold mb-2 text-dark fs-5">
+                                    {{ $subscription->tomorrow_schedule->dish->dish_name }}
+                                    @if($subscription->tomorrow_schedule->delivery_notes)
+                                        <div class="mt-1"><span class="badge bg-light text-dark fw-normal border" style="font-size: 11px;"><i class="bi bi-chat-left-text me-1 text-primary"></i> Ghi chú: {{ $subscription->tomorrow_schedule->delivery_notes }}</span></div>
+                                    @endif
+                                </div>
+                                @if($subscription->status === 'active')
                                 <!-- Thao tác đổi món / Ghi chú cho ngày mai -->
-                                <button type="button" class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal"
-                                    data-bs-target="#changeMenuModal" data-day="19"><i
+                                <button type="button" class="btn btn-sm btn-outline-primary me-2 shadow-sm" data-bs-toggle="modal"
+                                    data-bs-target="#changeMenuModal" data-sub-id="{{ $subscription->id }}" data-day="{{ $subscription->tomorrow_day_number }}"><i
                                         class="bi bi-arrow-left-right"></i> Đổi món ngày mai</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
-                                    data-bs-target="#noteDayModal" data-day="19"><i class="bi bi-pencil-square"></i> Ghi
+                                <button type="button" class="btn btn-sm btn-outline-secondary shadow-sm" data-bs-toggle="modal"
+                                    data-bs-target="#noteDayModal" data-sub-id="{{ $subscription->id }}" data-day="{{ $subscription->tomorrow_day_number }}"><i class="bi bi-pencil-square"></i> Ghi
                                     chú ngày mai</button>
+                                @endif
+                                @else
+                                <div class="info-title text-primary"><i class="bi bi-egg-fried"></i> Thực đơn tiếp theo:</div>
+                                <div class="text-muted mb-2">Đã hoàn thành hoặc không có lịch giao chờ xử lý.</div>
+                                @endif
                             </div>
                             <div class="col-md-6 ps-md-4">
-                                <div class="info-title text-secondary"><i class="bi bi-gear-fill"></i> Quản lý trạng
-                                    thái gói dài hạn:</div>
-                                <p class="small text-muted mb-2">Bạn có việc bận đột xuất? Bạn có thể tạm ngưng nhận món
-                                    ăn hoặc hủy gói bất kỳ lúc nào.</p>
-                                <button type="button" class="btn btn-sm btn-warning text-dark me-2"
-                                    data-bs-toggle="modal" data-bs-target="#pauseServiceModal"><i
+                                <div class="info-title text-secondary"><i class="bi bi-gear-fill"></i> Quản lý trạng thái gói dài hạn:</div>
+                                <p class="small text-muted mb-2">Bạn có việc bận đột xuất? Bạn có thể tạm ngưng nhận món ăn hoặc hủy gói bất kỳ lúc nào.</p>
+                                @if($subscription->status === 'active')
+                                <button type="button" class="btn btn-sm btn-warning text-dark me-2 shadow-sm fw-bold"
+                                    data-bs-toggle="modal" data-bs-target="#pauseServiceModal" data-sub-id="{{ $subscription->id }}"><i
                                         class="bi bi-pause-circle-fill"></i> Tạm ngưng gói</button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
-                                    data-bs-target="#cancelServiceModal"><i class="bi bi-x-octagon"></i> Hủy dịch
-                                    vụ</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger shadow-sm"
+                                    data-bs-toggle="modal" data-bs-target="#cancelServiceModal" data-sub-id="{{ $subscription->id }}"><i class="bi bi-x-octagon"></i> Hủy dịch vụ</button>
+                                @else
+                                <span class="text-muted small">Các tùy chọn tạm dừng/hủy không khả dụng cho gói đã ngưng hoạt động.</span>
+                                @endif
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                        <div class="small text-muted">* Đã giao thành công 17 ngày ăn uống ngon miệng.</div>
+                        <div class="small text-muted">* Đã giao thành công {{ $subscription->completed_days }} ngày. Số ngày còn lại: {{ $subscription->remaining_days }} ngày.</div>
                         <!-- Nút viết đánh giá dịch vụ tổng thể -->
-                        <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold"
-                            data-bs-toggle="modal" data-bs-target="#reviewServiceModal"><i class="bi bi-star-fill"></i>
+                        @if($subscription->status === 'active' || $subscription->status === 'expired')
+                        <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold shadow-sm"
+                            data-bs-toggle="modal" data-bs-target="#reviewServiceModal" data-sub-id="{{ $subscription->id }}"><i class="bi bi-star-fill"></i>
                             Đánh giá chất lượng gói</button>
+                        @endif
                     </div>
                 </div>
+                @empty
+                <div class="alert alert-info text-center py-4 bg-light border text-dark">
+                    <i class="bi bi-info-circle fa-2x mb-2 d-block text-primary"></i>
+                    Bạn chưa đăng ký gói dịch vụ ăn uống dài hạn nào. Hãy đăng ký gói ở trang chủ để được phục vụ bữa ăn nóng hổi hàng ngày!
+                </div>
+                @endforelse
 
             </div>
         </div>
@@ -212,13 +276,15 @@
     <!-- MODAL 1: YÊU CẦU ĐỔI MÓN -->
     <div class="modal fade" id="changeMenuModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content text-dark">
+            <div class="modal-content text-dark border-0 shadow">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-arrow-left-right me-2"></i>Yêu cầu đổi món ăn thực
-                        đơn</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-arrow-left-right me-2"></i>Yêu cầu đổi món ăn thực đơn</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="#" method="POST">
+                <form action="{{ route('goidichvu.change-menu') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="subscription_id" id="change-sub-id-input">
+                    <input type="hidden" name="day_number" id="change-day-input">
                     <div class="modal-body">
                         <p>Hệ thống hỗ trợ đổi món ăn cho lịch trình <strong class="text-primary">Ngày <span
                                     id="change-day-display">X</span></strong> (Hạn chót thay đổi trước 21h hôm nay):</p>
@@ -226,13 +292,13 @@
                             <label class="form-label small fw-bold">Chọn món thay thế mong muốn:</label>
                             <select class="form-select" name="new_dish_id" required>
                                 <option value="" selected disabled>-- Chọn thực đơn thay thế có sẵn --</option>
-                                <option value="1">Cơm tấm sườn bì chả đặc biệt + Trà đá</option>
-                                <option value="2">Bún bò Huế giò gân + Nước ngọt chanh dây</option>
-                                <option value="3">Mì vằn thắn xá xíu + Pudding tráng miệng</option>
+                                @foreach($dishes as $dish)
+                                <option value="{{ $dish->id }}">{{ $dish->dish_name }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light">
+                    <div class="modal-footer bg-light border-0">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                         <button type="submit" class="btn btn-primary px-4">Xác nhận đổi món</button>
                     </div>
@@ -244,23 +310,25 @@
     <!-- MODAL 2: GHI CHÚ THEO NGÀY -->
     <div class="modal fade" id="noteDayModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content text-dark">
+            <div class="modal-content text-dark border-0 shadow">
                 <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Ghi chú giao hàng cho ngày
-                        mai</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Ghi chú giao hàng cho ngày mai</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="#" method="POST">
+                <form action="{{ route('goidichvu.add-note') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="subscription_id" id="note-sub-id-input">
+                    <input type="hidden" name="day_number" id="note-day-input">
                     <div class="modal-body">
                         <div class="form-group mb-2">
                             <label for="day_note" class="form-label small fw-bold">Nhập yêu cầu giao hàng cụ thể cho
                                 Ngày <span id="note-day-display">X</span>:</label>
                             <textarea class="form-control" id="day_note" name="day_note" rows="3"
-                                placeholder="Ví dụ: Ngày mai giao trễ hơn 30 phút, không lấy hành lá, giao lên lầu 3 phân hiệu văn phòng giúp tôi..."
+                                placeholder="Ví dụ: Ngày mai giao trễ hơn 30 phút, không lấy hành lá, giao lên lầu 3 giúp tôi..."
                                 required></textarea>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light">
+                    <div class="modal-footer bg-light border-0">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                         <button type="submit" class="btn btn-dark px-4">Lưu ghi chú ngày</button>
                     </div>
@@ -272,26 +340,26 @@
     <!-- MODAL 3: TẠM NGƯNG DỊCH VỤ -->
     <div class="modal fade" id="pauseServiceModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content text-dark">
+            <div class="modal-content text-dark border-0 shadow">
                 <div class="modal-header bg-warning text-dark">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-pause-circle-fill me-2"></i>Yêu cầu tạm ngưng nhận
-                        món</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pause-circle-fill me-2"></i>Yêu cầu tạm ngưng nhận món</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="#" method="POST">
+                <form action="{{ route('goidichvu.pause') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="subscription_id" id="pause-sub-id-input">
                     <div class="modal-body">
-                        <p>Hệ thống sẽ tạm đóng băng gói dịch vụ dài hạn của bạn. Lịch giao hàng sẽ được bảo lưu và cộng
-                            dồn bù vào chu kỳ sau khi bạn kích hoạt mở lại.</p>
+                        <p>Hệ thống sẽ tạm dừng giao hàng cho gói dịch vụ dài hạn này. Số ngày còn lại sẽ được bảo lưu và tiếp tục giao sau khi bạn kích hoạt mở lại.</p>
                         <div class="form-group mb-3">
                             <label for="pause_days" class="form-label small fw-bold">Số ngày tạm ngưng dự kiến:</label>
                             <select class="form-select" id="pause_days" name="pause_days" required>
                                 <option value="3">Tạm ngưng 3 ngày tiếp theo</option>
                                 <option value="7">Tạm ngưng 1 tuần</option>
-                                <option value="unknown">Tạm ngưng cho đến khi tôi thông báo mở lại</option>
+                                <option value="unknown">Tạm đóng băng (cho đến khi mở lại)</option>
                             </select>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light">
+                    <div class="modal-footer bg-light border-0">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                         <button type="submit" class="btn btn-warning text-dark fw-bold px-4">Xác nhận tạm ngưng</button>
                     </div>
@@ -303,25 +371,23 @@
     <!-- MODAL 4: HỦY DỊCH VỤ GÓI -->
     <div class="modal fade" id="cancelServiceModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content text-dark">
+            <div class="modal-content text-dark border-0 shadow">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-x-octagon me-2"></i>Yêu cầu chấm dứt/Hủy ngang gói
-                        dịch vụ</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-x-octagon me-2"></i>Yêu cầu chấm dứt/Hủy ngang gói dịch vụ</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="#" method="POST">
+                <form action="{{ route('goidichvu.cancel') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="subscription_id" id="cancel-sub-id-input">
                     <div class="modal-body">
-                        <div class="alert alert-warning border-0 small"><i class="bi bi-info-circle-fill me-1"></i> Số
-                            tiền tương ứng với các ngày ăn chưa sử dụng còn lại (12 ngày) sẽ được hoàn trả về tài khoản
-                            ngân hàng của bạn sau khi trừ 5% phí hủy hợp đồng.</div>
+                        <div class="alert alert-warning border-0 small"><i class="bi bi-info-circle-fill me-1"></i> Tiền tương ứng với các ngày ăn chưa sử dụng còn lại sẽ được ban quản lý thẩm định và hoàn trả lại tài khoản ngân hàng của bạn sau khi đối soát.</div>
                         <div class="form-group">
-                            <label for="cancel_reason" class="form-label small fw-bold">Vui lòng cho cửa hàng biết lý do
-                                hủy:</label>
+                            <label for="cancel_reason" class="form-label small fw-bold">Vui lòng cho cửa hàng biết lý do hủy:</label>
                             <textarea class="form-control" id="cancel_reason" name="cancel_reason" rows="2"
-                                placeholder="Lý do cá nhân, món ăn không phù hợp..." required></textarea>
+                                placeholder="Lý do cá nhân, đổi văn phòng, món ăn không hợp vị..." required></textarea>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light">
+                    <div class="modal-footer bg-light border-0">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                         <button type="submit" class="btn btn-danger px-4">Xác nhận hủy gói dịch vụ</button>
                     </div>
@@ -333,13 +399,14 @@
     <!-- MODAL 5: ĐÁNH GIÁ CHẤT LƯỢNG GÓI -->
     <div class="modal fade" id="reviewServiceModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content text-dark">
+            <div class="modal-content text-dark border-0 shadow">
                 <div class="modal-header bg-light border-bottom">
-                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-star-fill text-warning me-2"></i>Đánh giá
-                        trải nghiệm gói dịch vụ</h5>
+                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-star-fill text-warning me-2"></i>Đánh giá trải nghiệm gói dịch vụ</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="#" method="POST">
+                <form action="{{ route('goidichvu.review') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="subscription_id" id="review-sub-id-input">
                     <div class="modal-body text-center">
                         <p class="text-start mb-1">Góp ý của bạn giúp FOODELICIOUS tối ưu hóa chất lượng phục vụ:</p>
                         <div class="star-rating my-2">
@@ -360,11 +427,9 @@
                                 required></textarea>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light">
-                        <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal">Trở
-                            lại</button>
-                        <button type="submit" class="btn btn-warning text-dark fw-bold shadow-sm px-4">Gửi nhận
-                            xét</button>
+                    <div class="modal-footer bg-light border-0">
+                        <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal">Trở lại</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold shadow-sm px-4">Gửi nhận xét</button>
                     </div>
                 </form>
             </div>
@@ -379,8 +444,8 @@
     </footer>
 
     <!-- Vendor JS Files -->
-    <script src="client/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="client/assets/vendor/aos/aos.js"></script>
+    <script src="{{ asset('client/assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('client/assets/vendor/aos/aos.js') }}"></script>
 
     <!-- Script điều động gán thông tin chu kỳ ngày vào Modal -->
     <script>
@@ -391,7 +456,10 @@
                 changeMenuModal.addEventListener('show.bs.modal', function (event) {
                     const button = event.relatedTarget;
                     const day = button.getAttribute('data-day');
+                    const subId = button.getAttribute('data-sub-id');
                     document.getElementById('change-day-display').innerText = day;
+                    document.getElementById('change-day-input').value = day;
+                    document.getElementById('change-sub-id-input').value = subId;
                 });
             }
 
@@ -401,7 +469,40 @@
                 noteDayModal.addEventListener('show.bs.modal', function (event) {
                     const button = event.relatedTarget;
                     const day = button.getAttribute('data-day');
+                    const subId = button.getAttribute('data-sub-id');
                     document.getElementById('note-day-display').innerText = day;
+                    document.getElementById('note-day-input').value = day;
+                    document.getElementById('note-sub-id-input').value = subId;
+                });
+            }
+
+            // Gán dữ liệu cho Modal tạm ngưng
+            const pauseServiceModal = document.getElementById('pauseServiceModal');
+            if (pauseServiceModal) {
+                pauseServiceModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const subId = button.getAttribute('data-sub-id');
+                    document.getElementById('pause-sub-id-input').value = subId;
+                });
+            }
+
+            // Gán dữ liệu cho Modal hủy dịch vụ
+            const cancelServiceModal = document.getElementById('cancelServiceModal');
+            if (cancelServiceModal) {
+                cancelServiceModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const subId = button.getAttribute('data-sub-id');
+                    document.getElementById('cancel-sub-id-input').value = subId;
+                });
+            }
+
+            // Gán dữ liệu cho Modal viết đánh giá
+            const reviewServiceModal = document.getElementById('reviewServiceModal');
+            if (reviewServiceModal) {
+                reviewServiceModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const subId = button.getAttribute('data-sub-id');
+                    document.getElementById('review-sub-id-input').value = subId;
                 });
             }
         });
