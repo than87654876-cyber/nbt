@@ -128,11 +128,46 @@
 
                         <div class="tab-pane fade {{ !$isMomo ? 'show active' : '' }}" id="pills-bank" role="tabpanel" aria-labelledby="pills-bank-tab">
                             <div class="qr-box box-bank shadow-sm mb-3">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=VietQR_Order_{{ $order_id }}_Amount_{{ $amount }}"
+                                <img src="{{ asset('uploads/1783301153260_498751122376481441_5835016170884865456_c9e2174cecac2b55bcfb2209c6c769f9.jpg') }}"
                                     alt="Mã VietQR" class="img-fluid">
                             </div>
+                            
+                            <div class="text-start bg-white p-3 rounded border mb-3 text-dark mx-auto" style="max-width: 320px;">
+                                <div class="row small mb-1">
+                                    <div class="col-5 text-muted">Ngân hàng:</div>
+                                    <div class="col-7 fw-bold">BIDV</div>
+                                </div>
+                                <div class="row small mb-1">
+                                    <div class="col-5 text-muted">Chi nhánh:</div>
+                                    <div class="col-7 fw-bold">CN TP Hồ Chí Minh</div>
+                                </div>
+                                <div class="row small mb-1">
+                                    <div class="col-5 text-muted">Số tài khoản:</div>
+                                    <div class="col-7 fw-bold text-primary">8899408675</div>
+                                </div>
+                                <div class="row small mb-1">
+                                    <div class="col-5 text-muted">Chủ tài khoản:</div>
+                                    <div class="col-7 fw-bold">TRAN LE THAN</div>
+                                </div>
+                                <div class="row small mb-1">
+                                    <div class="col-5 text-muted">Số tiền:</div>
+                                    <div class="col-7 fw-bold text-danger">{{ number_format($amount, 0, ',', '.') }} đ</div>
+                                </div>
+                                <div class="row small mb-1">
+                                    <div class="col-5 text-muted">Nội dung CK:</div>
+                                    <div class="col-7 fw-bold text-success">FDL-{{ $order_id }}</div>
+                                </div>
+                            </div>
+
+                            <a href="https://img.vietqr.io/image/BIDV-8899408675-compact2.jpg?amount={{ $amount }}&addInfo=FDL-{{ $order_id }}&accountName=Tran%20Le%20Than" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-primary fw-bold mb-3 d-inline-block w-100" 
+                               style="max-width: 320px;">
+                                <i class="bi bi-qr-code-scan me-1"></i> Liên kết chuyển khoản nhanh VietQR
+                            </a>
+                            
                             <p class="small text-muted mb-3"><i class="bi bi-phone-vibrate me-1"></i> Sử dụng
-                                <strong>App Ngân hàng (Mobile Banking)</strong> bất kỳ để quét mã</p>
+                                <strong>App Ngân hàng (Mobile Banking)</strong> để quét mã hoặc sử dụng thông tin trên để chuyển khoản.</p>
                         </div>
 
                     </div>

@@ -37,7 +37,7 @@ class MailNotificationTest extends TestCase
 
         $response->assertRedirect(route('trangchu'));
 
-        Mail::assertSent(WelcomeMail::class, function ($mail) {
+        Mail::assertQueued(WelcomeMail::class, function ($mail) {
             return $mail->hasTo('nguyenvana@example.com') && $mail->fullname === 'Nguyen Van A';
         });
     }
@@ -145,7 +145,7 @@ class MailNotificationTest extends TestCase
 
         $response->assertRedirect(route('giohang'));
 
-        Mail::assertSent(OrderPlacedMail::class, function ($mail) use ($user) {
+        Mail::assertQueued(OrderPlacedMail::class, function ($mail) use ($user) {
             return $mail->hasTo('orderclient@example.com') && $mail->order->final_amount == 70000;
         });
     }

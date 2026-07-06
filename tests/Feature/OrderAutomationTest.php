@@ -183,4 +183,152 @@ class OrderAutomationTest extends TestCase
         // Assert coupon usage limit was decremented
         $this->assertEquals(9, $coupon->fresh()->usage_limit);
     }
+
+    /**
+     * Test the point calculation logic for USD and VND amounts.
+     */
+    public function test_point_calculation_for_usd_and_vnd()
+    {
+        $customer = User::create([
+            'fullname' => 'Point Test Customer',
+            'email' => 'pointtest@example.com',
+            'phone' => '0912345600',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+            'status' => true,
+        ]);
+
+        // 1. Test USD amount (< 1000)
+        // 179.99 USD * 10 = 1800 points
+        $customer->addPoints(179.99);
+        $this->assertEquals(1800, $customer->fresh()->points);
+        $this->assertEquals('gold', $customer->fresh()->membership);
+
+        // Reset points
+        $customer->points = 0;
+        $customer->membership = 'bronze';
+        $customer->save();
+
+        // 2. Test VND amount (>= 1000)
+        // 50,000 VND / 1000 = 50 points
+        $customer->addPoints(50000);
+        $this->assertEquals(50, $customer->fresh()->points);
+        $this->assertEquals('bronze', $customer->fresh()->membership);
+
+        // Reset points
+        $customer->points = 0;
+        $customer->membership = 'bronze';
+        $customer->save();
+
+        // 1,500,000 VND / 1000 = 1500 points
+        $customer->addPoints(1500000);
+        $this->assertEquals(1500, $customer->fresh()->points);
+        $this->assertEquals('gold', $customer->fresh()->membership);
+
+        // Add 500,000 VND / 1000 = 500 points
+        $customer->addPoints(500000);
+        $this->assertEquals(2000, $customer->fresh()->points);
+        $this->assertEquals('diamond', $customer->fresh()->membership);
+    }
+
+    /**
+     * Test the subscription:dispatch-daily Artisan command.
+     */
+    public function test_subscription_dispatch_daily_command()
+    {
+        $customer = User::create([
+            'fullname' => 'Subscription Dispatch Test Customer',
+            'email' => 'subdispatchtest@example.com',
+            'phone' => '0912345601',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+            'status' => true,
+        ]);
+
+        $category = \App\Models\Category::create([
+            'category_name' => 'Mon An Test',
+            'description' => 'Test'
+        ]);
+
+        $dish = \App\Models\Dish::create([
+            'category_id' => $category->id,
+            'dish_name' => 'Pho Ga',
+            'price' => 45000,
+            'is_available' => true,
+        ]);
+
+        $package = \App\Models\ServicePackage::create([
+            'package_name' => 'Gói 30 ngày',
+            'price' => 1500000.00,
+            'duration_days' => 30,
+            'status' => true,
+        ]);
+
+        $order = Order::create([
+            'user_id' => $customer->id,
+            'order_type' => 'subscription',
+            'total_amount' => 1500000.00,
+            'final_amount' => 1500000.00,
+            'payment_method' => 'bank_transfer',
+            'payment_status' => 'paid',
+            'order_status' => 'confirmed',
+        ]);
+
+        $subscription = \App\Models\Subscription::create([
+            'order_id' => $order->id,
+            'user_id' => $customer->id,
+            'package_id' => $package->id,
+            'start_date' => Carbon::today()->toDateString(),
+            'end_date' => Carbon::today()->addDays(30)->toDateString(),
+            'remaining_days' => 10,
+            'status' => 'active',
+        ]);
+
+        // Create two schedules: one for yesterday (pending), one for today (pending), one for tomorrow (pending)
+        $scheduleYesterday = \App\Models\DailySchedule::create([
+            'subscription_id' => $subscription->id,
+            'delivery_date' => Carbon::yesterday()->toDateString(),
+            'dish_id' => $dish->id,
+            'delivery_status' => 'pending',
+            'is_locked' => false,
+        ]);
+
+        $scheduleToday = \App\Models\DailySchedule::create([
+            'subscription_id' => $subscription->id,
+            'delivery_date' => Carbon::today()->toDateString(),
+            'dish_id' => $dish->id,
+            'delivery_status' => 'pending',
+            'is_locked' => false,
+        ]);
+
+        $scheduleTomorrow = \App\Models\DailySchedule::create([
+            'subscription_id' => $subscription->id,
+            'delivery_date' => Carbon::tomorrow()->toDateString(),
+            'dish_id' => $dish->id,
+            'delivery_status' => 'pending',
+            'is_locked' => false,
+        ]);
+
+        // Run Artisan command
+        $this->artisan('subscription:dispatch-daily')
+            ->expectsOutput('Starting checking for subscription daily schedules to dispatch...')
+            ->expectsOutput("Dispatched schedule ID {$scheduleYesterday->id} (Dish: Pho Ga) for Subscription ID {$subscription->id}")
+            ->expectsOutput("Dispatched schedule ID {$scheduleToday->id} (Dish: Pho Ga) for Subscription ID {$subscription->id}")
+            ->expectsOutput('Successfully dispatched 2 daily schedules.')
+            ->assertExitCode(0);
+
+        // Assert yesterday and today dispatches completed
+        $this->assertEquals('delivered', $scheduleYesterday->fresh()->delivery_status);
+        $this->assertTrue($scheduleYesterday->fresh()->is_locked);
+
+        $this->assertEquals('delivered', $scheduleToday->fresh()->delivery_status);
+        $this->assertTrue($scheduleToday->fresh()->is_locked);
+
+        // Tomorrow dispatch should remain pending
+        $this->assertEquals('pending', $scheduleTomorrow->fresh()->delivery_status);
+        $this->assertFalse($scheduleTomorrow->fresh()->is_locked);
+
+        // Remaining days: started with 10, dispatched 2 -> should be 8
+        $this->assertEquals(8, $subscription->fresh()->remaining_days);
+    }
 }

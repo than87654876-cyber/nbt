@@ -76,8 +76,10 @@ class User extends Authenticatable
      */
     public function addPoints(float $amount): void
     {
-        // Calculate points to add: 10 points for every 1 unit of final_amount
-        $pointsToAdd = (int) round($amount * 10);
+        // Calculate points to add:
+        // - If amount >= 1000 (detected as VND), add 1 point for every 1,000 VND
+        // - If amount < 1000 (detected as USD), add 10 points for every 1 unit of USD
+        $pointsToAdd = $amount >= 1000 ? (int) round($amount / 1000) : (int) round($amount * 10);
         if ($pointsToAdd <= 0) {
             return;
         }
