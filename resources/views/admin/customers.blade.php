@@ -26,7 +26,7 @@
                 Không hoạt động >3 tháng
             </a>
         </div>
-        <a href="{{ route('baocao_xuat_customers') }}{{ isset($filter) && $filter ? '?filter='.$filter : '' }}" class="btn btn-sm btn-success shadow-sm">
+        <a href="{{ route('baocao_xuat_customers', request()->query()) }}" class="btn btn-sm btn-success shadow-sm">
             <i class="fas fa-file-excel mr-2"></i> Xuất Excel
         </a>
     </div>
