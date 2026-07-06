@@ -185,7 +185,8 @@ class SubscriptionController extends Controller
     {
         $request->validate([
             'subscription_id' => 'required|integer',
-            'cancel_reason' => 'required|string',
+            'cancel_reason' => 'required|string|min:50',
+            'cancel_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         $subscription = Subscription::where('id', $request->subscription_id)
@@ -209,7 +210,19 @@ class SubscriptionController extends Controller
             // Giả lập tính số tiền hoàn trả: còn bao nhiêu ngày nhân với đơn giá ngày
             $refundAmount = round(($order->total_amount / max(1, $subscription->dailySchedules()->count())) * $remainingDays, 2);
 
-            $refundText = '[Yêu cầu hoàn tiền - Lý do: Hủy gói ('.$request->cancel_reason.'), Phương thức: Chuyển khoản (Số tiền hoàn lại ước tính: '.$refundAmount.')]';
+            $imageUrl = null;
+            if ($request->hasFile('cancel_image')) {
+                $file = $request->file('cancel_image');
+                $filename = time().'_'.$file->getClientOriginalName();
+                if (!file_exists(public_path('uploads/cancels'))) {
+                    mkdir(public_path('uploads/cancels'), 0777, true);
+                }
+                $file->move(public_path('uploads/cancels'), $filename);
+                $imageUrl = 'uploads/cancels/'.$filename;
+            }
+
+            $imageLink = $imageUrl ? url($imageUrl) : 'Không có';
+            $refundText = '[Yêu cầu hoàn tiền - Lý do: Hủy gói ('.$request->cancel_reason.'), Hình ảnh minh chứng: '.$imageLink.', Phương thức: Chuyển khoản (Số tiền hoàn lại ước tính: '.$refundAmount.')]';
             $order->health_notes = ($order->health_notes ? $order->health_notes."\n" : '').$refundText;
             $order->save();
         }

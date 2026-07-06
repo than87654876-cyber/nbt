@@ -54,7 +54,7 @@
                         </tr>
                         <tr>
                             <th>Giá bán:</th>
-                            <td class="text-danger font-weight-bold">${{ number_format($dish->price, 2) }}</td>
+                            <td class="text-danger font-weight-bold">{{ number_format($dish->price, 0, ',', '.') }} đ</td>
                         </tr>
                         <tr>
                             <th>Trạng thái phục vụ:</th>

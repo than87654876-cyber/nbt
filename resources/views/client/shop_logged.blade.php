@@ -105,6 +105,7 @@
             border: 1px solid #ffd8bf;
         }
     </style>
+    @vite(['resources/js/app.js'])
 </head>
 
 <body class="index-page">
@@ -112,8 +113,8 @@
     <header id="header" class="header d-flex align-items-center sticky-top">
         <div class="container position-relative d-flex align-items-center justify-content-between">
 
-            <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-                <img src="{{ asset('logo.jpg') }}" alt="">
+            <a href="{{ route('trangchu') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+                <img src="{{ isset($settings['logo_url']) ? (Str::startsWith($settings['logo_url'], 'http') ? $settings['logo_url'] : asset($settings['logo_url'])) : asset('logo.jpg') }}" alt="" class="setting-logo-img">
                 <h1 class="sitename">FOODELICIOUS</h1>
                 <span>.</span>
             </a>
@@ -131,6 +132,7 @@
                     </li>
                     <li><a href="#events">Chương trình</a></li>
                     <li><a href="#contact">Liên hệ</a></li>
+                    <li><a href="{{ route('tracuu') }}">Tra cứu đơn hàng</a></li>
                 </ul>
                 <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </nav>
@@ -147,6 +149,13 @@
                         <i class="bi bi-chevron-down small text-muted"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end mt-2" aria-labelledby="userMenu">
+                        @if(in_array(Auth::user()->role, ['admin', 'staff']))
+                        <li>
+                            <a class="dropdown-item py-2 fw-bold text-primary" href="{{ Auth::user()->role === 'admin' ? route('quanly') : route('quanly_banlamviec') }}">
+                                <i class="bi bi-shield-lock me-2"></i>Trang Quản Trị
+                            </a>
+                        </li>
+                        @endif
                         <li>
                             <a class="dropdown-item py-2" href="#" data-bs-toggle="modal"
                                 data-bs-target="#userProfileModal">
@@ -317,7 +326,11 @@
                         <div class="text-center mb-4">
                             <div class="display-5 text-muted mb-2"><i class="bi bi-user-circle"></i></div>
                             <h4 class="fw-bold text-dark mb-1">{{ Auth::user()->fullname }}</h4>
-                            <span class="badge badge-{{ Auth::user()->membership }} px-3 py-2 fw-bold"><i class="bi bi-crown-fill me-1"></i>Thành viên {{ strtoupper(Auth::user()->membership) }}</span>
+                            @if(in_array(Auth::user()->role, ['admin', 'staff']))
+                                <span class="badge bg-danger text-white px-3 py-2 fw-bold"><i class="bi bi-shield-lock-fill me-1"></i>{{ strtoupper(Auth::user()->role) }}</span>
+                            @else
+                                <span class="badge badge-{{ Auth::user()->membership ?? 'bronze' }} px-3 py-2 fw-bold"><i class="bi bi-crown-fill me-1"></i>Thành viên {{ strtoupper(Auth::user()->membership ?? 'bronze') }}</span>
+                            @endif
                         </div>
 
                         <div class="table-responsive">
@@ -444,9 +457,31 @@
                                 <div id="cart-items-container">
                                     <!-- Sẽ được tải động bằng JS -->
                                 </div>
-                                <div class="d-flex justify-content-between small pt-2 px-2 border-top">
-                                    <span class="fw-bold">Tổng tiền hàng tạm tính:</span>
-                                    <span class="fw-bold text-danger fs-5" id="cart-total-price">$0.00</span>
+                                <div class="pt-2 px-2 border-top">
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span class="text-muted">Tổng tiền hàng tạm tính:</span>
+                                        <span class="fw-bold text-dark" id="cart-subtotal-price">0 đ</span>
+                                    </div>
+                                    <div id="cart-discount-row" class="d-flex justify-content-between small mb-1 d-none text-success">
+                                        <span>Khuyến mãi giảm giá:</span>
+                                        <span class="fw-bold" id="cart-discount-price">-0 đ</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Tổng tiền thanh toán:</span>
+                                        <span class="fw-bold text-danger fs-5" id="cart-total-price">0 đ</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mã giảm giá (Coupon) Section -->
+                            <h6 class="fw-bold border-bottom pb-2 text-danger mt-4"><i class="bi bi-tag-fill text-danger"></i> 3. Mã giảm giá (Coupon)</h6>
+                            <div class="row align-items-center mb-2">
+                                <div class="col-md-8 mb-2 mb-md-0">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control text-uppercase font-weight-bold text-danger" id="coupon_code" name="coupon_code" placeholder="Nhập mã giảm giá (ví dụ: FOODELICIOUS2026)...">
+                                        <button class="btn btn-dark fw-bold px-3" type="button" onclick="applyCoupon()">Áp dụng</button>
+                                    </div>
+                                    <div id="coupon-message" class="small mt-1 d-none"></div>
                                 </div>
                             </div>
 
@@ -471,11 +506,43 @@
                                     </select>
                                 </div>
                             </div>
+                            <!-- Vietnam Provinces & Geocoding -->
+                            <div class="row g-2 mb-2">
+                                <div class="form-group col-md-4">
+                                    <label for="province" class="form-label small fw-bold">Tỉnh/Thành phố <span class="text-danger">*</span></label>
+                                    <select class="form-select form-select-sm" id="province" required>
+                                        <option value="">Chọn Tỉnh/Thành</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="district" class="form-label small fw-bold">Quận/Huyện <span class="text-danger">*</span></label>
+                                    <select class="form-select form-select-sm" id="district" required disabled>
+                                        <option value="">Chọn Quận/Huyện</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="ward" class="form-label small fw-bold">Phường/Xã <span class="text-danger">*</span></label>
+                                    <select class="form-select form-select-sm" id="ward" required disabled>
+                                        <option value="">Chọn Phường/Xã</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div class="form-group mb-3">
-                                <label for="cart_address" class="form-label small fw-bold">Địa chỉ nhận hàng cụ thể
-                                    <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-sm" id="cart_address" name="cart_address"
-                                    value="Trường Cao đẳng Công nghệ Thông tin TP.HCM (ITC), Quận Tân Phú" required>
+                                <label for="cart_address_detail" class="form-label small fw-bold">Địa chỉ chi tiết (Số nhà, tên đường, khu vực...) <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="cart_address_detail"
+                                    placeholder="Ví dụ: 12 Bàu Cát 2" required>
+                                <input type="hidden" id="cart_address" name="cart_address" required>
+                            </div>
+
+                            <!-- Map and Directions UI -->
+                            <div id="osm-map-section" class="mb-3" style="display:none;">
+                                <label class="form-label small fw-bold text-success"><i class="bi bi-map"></i> Bản đồ số giao hàng & Chỉ đường</label>
+                                <div style="width: 100%; height: 200px; border-radius: 8px; overflow: hidden; border: 1px solid #ddd;">
+                                    <iframe id="osm-map-iframe" width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>
+                                </div>
+                                <div class="mt-2 text-end">
+                                    <a id="directions-link" href="#" target="_blank" class="btn btn-sm btn-outline-danger fw-bold"><i class="bi bi-cursor"></i> Chỉ đường từ cửa hàng gần nhất</a>
+                                </div>
                             </div>
 
                             <h6 class="fw-bold border-bottom pb-2 text-danger mt-4"><i
@@ -525,7 +592,7 @@
                         <img src="{{ asset('client/assets/img/about.jpg') }}" class="img-fluid mb-4" alt="">
                         <div class="book-a-table">
                             <h3>Số điện thoại tư vấn:</h3>
-                            <p>+1 5589 55488 55</p>
+                            <p class="setting-contact-phone">{{ $settings['contact_phone'] ?? '+1 5589 55488 55' }}</p>
                         </div>
                     </div>
                     <div class="col-lg-5" data-aos="fade-up" data-aos-delay="250">
@@ -696,7 +763,7 @@
                                                 </a>
                                                 <h4>{{ $dish->dish_name }}</h4>
                                                 <p class="ingredients">{{ $dish->description }}</p>
-                                                <p class="price">${{ number_format($dish->price, 2) }}</p>
+                                                <p class="price">{{ number_format($dish->price, 0, ',', '.') }} đ</p>
                                             </div>
                                         @endforeach
                                     </div>
@@ -787,20 +854,46 @@
             </div>
 
             <div class="container" data-aos="fade-up" data-aos-delay="100">
+                @php
+                    $mapUrl = $settings['map_embed_url'] ?? 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.1415053648486!2d106.6917926!3d10.8004543!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317528c2576b92dd%3A0x6e9ca9bc8926958b!2zMTIzIEzDqiBI4buTbmcgUGjDuW5nLCBRdeG6rW4gMywgVFAuSENN!5e0!3m2!1svi!2s!4v1539943755621';
+                    $mapSrc = $mapUrl;
+                    if (preg_match('/src="([^"]+)"/', $mapUrl, $match)) {
+                        $mapSrc = $match[1];
+                    } elseif ($mapUrl && !str_contains($mapUrl, 'output=embed')) {
+                        $mapSrc = "https://maps.google.com/maps?q=" . urlencode($mapUrl) . "&output=embed";
+                    }
+                @endphp
                 <div class="mb-5">
                     <iframe style="width: 100%; height: 400px;"
-                        src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d12097.433213460943!2d-74.0062269!3d40.7101282!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0xb89d1fe6bc499443!2sDowntown+Conference+Center!5e0!3m2!1smk!2sbg!4v1539943755621"
-                        frameborder="0" allowfullscreen=""></iframe>
+                        src="{{ $mapSrc }}"
+                        frameborder="0" allowfullscreen="" class="setting-map-iframe"></iframe>
                 </div>
 
-                <div class="row gy-4">
-                    <div class="col-md-6">
-                        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="200">
+                <div class="row gy-4 mb-4">
+                    <div class="col-md-4">
+                        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="200" style="height: 100%;">
                             <i class="icon bi bi-geo-alt flex-shrink-0"></i>
                             <div>
                                 <h3>Địa chỉ</h3>
-                                <p>Tầng 12, Tòa nhà Saigon Innovation Tower, 154 Nguyễn Thị Minh Khai, Phường Võ Thị
-                                    Sáu, Quận 3, TP. Hồ Chí Minh.</p>
+                                <p class="setting-contact-address">{{ $settings['contact_address'] ?? 'Tầng 12, Tòa nhà Saigon Innovation Tower, 154 Nguyễn Thị Minh Khai, Phường Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh.' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="300" style="height: 100%;">
+                            <i class="icon bi bi-telephone flex-shrink-0"></i>
+                            <div>
+                                <h3>Điện thoại</h3>
+                                <p class="setting-contact-phone">{{ $settings['contact_phone'] ?? '+1 5589 55488 55' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="400" style="height: 100%;">
+                            <i class="icon bi bi-envelope flex-shrink-0"></i>
+                            <div>
+                                <h3>Email</h3>
+                                <p class="setting-contact-email">{{ $settings['contact_email'] ?? 'contact@example.com' }}</p>
                             </div>
                         </div>
                     </div>
@@ -891,6 +984,115 @@
             });
             updateCartCount();
 
+            // --- Vietnam Provinces API & Geocoding / Maps ---
+            let provinceData = [];
+            const provinceSelect = document.getElementById('province');
+            const districtSelect = document.getElementById('district');
+            const wardSelect = document.getElementById('ward');
+            const addressDetailInput = document.getElementById('cart_address_detail');
+            const hiddenAddressInput = document.getElementById('cart_address');
+            
+            const mapSection = document.getElementById('osm-map-section');
+            const mapIframe = document.getElementById('osm-map-iframe');
+            const directionsLink = document.getElementById('directions-link');
+
+            if (provinceSelect) {
+                // Load Provinces
+                fetch('https://provinces.open-api.vn/api/?depth=3')
+                    .then(response => response.json())
+                    .then(data => {
+                        provinceData = data;
+                        provinceSelect.innerHTML = '<option value="">Chọn Tỉnh/Thành</option>';
+                        data.forEach(p => {
+                            provinceSelect.innerHTML += `<option value="${p.code}">${p.name}</option>`;
+                        });
+                    })
+                    .catch(err => console.error('Failed to load Vietnam provinces:', err));
+
+                provinceSelect.addEventListener('change', function () {
+                    const code = this.value;
+                    districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                    wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+                    districtSelect.disabled = true;
+                    wardSelect.disabled = true;
+
+                    if (code) {
+                        const province = provinceData.find(p => p.code == code);
+                        if (province && province.districts) {
+                            province.districts.forEach(d => {
+                                districtSelect.innerHTML += `<option value="${d.code}">${d.name}</option>`;
+                            });
+                            districtSelect.disabled = false;
+                        }
+                    }
+                    updateFullAddress();
+                });
+
+                districtSelect.addEventListener('change', function () {
+                    const code = this.value;
+                    wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+                    wardSelect.disabled = true;
+
+                    if (code) {
+                        const provinceCode = provinceSelect.value;
+                        const province = provinceData.find(p => p.code == provinceCode);
+                        const district = province.districts.find(d => d.code == code);
+                        if (district && district.wards) {
+                            district.wards.forEach(w => {
+                                wardSelect.innerHTML += `<option value="${w.code}">${w.name}</option>`;
+                            });
+                            wardSelect.disabled = false;
+                        }
+                    }
+                    updateFullAddress();
+                });
+
+                wardSelect.addEventListener('change', updateFullAddress);
+                addressDetailInput.addEventListener('input', updateFullAddress);
+            }
+
+            function updateFullAddress() {
+                const provName = provinceSelect.options[provinceSelect.selectedIndex]?.text || '';
+                const distName = districtSelect.options[districtSelect.selectedIndex]?.text || '';
+                const wardName = wardSelect.options[wardSelect.selectedIndex]?.text || '';
+                const detail = addressDetailInput.value.trim();
+
+                if (provinceSelect.value && districtSelect.value && wardSelect.value && detail) {
+                    const fullAddress = `${detail}, ${wardName}, ${distName}, ${provName}`;
+                    hiddenAddressInput.value = fullAddress;
+                    geocodeAddress(fullAddress);
+                } else {
+                    hiddenAddressInput.value = '';
+                    mapSection.style.display = 'none';
+                }
+            }
+
+            let geocodeTimeout;
+            function geocodeAddress(address) {
+                clearTimeout(geocodeTimeout);
+                geocodeTimeout = setTimeout(() => {
+                    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
+                    fetch(url, { headers: { 'User-Agent': 'FOODELICIOUS-Jollibee-App' } })
+                        .then(res => res.json())
+                        .then(results => {
+                            if (results && results.length > 0) {
+                                const lat = results[0].lat;
+                                const lon = results[0].lon;
+                                
+                                mapIframe.src = `https://maps.google.com/maps?q=${lat},${lon}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+                                mapSection.style.display = 'block';
+
+                                const storeAddress = "{{ $settings['contact_address'] ?? 'Tầng 12, Tòa nhà Saigon Innovation Tower, 154 Nguyễn Thị Minh Khai, Phường Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh.' }}";
+                                directionsLink.href = `https://www.google.com/maps/dir/?api=1&origin=${lat},${lon}&destination=${encodeURIComponent(storeAddress)}`;
+                            } else {
+                                mapSection.style.display = 'none';
+                            }
+                        })
+                        .catch(err => console.error('Geocoding error:', err));
+                }, 800);
+            }
+
+
             // 1. Xử lý nạp dữ liệu cho Modal Đặt Mua Nhanh Món Đơn
             const menuItems = document.querySelectorAll(".menu-item");
             menuItems.forEach(item => {
@@ -901,7 +1103,7 @@
                     
                     document.getElementById("modal-product-id").value = productId;
                     document.getElementById("modal-product-name").innerText = productName;
-                    document.getElementById("modal-product-price").innerText = "$" + parseFloat(productPrice).toFixed(2);
+                    document.getElementById("modal-product-price").innerText = new Intl.NumberFormat('vi-VN').format(productPrice) + " đ";
                     document.getElementById("quantity").value = 1;
                     document.getElementById("order_notes").value = "";
                 });
@@ -914,7 +1116,7 @@
                     e.preventDefault();
                     const productId = document.getElementById("modal-product-id").value;
                     const productName = document.getElementById("modal-product-name").innerText;
-                    const productPrice = parseFloat(document.getElementById("modal-product-price").innerText.replace('$', ''));
+                    const productPrice = parseFloat(document.getElementById("modal-product-price").innerText.replace(/[^0-9]/g, ''));
                     const quantity = parseInt(document.getElementById("quantity").value) || 1;
                     const notes = document.getElementById("order_notes").value;
 
@@ -982,51 +1184,272 @@
                 });
             }
 
-            // 2. Xử lý Modal & Swipe - Gói dịch vụ
+            // 2. Xử lý Modal & Click - Gói dịch vụ
             const packageSelectElement = document.getElementById("package_type");
             const myModal = new bootstrap.Modal(document.getElementById('subscribePackageModal'));
-            const swiperWrapper = document.querySelector(".events .swiper-wrapper");
 
-            if (swiperWrapper) {
-                const SWIPE_THRESHOLD = 30;
-                let startX = 0;
-                let startY = 0;
-                let isSwiping = false;
-                let currentItem = null;
-
-                swiperWrapper.addEventListener("pointerdown", (e) => {
-                    if (!e.target.closest(".event-item")) return;
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    isSwiping = false;
-                    currentItem = e.target.closest(".event-item");
-                }, true);
-
-                document.addEventListener("pointermove", (e) => {
-                    if (!currentItem) return;
-                    const moveX = Math.abs(e.clientX - startX);
-                    const moveY = Math.abs(e.clientY - startY);
-
-                    if (moveX > SWIPE_THRESHOLD || moveY > SWIPE_THRESHOLD) {
-                        isSwiping = true;
-                    }
-                });
-
-                document.addEventListener("pointerup", () => {
-                    if (!currentItem || isSwiping) {
-                        currentItem = null;
-                        return;
-                    }
-
-                    const packageValue = currentItem.getAttribute("data-package-select");
+            const eventItems = document.querySelectorAll(".events .event-item");
+            eventItems.forEach(item => {
+                item.addEventListener("click", function () {
+                    const packageValue = this.getAttribute("data-package-select");
                     if (packageSelectElement && packageValue) {
                         packageSelectElement.value = packageValue;
                     }
                     myModal.show();
-                    currentItem = null;
                 });
+                item.style.cursor = "pointer";
+            });
+
+            // --- Realtime Order Update Listener (Disabled in favor of Polling) ---
+            /*
+            const userId = "{{ Auth::id() }}";
+            if (window.Echo && userId) {
+                window.Echo.private(`App.Models.User.${userId}`)
+                    .listen('OrderUpdated', (e) => {
+                        console.log('Realtime User Order status updated:', e);
+                        const statusLabels = {
+                            'pending': 'Chờ xác nhận',
+                            'confirmed': 'Đã xác nhận',
+                            'preparing': 'Đang chuẩn bị',
+                            'delivering': 'Đang giao hàng',
+                            'completed': 'Đã giao hàng thành công',
+                            'cancelled': 'Đã hủy'
+                        };
+                        const statusLabel = statusLabels[e.order.order_status] ?? e.order.order_status;
+                        
+                        alert(`🔔 [Cập nhật Đơn hàng FDL-${e.order.id}]: Trạng thái đơn của bạn hiện là: ${statusLabel}!`);
+                        if (window.location.href.indexOf('giohang') > -1) {
+                            window.location.reload();
+                        }
+                    });
+            }
+            */
+
+            // --- Realtime Order Update Polling & Settings Polling ---
+            const userId = "{{ Auth::id() }}";
+            if (userId) {
+                let lastCheckedTime = null;
+
+                // Initialize Order Polling
+                fetch("{{ route('api.orders.poll') }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        lastCheckedTime = data.timestamp;
+                        console.log('Shop Logged Order Polling initialized at:', lastCheckedTime);
+                        setInterval(pollOrderUpdates, 2000);
+                    })
+                    .catch(err => console.error('Error initializing shop logged order polling:', err));
+
+                function pollOrderUpdates() {
+                    if (!lastCheckedTime) return;
+
+                    fetch(`{{ route('api.orders.poll') }}?since=${encodeURIComponent(lastCheckedTime)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            lastCheckedTime = data.timestamp;
+                            if (data.updates && data.updates.length > 0) {
+                                data.updates.forEach(e => {
+                                    console.log('Polling User Order status updated:', e);
+                                    const statusLabels = {
+                                        'pending': 'Chờ xác nhận',
+                                        'confirmed': 'Đã xác nhận',
+                                        'preparing': 'Đang chuẩn bị',
+                                        'delivering': 'Đang giao hàng',
+                                        'completed': 'Đã giao hàng thành công',
+                                        'cancelled': 'Đã hủy'
+                                    };
+                                    const statusLabel = statusLabels[e.order.order_status] ?? e.order.order_status;
+                                    
+                                    alert(`🔔 [Cập nhật Đơn hàng FDL-${e.order.id}]: Trạng thái đơn của bạn hiện là: ${statusLabel}!`);
+                                    if (window.location.href.indexOf('giohang') > -1) {
+                                        window.location.reload();
+                                    }
+                                });
+                            }
+                        })
+                        .catch(err => console.error('Error during shop logged order polling:', err));
+                }
+
+                // Initialize Settings Polling
+                let currentFingerprint = null;
+                let currentTimestamps = null;
+                
+                function pollSettings() {
+                    fetch("{{ route('api.settings.poll') }}")
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!currentFingerprint) {
+                                currentFingerprint = data.fingerprint;
+                                currentTimestamps = data.timestamps;
+                                console.log('Shop Logged Settings polling initialized with fingerprint:', currentFingerprint);
+                                return;
+                            }
+                            
+                            if (data.fingerprint !== currentFingerprint) {
+                                console.log('Data change detected! Fingerprint:', data.fingerprint);
+                                
+                                // Check if structural tables changed (Dishes, Categories, Coupons, ServicePackages)
+                                let structuralChanged = false;
+                                if (currentTimestamps) {
+                                    for (let key in data.timestamps) {
+                                        if (data.timestamps[key] !== currentTimestamps[key]) {
+                                            structuralChanged = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (structuralChanged) {
+                                    console.log('Structural data change detected. Reloading page...');
+                                    window.location.reload();
+                                    return;
+                                }
+                                
+                                // Otherwise, update settings in-place:
+                                currentFingerprint = data.fingerprint;
+                                currentTimestamps = data.timestamps;
+                                const s = data.settings;
+                                
+                                // 1. Logo
+                                if (s.logo_url) {
+                                    document.querySelectorAll('.setting-logo-img').forEach(img => {
+                                        if (img.src !== s.logo_url) img.src = s.logo_url;
+                                    });
+                                }
+                                
+                                // 2. Contact Phone
+                                if (s.contact_phone) {
+                                    document.querySelectorAll('.setting-contact-phone').forEach(el => {
+                                        if (el.innerText !== s.contact_phone) el.innerText = s.contact_phone;
+                                    });
+                                }
+                                
+                                // 3. Contact Address
+                                if (s.contact_address) {
+                                    document.querySelectorAll('.setting-contact-address').forEach(el => {
+                                        if (el.innerText !== s.contact_address) el.innerText = s.contact_address;
+                                    });
+                                    // Update the inline variable
+                                    storeAddress = s.contact_address;
+                                }
+                                
+                                // 4. Contact Email
+                                if (s.contact_email) {
+                                    document.querySelectorAll('.setting-contact-email').forEach(el => {
+                                        if (el.innerText !== s.contact_email) el.innerText = s.contact_email;
+                                    });
+                                }
+                                
+                                // 5. Map
+                                if (s.map_embed_url) {
+                                    const mapIframe = document.querySelector('.setting-map-iframe');
+                                    if (mapIframe) {
+                                        let newSrc = s.map_embed_url;
+                                        const match = s.map_embed_url.match(/src="([^"]+)"/);
+                                        if (match) {
+                                            newSrc = match[1];
+                                        } else if (s.map_embed_url && !s.map_embed_url.includes('output=embed')) {
+                                            newSrc = "https://maps.google.com/maps?q=" + encodeURIComponent(s.map_embed_url) + "&output=embed";
+                                        }
+                                        if (mapIframe.src !== newSrc) {
+                                            mapIframe.src = newSrc;
+                                        }
+                                    }
+                                }
+                            }
+                        })
+                        .catch(err => console.error('Error during settings polling:', err));
+                }
+                
+                setInterval(pollSettings, 2000);
             }
         });
+
+        let appliedCouponCode = null;
+        let discountValue = 0;
+
+        function applyCoupon() {
+            const codeInput = document.getElementById('coupon_code');
+            if (!codeInput) return;
+            const code = codeInput.value.trim().toUpperCase();
+            if (!code) {
+                alert('Vui lòng nhập mã giảm giá!');
+                return;
+            }
+
+            const cart = getCart();
+            let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            if (total === 0) {
+                alert('Giỏ hàng của bạn đang trống.');
+                return;
+            }
+
+            fetch("{{ route('api.coupon.validate') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ code: code, total_amount: total })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const msgEl = document.getElementById('coupon-message');
+                if (!msgEl) return;
+                msgEl.classList.remove('d-none', 'text-success', 'text-danger');
+                if (data.success) {
+                    appliedCouponCode = code;
+                    discountValue = data.discount_amount;
+                    msgEl.classList.add('text-success');
+                    msgEl.innerText = data.message;
+                    renderCartItems();
+                } else {
+                    appliedCouponCode = null;
+                    discountValue = 0;
+                    msgEl.classList.add('text-danger');
+                    msgEl.innerText = data.message;
+                    renderCartItems();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Có lỗi xảy ra khi áp dụng mã giảm giá.');
+            });
+        }
+
+        function revalidateCoupon() {
+            if (!appliedCouponCode) return;
+            const cart = getCart();
+            let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            fetch("{{ route('api.coupon.validate') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ code: appliedCouponCode, total_amount: total })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const msgEl = document.getElementById('coupon-message');
+                if (data.success) {
+                    discountValue = data.discount_amount;
+                } else {
+                    appliedCouponCode = null;
+                    discountValue = 0;
+                    if (msgEl) {
+                        msgEl.classList.remove('d-none', 'text-success');
+                        msgEl.classList.add('text-danger');
+                        msgEl.innerText = data.message + ' (Đã hủy áp dụng mã)';
+                    }
+                    const inputEl = document.getElementById('coupon_code');
+                    if (inputEl) inputEl.value = '';
+                }
+                renderCartItems();
+            })
+            .catch(err => console.error(err));
+        }
 
         function renderCartItems() {
             const container = document.getElementById('cart-items-container');
@@ -1035,7 +1458,12 @@
             const cart = getCart();
             if (cart.length === 0) {
                 container.innerHTML = `<div class="p-3 text-center text-muted">Giỏ hàng trống. Hãy chọn món ăn ngon từ thực đơn!</div>`;
-                document.getElementById('cart-total-price').innerText = "$0.00";
+                document.getElementById('cart-total-price').innerText = "0 đ";
+                document.getElementById('cart-subtotal-price').innerText = "0 đ";
+                const discountRow = document.getElementById('cart-discount-row');
+                if (discountRow) discountRow.classList.add('d-none');
+                appliedCouponCode = null;
+                discountValue = 0;
                 return;
             }
 
@@ -1051,7 +1479,7 @@
                     <div style="flex: 1;">
                         <div class="fw-bold">${item.name}</div>
                         <small class="text-muted">${item.notes ? 'Ghi chú: ' + item.notes : ''}</small>
-                        <div class="small text-secondary">$${item.price.toFixed(2)} x ${item.quantity}</div>
+                        <div class="small text-secondary">${new Intl.NumberFormat('vi-VN').format(item.price)} đ x ${item.quantity}</div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="changeQty(${index}, -1)">-</button>
@@ -1060,14 +1488,31 @@
                         <button type="button" class="btn btn-sm btn-danger ms-2 py-0 px-2" onclick="removeCartItem(${index})"><i class="bi bi-trash"></i></button>
                     </div>
                     <div class="text-end fw-bold text-danger ms-3" style="min-width: 70px;">
-                        $${itemTotal.toFixed(2)}
+                        ${new Intl.NumberFormat('vi-VN').format(itemTotal)} đ
                     </div>
                 </div>
                 `;
             });
 
             container.innerHTML = html;
-            document.getElementById('cart-total-price').innerText = "$" + total.toFixed(2);
+            
+            const subtotalEl = document.getElementById('cart-subtotal-price');
+            if (subtotalEl) {
+                subtotalEl.innerText = new Intl.NumberFormat('vi-VN').format(total) + " đ";
+            }
+            
+            const discountRow = document.getElementById('cart-discount-row');
+            const discountEl = document.getElementById('cart-discount-price');
+            
+            if (appliedCouponCode && discountValue > 0) {
+                if (discountRow) discountRow.classList.remove('d-none');
+                if (discountEl) discountEl.innerText = "-" + new Intl.NumberFormat('vi-VN').format(discountValue) + " đ";
+            } else {
+                if (discountRow) discountRow.classList.add('d-none');
+            }
+
+            const finalTotal = Math.max(0, total - discountValue);
+            document.getElementById('cart-total-price').innerText = new Intl.NumberFormat('vi-VN').format(finalTotal) + " đ";
         }
 
         function changeQty(index, delta) {
@@ -1078,7 +1523,11 @@
                     cart.splice(index, 1);
                 }
                 saveCart(cart);
-                renderCartItems();
+                if (appliedCouponCode) {
+                    revalidateCoupon();
+                } else {
+                    renderCartItems();
+                }
             }
         }
 
@@ -1087,10 +1536,14 @@
             if (cart[index]) {
                 cart.splice(index, 1);
                 saveCart(cart);
-                renderCartItems();
+                if (appliedCouponCode) {
+                    revalidateCoupon();
+                } else {
+                    renderCartItems();
+                }
             }
         }
     </script>
+    @include('client.chatbot')
 </body>
-
 </html>

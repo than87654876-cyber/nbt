@@ -17,8 +17,10 @@ class AdminDishController extends Controller
         $query = Dish::with('category');
 
         if ($search) {
-            $query->where('dish_name', 'like', '%'.$search.'%')
-                ->orWhere('description', 'like', '%'.$search.'%');
+            $query->where(function ($q) use ($search) {
+                $q->where('dish_name', 'like', '%'.$search.'%')
+                    ->orWhere('description', 'like', '%'.$search.'%');
+            });
         }
 
         if ($categoryId) {
@@ -63,10 +65,11 @@ class AdminDishController extends Controller
         $data['is_available'] = $request->has('is_available');
 
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = time().'_'.$file->getClientOriginalName();
-            $file->move(public_path('uploads/dishes'), $filename);
-            $data['image_url'] = 'uploads/dishes/'.$filename;
+            $cloudinary = app(\App\Services\CloudinaryService::class);
+            $imageUrl = $cloudinary->upload($request->file('image'));
+            if ($imageUrl) {
+                $data['image_url'] = $imageUrl;
+            }
         }
 
         Dish::create($data);
@@ -100,15 +103,16 @@ class AdminDishController extends Controller
         $data['is_available'] = $request->has('is_available');
 
         if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($dish->image_url && file_exists(public_path($dish->image_url))) {
+            // Delete old local image if exists
+            if ($dish->image_url && !str_starts_with($dish->image_url, 'http') && file_exists(public_path($dish->image_url))) {
                 @unlink(public_path($dish->image_url));
             }
 
-            $file = $request->file('image');
-            $filename = time().'_'.$file->getClientOriginalName();
-            $file->move(public_path('uploads/dishes'), $filename);
-            $data['image_url'] = 'uploads/dishes/'.$filename;
+            $cloudinary = app(\App\Services\CloudinaryService::class);
+            $imageUrl = $cloudinary->upload($request->file('image'));
+            if ($imageUrl) {
+                $data['image_url'] = $imageUrl;
+            }
         }
 
         $dish->update($data);
@@ -129,5 +133,46 @@ class AdminDishController extends Controller
         $dish->delete();
 
         return redirect()->route('quanly_monandon')->with('success', 'Đã xóa món ăn thành công!');
+    }
+
+    // Xuất báo cáo món ăn bán chạy (CSV UTF-8 BOM)
+    public function exportDishesCsv()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="mon-an-ban-chay.csv"',
+        ];
+
+        $callback = function() {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            fputcsv($file, ['Mã món', 'Danh mục', 'Tên món ăn', 'Đơn giá (VNĐ)', 'Trạng thái', 'Số lượng bán lẻ đã bán', 'Ngày tạo']);
+
+            $dishes = Dish::with('category')->get()->map(function($dish) {
+                $dish->total_sold = \App\Models\OrderItem::where('dish_id', $dish->id)
+                    ->whereHas('order', function($q) {
+                        $q->where('payment_status', 'paid');
+                    })->sum('quantity');
+                return $dish;
+            })->sortByDesc('total_sold');
+
+            foreach ($dishes as $dish) {
+                $statusText = $dish->is_available ? 'Còn hàng' : 'Hết hàng';
+                fputcsv($file, [
+                    'MON-' . sprintf('%03d', $dish->id),
+                    $dish->category ? $dish->category->category_name : 'Không phân loại',
+                    $dish->dish_name,
+                    $dish->price,
+                    $statusText,
+                    $dish->total_sold,
+                    $dish->created_at ? $dish->created_at->format('d/m/Y H:i') : 'N/A',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

@@ -44,6 +44,21 @@
         if (preg_match('/SĐT MoMo: ([^,]+)/', $notes, $matches)) { $momoPhone = $matches[1]; }
         $momoUser = '';
         if (preg_match('/Chủ tài khoản MoMo: ([^\)]+)/', $notes, $matches)) { $momoUser = $matches[1]; }
+
+        // Parse custom requested amount if present
+        $reqAmount = null;
+        if (preg_match('/Số tiền yêu cầu: ([^,\]]+)/', $notes, $matches)) {
+            $reqAmount = $matches[1];
+        }
+
+        // Parse custom requested image proof if present
+        $imageLink = '';
+        if (preg_match('/Hình ảnh minh chứng: ([^,\]]+)/', $notes, $matches)) {
+            $imageLink = trim($matches[1]);
+            if ($imageLink === 'Không có') {
+                $imageLink = '';
+            }
+        }
     @endphp
 
     <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-3">
@@ -75,9 +90,18 @@
                                 class="fas fa-exclamation-circle me-1"></i>{{ $reasonText }}</h6>
 
                         <div class="text-muted small font-weight-bold mt-3 mb-1">Miêu tả chi tiết từ khách hàng:</div>
-                        <div class="p-3 bg-light rounded text-dark font-italic">
+                        <div class="p-3 bg-light rounded text-dark font-italic mb-3">
                             "{{ $detail }}"
                         </div>
+
+                        @if($imageLink)
+                            <div class="text-muted small font-weight-bold mb-1">Hình ảnh minh chứng từ khách:</div>
+                            <div class="p-2 bg-light rounded text-center border">
+                                <a href="{{ $imageLink }}" target="_blank">
+                                    <img src="{{ $imageLink }}" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -115,9 +139,16 @@
                             </div>
                         @endif
 
-                        <div class="mt-3 p-3 bg-gradient-light rounded border text-right">
-                            <div class="text-muted small">Tổng giá trị thụ hưởng hoàn trả chi tiết:</div>
-                            <h3 class="font-weight-bold text-danger mb-0">{{ number_format($order->final_amount, 0, ',', '.') }} đ</h3>
+                        <div class="mt-3 p-3 bg-gradient-light rounded border text-right text-dark">
+                            @if($reqAmount)
+                                <div class="text-muted small">Tổng giá trị đơn hàng gốc:</div>
+                                <h5 class="font-weight-bold text-secondary mb-2">{{ number_format($order->final_amount, 0, ',', '.') }} đ</h5>
+                                <div class="text-muted small">Số tiền khách hàng yêu cầu hoàn trả:</div>
+                                <h3 class="font-weight-bold text-danger mb-0">{{ $reqAmount }}</h3>
+                            @else
+                                <div class="text-muted small">Tổng giá trị thụ hưởng hoàn trả (Yêu cầu hoàn toàn bộ):</div>
+                                <h3 class="font-weight-bold text-danger mb-0">{{ number_format($order->final_amount, 0, ',', '.') }} đ</h3>
+                            @endif
                         </div>
                     </div>
                 </div>

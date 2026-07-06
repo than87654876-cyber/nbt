@@ -41,6 +41,12 @@
                     </thead>
                     <tbody>
                         @foreach($orders as $index => $order)
+                            @php
+                                $reqAmountText = number_format($order->final_amount, 0, ',', '.') . ' đ';
+                                if (preg_match('/Số tiền yêu cầu: ([^,\]]+)/', $order->health_notes, $matches)) {
+                                    $reqAmountText = $matches[1];
+                                }
+                            @endphp
                             <tr>
                                 <td>{{ $index + 1 }}</td>
                                 <td class="font-weight-bold">
@@ -49,7 +55,7 @@
                                 </td>
                                 <td>{{ $order->updated_at->format('d/m/Y H:i') }}</td>
                                 <td><a href="{{ route('donhang_xem', $order->id) }}" class="font-weight-bold text-primary">#FDL-{{ $order->id }}</a></td>
-                                <td class="font-weight-bold text-danger">{{ number_format($order->final_amount, 0, ',', '.') }} đ</td>
+                                <td class="font-weight-bold text-danger">{{ $reqAmountText }}</td>
                                 <td>
                                     @if($order->payment_status === 'refunded')
                                         <span class="badge badge-success shadow-sm"><i class="fas fa-check-circle"></i> Đã hoàn tiền</span>

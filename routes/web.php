@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminCategoryController;
 use App\Http\Controllers\AdminDishController;
 use App\Http\Controllers\AdminOrderController;
+use App\Http\Controllers\AdminPackageController;
 use App\Http\Controllers\AdminPromotionController;
 use App\Http\Controllers\AdminSubscriptionController;
 use App\Http\Controllers\AdminUserController;
@@ -18,36 +19,51 @@ Route::get('/', function () {
     return redirect()->route('trangchu');
 });
 Route::get('/trangchu', [ShopController::class, 'index'])->name('trangchu');
+Route::get('/tracuu', [ShopController::class, 'trackOrder'])->name('tracuu');
 
 // --- Phân hệ Xác thực (Authentication) ---
-// Admin & Staff login
-Route::get('/dangnhap', [AuthController::class, 'showAdminLogin'])->name('dangnhap');
-Route::post('/dangnhap', [AuthController::class, 'adminLogin'])->name('dangnhap.post');
-Route::get('/dangky', [AuthController::class, 'showAdminRegister'])->name('dangky');
-Route::post('/dangky', [AuthController::class, 'adminRegister'])->name('dangky.post');
+// Unified Login Route (Dùng chung cho cả Admin, Staff và Khách hàng)
+Route::get('/dangnhap', [AuthController::class, 'showLogin'])->name('dangnhap');
+Route::post('/dangnhap', [AuthController::class, 'login'])->name('dangnhap.post');
+Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 Route::any('/dangxuat', [AuthController::class, 'logout'])->name('dangxuat');
 
-// Client login & register
-Route::get('/trangchu/dangnhap', [AuthController::class, 'showClientLogin'])->name('trangchu/dangnhap');
-Route::post('/trangchu/dangnhap', [AuthController::class, 'clientLogin'])->name('trangchu/dangnhap.post');
+// Chuyển hướng các trang đăng nhập cũ về trang dùng chung
+Route::get('/trangchu/dangnhap', function () {
+    return redirect()->route('dangnhap');
+})->name('trangchu/dangnhap');
+Route::post('/trangchu/dangnhap', [AuthController::class, 'login'])->name('trangchu/dangnhap.post');
+
+// Đăng ký cho Khách hàng
 Route::get('/trangchu/dangky', [AuthController::class, 'showClientRegister'])->name('trangchu/dangky');
 Route::post('/trangchu/dangky', [AuthController::class, 'clientRegister'])->name('trangchu/dangky.post');
+Route::get('/dangky', function () {
+    return redirect()->route('trangchu/dangky');
+})->name('dangky');
+
 
 Route::get('/quenmatkhau', function () {
     return view('admin.forgot_password');
 })->name('quenmatkhau');
+Route::post('/quenmatkhau', [AuthController::class, 'sendAdminResetLinkEmail'])->name('quenmatkhau.post');
 
 Route::get('/trangchu/quenmatkhau', function () {
     return view('client.forget_password');
 })->name('trangchu/quenmatkhau');
+Route::post('/trangchu/quenmatkhau', [AuthController::class, 'sendClientResetLinkEmail'])->name('trangchu/quenmatkhau.post');
 
-Route::get('/trangchu/doimatkhau', function () {
-    return view('client.password_reset');
-})->name('trangchu/doimatkhau');
+Route::get('/trangchu/quenmatkhau/xacnhan', [AuthController::class, 'showClientOtpVerify'])->name('trangchu/quenmatkhau/xacnhan');
+Route::post('/trangchu/quenmatkhau/xacnhan', [AuthController::class, 'verifyClientOtpAndResetPassword'])->name('trangchu/quenmatkhau/xacnhan.post');
 
-Route::get('/doimatkhau', function () {
-    return view('admin.password_reset');
-})->name('doimatkhau');
+Route::get('/trangchu/doimatkhau/{token}', [AuthController::class, 'showClientResetPassword'])->name('trangchu/doimatkhau');
+Route::post('/trangchu/doimatkhau', [AuthController::class, 'resetClientPassword'])->name('trangchu/doimatkhau.post');
+
+Route::get('/doimatkhau/{token}', [AuthController::class, 'showAdminResetPassword'])->name('doimatkhau');
+Route::post('/doimatkhau', [AuthController::class, 'resetAdminPassword'])->name('doimatkhau.post');
+
+Route::get('/muahang', [CartController::class, 'checkoutPage'])->name('muahang');
+Route::post('/muahang/process', [CartController::class, 'processCheckout'])->name('muahang.process');
 
 // --- Phân hệ Khách hàng Đăng nhập ---
 Route::middleware(['auth'])->group(function () {
@@ -59,8 +75,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/giohang/update', [CartController::class, 'update'])->name('giohang.update');
     Route::post('/giohang/remove', [CartController::class, 'remove'])->name('giohang.remove');
 
-    Route::get('/muahang', [CartController::class, 'checkoutPage'])->name('muahang');
-    Route::post('/muahang/process', [CartController::class, 'processCheckout'])->name('muahang.process');
     Route::post('/order/cancel', [CartController::class, 'cancelOrder'])->name('order.cancel');
     Route::post('/order/review', [CartController::class, 'reviewOrder'])->name('order.review');
     Route::post('/order/refund', [CartController::class, 'refundOrder'])->name('order.refund');
@@ -70,6 +84,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/thanhtoan_hoantat/{id}', [CartController::class, 'completePayment'])->name('thanhtoan_hoantat');
 
     Route::get('/yeucauhoan', [CartController::class, 'refundsList'])->name('yeucauhoan');
+    Route::get('/api/orders/poll', [CartController::class, 'pollOrders'])->name('api.orders.poll');
 
     Route::get('/goidichvu', [SubscriptionController::class, 'index'])->name('goidichvu');
     Route::post('/goidichvu/buy', [SubscriptionController::class, 'buyPackage'])->name('goidichvu.buy');
@@ -85,13 +100,15 @@ Route::middleware(['admin'])->group(function () {
 
     // Các chức năng chỉ Admin (SuperAdmin) mới có quyền truy cập
     Route::middleware(['superadmin'])->group(function () {
-        Route::get('/quanly', function () {
-            return view('admin.revenue_report');
-        })->name('quanly');
+        Route::get('/quanly', [\App\Http\Controllers\AdminDashboardController::class, 'index'])->name('quanly');
 
         Route::get('/quanly_trangchu', function () {
             return view('admin.mainpage');
         })->name('quanly_trangchu');
+
+        // Cấu hình Hệ thống / Trang chủ
+        Route::get('/quanly_cauhinh', [\App\Http\Controllers\AdminSettingController::class, 'index'])->name('quanly_cauhinh');
+        Route::post('/quanly_cauhinh', [\App\Http\Controllers\AdminSettingController::class, 'update'])->name('quanly_cauhinh.post');
 
         // Quản lý Khuyến mãi
         Route::get('/quanly_khuyenmai', [AdminPromotionController::class, 'index'])->name('quanly_khuyenmai');
@@ -140,24 +157,20 @@ Route::middleware(['admin'])->group(function () {
     Route::post('/monandon_xoa/{id}', [AdminDishController::class, 'destroy'])->name('monandon_xoa');
 
     // Quản lý Gói dịch vụ (Sản phẩm gói)
-    Route::get('/quanly_goidichvu', function () {
-        return view('admin.packages');
-    })->name('quanly_goidichvu');
-    Route::get('/goidichvu_them', function () {
-        return view('admin.packages_add');
-    })->name('goidichvu_them');
-    Route::get('/goidichvu_xem', function () {
-        return view('admin.packages_detail');
-    })->name('goidichvu_xem');
-    Route::get('/goidichvu_chinhsua', function () {
-        return view('admin.packages_edit');
-    })->name('goidichvu_chinhsua');
+    Route::get('/quanly_goidichvu', [AdminPackageController::class, 'index'])->name('quanly_goidichvu');
+    Route::get('/goidichvu_them', [AdminPackageController::class, 'create'])->name('goidichvu_them');
+    Route::post('/goidichvu_them', [AdminPackageController::class, 'store'])->name('goidichvu_them.post');
+    Route::get('/goidichvu_xem/{id}', [AdminPackageController::class, 'show'])->name('goidichvu_xem');
+    Route::get('/goidichvu_chinhsua/{id}', [AdminPackageController::class, 'edit'])->name('goidichvu_chinhsua');
+    Route::post('/goidichvu_chinhsua/{id}', [AdminPackageController::class, 'update'])->name('goidichvu_chinhsua.post');
+    Route::post('/goidichvu_xoa/{id}', [AdminPackageController::class, 'destroy'])->name('goidichvu_xoa');
 
     // Quản lý Đơn hàng
     Route::get('/quanly_donhang', [AdminOrderController::class, 'index'])->name('quanly_donhang');
     Route::get('/donhang_xem/{id}', [AdminOrderController::class, 'show'])->name('donhang_xem');
     Route::get('/donhang_chinhsua/{id}', [AdminOrderController::class, 'edit'])->name('donhang_chinhsua');
     Route::post('/donhang_chinhsua/{id}', [AdminOrderController::class, 'update'])->name('donhang_chinhsua.post');
+    Route::post('/donhang_refund/{id}', [AdminOrderController::class, 'processRefund'])->name('donhang_refund');
     Route::post('/donhang_xoa/{id}', [AdminOrderController::class, 'destroy'])->name('donhang_xoa');
 
     // Bếp chuẩn bị món
@@ -182,4 +195,27 @@ Route::middleware(['admin'])->group(function () {
     Route::get('/khachhang_chinhsua/{id}', [AdminUserController::class, 'customerEdit'])->name('khachhang_chinhsua');
     Route::post('/khachhang_chinhsua/{id}', [AdminUserController::class, 'customerUpdate'])->name('khachhang_chinhsua.post');
     Route::post('/khachhang_xoa/{id}', [AdminUserController::class, 'customerDestroy'])->name('khachhang_xoa');
+    Route::get('/quanly_khachvanglai', [AdminUserController::class, 'guestsList'])->name('quanly_khachvanglai');
+
+    // Báo cáo & Xuất CSV (Excel)
+    Route::get('/quanly/baocao/xuat-orders', [AdminOrderController::class, 'exportOrdersCsv'])->name('baocao_xuat_orders');
+    Route::get('/quanly/baocao/xuat-customers', [AdminUserController::class, 'exportCustomersCsv'])->name('baocao_xuat_customers');
+    Route::get('/quanly/baocao/xuat-dishes', [AdminDishController::class, 'exportDishesCsv'])->name('baocao_xuat_dishes');
+    Route::get('/quanly/baocao/xuat-refunds', [AdminOrderController::class, 'exportRefundsCsv'])->name('baocao_xuat_refunds');
 });
+
+Route::get('/test-broadcast', function () {
+    broadcast(new \App\Events\MessageSent('Chào bạn, đây là tin nhắn thời gian thực từ Pusher!'));
+    return 'Broadcast Sent!';
+});
+
+// --- Các API & Webhook tích hợp ---
+Route::post('/api/gemini/chat', [ShopController::class, 'geminiChat'])->name('api.gemini.chat');
+Route::post('/api/payos/webhook', [CartController::class, 'payosWebhook'])->name('api.payos.webhook');
+Route::post('/api/coupon/validate', [CartController::class, 'validateCoupon'])->name('api.coupon.validate');
+Route::get('/api/geocode', [ShopController::class, 'geocodeAddress'])->name('api.geocode');
+Route::get('/api/settings/poll', [ShopController::class, 'pollSettings'])->name('api.settings.poll');
+Route::get('/api/orders/track/poll', [ShopController::class, 'pollTrackedOrder'])->name('api.orders.track.poll');
+
+
+

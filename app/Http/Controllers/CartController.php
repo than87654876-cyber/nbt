@@ -9,6 +9,8 @@ use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderPlacedMail;
 
 class CartController extends Controller
 {
@@ -41,17 +43,64 @@ class CartController extends Controller
     // Xử lý gửi đơn đặt hàng từ giỏ hàng (localStorage gửi lên)
     public function processCheckout(Request $request)
     {
-        $request->validate([
+        $validationRules = [
             'cart_phone' => 'required|string',
             'cart_address' => 'required|string',
             'cart_time' => 'required|string',
             'cart_payment' => 'required|string',
             'cart_items' => 'required|string', // Chuỗi JSON chứa danh sách sản phẩm
-        ]);
+        ];
+
+        if (!Auth::check()) {
+            $validationRules['cart_fullname'] = 'required|string|max:255';
+            $validationRules['cart_email'] = 'required|email';
+        }
+
+        $request->validate($validationRules);
 
         $items = json_decode($request->cart_items, true);
         if (empty($items)) {
             return back()->withErrors(['cart_items' => 'Giỏ hàng của bạn đang trống.']);
+        }
+
+        // Xác định ID người dùng (Nếu là khách vãng lai thì tìm hoặc tạo tài khoản guest ẩn)
+        $userId = Auth::id();
+        if (!$userId) {
+            $email = $request->input('cart_email');
+            $phone = $request->input('cart_phone');
+            $fullname = $request->input('cart_fullname');
+
+            // Kiểm tra xem đã có tài khoản khách hàng thực thụ chưa
+            $existingCustomer = \App\Models\User::where('role', 'customer')
+                ->where(function($q) use ($email, $phone) {
+                    $q->where('email', $email)->orWhere('phone', $phone);
+                })->first();
+
+            if ($existingCustomer) {
+                return back()->withErrors(['error' => 'Email hoặc Số điện thoại đã được đăng ký thành viên. Vui lòng đăng nhập để đặt hàng.']);
+            }
+
+            // Tìm hoặc tạo tài khoản guest ẩn
+            $guestUser = \App\Models\User::where('role', 'guest')
+                ->where(function($q) use ($email, $phone) {
+                    $q->where('email', $email)->orWhere('phone', $phone);
+                })->first();
+
+            if (!$guestUser) {
+                $guestUser = \App\Models\User::create([
+                    'fullname' => $fullname,
+                    'email' => $email,
+                    'phone' => $phone,
+                    'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
+                    'role' => 'guest',
+                    'status' => true,
+                ]);
+            } else {
+                $guestUser->update([
+                    'fullname' => $fullname,
+                ]);
+            }
+            $userId = $guestUser->id;
         }
 
         DB::beginTransaction();
@@ -80,12 +129,55 @@ class CartController extends Controller
                 return back()->withErrors(['cart_items' => 'Không có món ăn hợp lệ nào trong giỏ hàng.']);
             }
 
+            // Tính giảm giá coupon nếu có
+            $discountAmount = 0;
+            $couponId = null;
+            if ($request->filled('coupon_code')) {
+                $code = strtoupper($request->input('coupon_code'));
+                $coupon = \App\Models\Coupon::where('coupon_code', $code)->first();
+                if ($coupon) {
+                    $now = now()->format('Y-m-d');
+                    $isValid = true;
+                    if ($coupon->start_date && $now < $coupon->start_date) {
+                        $isValid = false;
+                    }
+                    if ($coupon->end_date && $now > $coupon->end_date) {
+                        $isValid = false;
+                    }
+                    if ($coupon->min_order_value && $totalAmount < $coupon->min_order_value) {
+                        $isValid = false;
+                    }
+                    if ($coupon->usage_limit !== null && $coupon->usage_limit <= 0) {
+                        $isValid = false;
+                    }
+
+                    if ($isValid) {
+                        $couponId = $coupon->id;
+                        if ($coupon->discount_type === 'percent') {
+                            $discountAmount = $totalAmount * ($coupon->discount_value / 100);
+                        } else {
+                            $discountAmount = $coupon->discount_value;
+                        }
+                        if ($discountAmount > $totalAmount) {
+                            $discountAmount = $totalAmount;
+                        }
+
+                        if ($coupon->usage_limit !== null) {
+                            $coupon->decrement('usage_limit');
+                        }
+                    }
+                }
+            }
+
             // Tạo đơn hàng mới
             $order = new Order;
-            $order->user_id = Auth::id();
+            $order->user_id = $userId;
             $order->order_type = 'single';
             $order->total_amount = $totalAmount;
-            $order->final_amount = $totalAmount; // Chưa tính giảm giá coupon
+            $order->final_amount = max(0, $totalAmount - $discountAmount);
+            if ($couponId) {
+                $order->coupon_id = $couponId;
+            }
 
             // Map payment methods: cod -> cash, atm -> bank_transfer, momo -> momo
             $paymentMethod = 'cash';
@@ -112,14 +204,69 @@ class CartController extends Controller
 
             DB::commit();
 
-            // Điều hướng dựa trên phương thức thanh toán
-            if ($request->cart_payment === 'momo') {
-                return redirect()->route('thanhtoan_momo', ['order_id' => $order->id, 'amount' => $totalAmount]);
-            } elseif ($request->cart_payment === 'atm') {
-                return redirect()->route('thanhtoan_ATM', ['order_id' => $order->id, 'amount' => $totalAmount]);
+            try {
+                event(new \App\Events\OrderUpdated($order, 'created'));
+            } catch (\Exception $broadcastException) {
+                \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
             }
 
-            // Nếu COD thì về luôn trang lịch sử đơn hàng với thông báo thành công
+            // Tích hợp thanh toán trực tuyến qua PayOS (VietQR) cho MoMo hoặc ATM chuyển khoản
+            if (in_array($request->cart_payment, ['atm', 'momo'])) {
+                $payOS = app(\App\Services\PayOSService::class);
+                $cancelUrl = Auth::check() ? route('giohang') . '?error=cancel_payment' : route('trangchu') . '?error=cancel_payment';
+                $returnUrl = route('thanhtoan_hoantat', ['id' => $order->id]);
+                if (!Auth::check()) {
+                    $returnUrl .= '?email=' . urlencode($request->cart_email) . '&phone=' . urlencode($request->cart_phone);
+                }
+
+                $res = $payOS->createPaymentLink([
+                    'orderCode' => $order->id,
+                    'amount' => $order->final_amount, // Use the discounted final amount
+                    'description' => 'FDL-' . $order->id,
+                    'cancelUrl' => $cancelUrl,
+                    'returnUrl' => $returnUrl
+                ]);
+
+                if ($res['success']) {
+                    DB::commit();
+                    
+                    // Gửi thông báo Telegram khi có đơn hàng mới chờ thanh toán
+                    try {
+                        $telegram = app(\App\Services\TelegramService::class);
+                        $telegram->sendMessage("🔔 <b>Đơn đặt món mới chờ thanh toán:</b>\nMã đơn: #FDL-{$order->id}\nTổng tiền: " . number_format($order->final_amount, 0, ',', '.') . " VNĐ\nPhương thức: Trực tuyến (PayOS)\nVui lòng kiểm tra cổng thanh toán.");
+                    } catch (\Exception $telError) {
+                        \Illuminate\Support\Facades\Log::warning('Telegram sending warning: ' . $telError->getMessage());
+                    }
+
+                    return redirect($res['data']['checkoutUrl']);
+                } else {
+                    throw new \Exception('Không thể tạo liên kết thanh toán PayOS: ' . $res['message']);
+                }
+            }
+
+            // Nếu COD thì gửi thông báo Telegram đặt hàng trực tiếp & về trang lịch sử với thông báo thành công
+            try {
+                $telegram = app(\App\Services\TelegramService::class);
+                $telegram->sendMessage("🔔 <b>Đơn đặt món mới (COD):</b>\nMã đơn: #FDL-{$order->id}\nTổng tiền: " . number_format($order->final_amount, 0, ',', '.') . " VNĐ\nPhương thức: Tiền mặt khi nhận (COD)\nVui lòng chuẩn bị và giao hàng.");
+            } catch (\Exception $telError) {
+                \Illuminate\Support\Facades\Log::warning('Telegram sending warning: ' . $telError->getMessage());
+            }
+
+            // Gửi email xác nhận đặt hàng
+            try {
+                Mail::to($order->user->email)->send(new OrderPlacedMail($order));
+            } catch (\Exception $mailError) {
+                \Illuminate\Support\Facades\Log::warning('OrderPlacedMail sending warning: ' . $mailError->getMessage());
+            }
+
+            if (!Auth::check()) {
+                return redirect()->route('tracuu', [
+                    'order_id' => $order->id,
+                    'phone' => $request->cart_phone,
+                    'email' => $request->cart_email
+                ])->with('success', 'Đơn hàng FDL-'.$order->id.' đã được đặt thành công! Bạn có thể theo dõi tiến độ đơn hàng tại đây.');
+            }
+
             return redirect()->route('giohang')->with('success', 'Đơn hàng FDL-'.$order->id.' đã được đặt thành công!');
 
         } catch (\Exception $e) {
@@ -149,7 +296,7 @@ class CartController extends Controller
             ->firstOrFail();
 
         if ($order->order_status !== 'pending') {
-            return back()->withErrors(['error' => 'Chỉ có thể hủy đơn hàng ở trạng thái chờ xác nhận.']);
+            return redirect()->route('giohang')->withErrors(['error' => 'Chỉ có thể hủy đơn hàng ở trạng thái chờ xác nhận.']);
         }
 
         $order->order_status = 'cancelled';
@@ -157,7 +304,13 @@ class CartController extends Controller
             '[Hủy đơn - Lý do: '.$request->cancel_reason.($request->cancel_detail ? ' (Chi tiết: '.$request->cancel_detail.')' : '').']';
         $order->save();
 
-        return back()->with('success', 'Đơn hàng FDL-'.$order->id.' đã được hủy thành công.');
+        try {
+            event(new \App\Events\OrderUpdated($order, 'cancelled'));
+        } catch (\Exception $broadcastException) {
+            \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
+        }
+
+        return redirect()->route('giohang')->with('success', 'Đơn hàng FDL-'.$order->id.' đã được hủy thành công.');
     }
 
     // Xử lý gửi đánh giá chất lượng đơn hàng
@@ -176,7 +329,7 @@ class CartController extends Controller
         // Kiểm tra xem đã đánh giá chưa
         $exists = Review::where('order_id', $order->id)->exists();
         if ($exists) {
-            return back()->withErrors(['error' => 'Đơn hàng này đã được đánh giá trước đó.']);
+            return redirect()->route('giohang')->withErrors(['error' => 'Đơn hàng này đã được đánh giá trước đó.']);
         }
 
         Review::create([
@@ -186,7 +339,7 @@ class CartController extends Controller
             'comment' => $request->review_comment,
         ]);
 
-        return back()->with('success', 'Cảm ơn bạn đã gửi đánh giá cho đơn hàng FDL-'.$order->id.'!');
+        return redirect()->route('giohang')->with('success', 'Cảm ơn bạn đã gửi đánh giá cho đơn hàng FDL-'.$order->id.'!');
     }
 
     // Xử lý yêu cầu hoàn trả tiền
@@ -201,6 +354,8 @@ class CartController extends Controller
             'bank_user' => 'required_if:refund_method,bank|nullable|string',
             'momo_phone' => 'required_if:refund_method,momo|nullable|string',
             'momo_user' => 'required_if:refund_method,momo|nullable|string',
+            'refund_amount' => 'required|numeric|min:0',
+            'refund_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'refund_detail' => 'required|string',
         ]);
 
@@ -209,10 +364,28 @@ class CartController extends Controller
             ->firstOrFail();
 
         if ($order->order_status !== 'completed') {
-            return back()->withErrors(['error' => 'Chỉ có thể yêu cầu hoàn tiền cho đơn hàng đã hoàn thành.']);
+            return redirect()->route('giohang')->withErrors(['error' => 'Chỉ có thể yêu cầu hoàn tiền cho đơn hàng đã hoàn thành.']);
         }
 
-        $refundInfo = '[Yêu cầu hoàn tiền - Lý do: '.$request->refund_reason.', Phương thức: '.$request->refund_method;
+        // Xử lý upload ảnh minh chứng hoàn tiền
+        $imageLink = 'Không có';
+        if ($request->hasFile('refund_image')) {
+            try {
+                $file = $request->file('refund_image');
+                $filename = 'refund_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads'), $filename);
+                $imageLink = asset('uploads/' . $filename);
+            } catch (\Exception $uploadError) {
+                \Illuminate\Support\Facades\Log::warning('Refund image upload error: ' . $uploadError->getMessage());
+            }
+        }
+
+        $reqAmount = floatval($request->input('refund_amount', $order->final_amount));
+        if ($reqAmount > $order->final_amount) {
+            $reqAmount = $order->final_amount;
+        }
+
+        $refundInfo = '[Yêu cầu hoàn tiền - Số tiền yêu cầu: '.number_format($reqAmount, 0, ',', '.').'đ, Lý do: '.$request->refund_reason.', Hình ảnh minh chứng: '.$imageLink.', Phương thức: '.$request->refund_method;
         if ($request->refund_method === 'bank') {
             $refundInfo .= ' (Ngân hàng: '.$request->bank_name.', STK: '.$request->bank_account.', Chủ tài khoản: '.$request->bank_user.')';
         } else {
@@ -223,7 +396,13 @@ class CartController extends Controller
         $order->health_notes = ($order->health_notes ? $order->health_notes."\n" : '').$refundInfo;
         $order->save();
 
-        return back()->with('success', 'Yêu cầu hoàn tiền cho đơn hàng FDL-'.$order->id.' đã được gửi thành công. Ban quản lý sẽ thẩm định và phản hồi sớm nhất.');
+        try {
+            event(new \App\Events\OrderUpdated($order, 'refund_requested'));
+        } catch (\Exception $broadcastException) {
+            \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
+        }
+
+        return redirect()->route('giohang')->with('success', 'Yêu cầu hoàn tiền cho đơn hàng FDL-'.$order->id.' đã được gửi thành công. Ban quản lý sẽ thẩm định và phản hồi sớm nhất.');
     }
 
     // Trang giả lập thanh toán MoMo
@@ -269,10 +448,216 @@ class CartController extends Controller
     // Hoàn tất thanh toán và chuyển hướng với thông báo thành công
     public function completePayment($id)
     {
-        $order = Order::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $order = Order::where('id', $id)->firstOrFail();
         $order->payment_status = 'paid';
         $order->save();
 
-        return redirect()->route('giohang')->with('success', 'Thanh toán đơn hàng FDL-'.$order->id.' thành công! Đơn hàng đang được nhà hàng chuẩn bị.');
+        try {
+            event(new \App\Events\OrderUpdated($order, 'paid'));
+        } catch (\Exception $broadcastException) {
+            \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
+        }
+
+        // Gửi email xác nhận đặt hàng thành công sau khi thanh toán thành công
+        try {
+            Mail::to($order->user->email)->send(new OrderPlacedMail($order));
+        } catch (\Exception $mailError) {
+            \Illuminate\Support\Facades\Log::warning('OrderPlacedMail sending warning: ' . $mailError->getMessage());
+        }
+
+        // Gửi thông báo Telegram khi đã thanh toán trực tuyến thành công
+        try {
+            $telegram = app(\App\Services\TelegramService::class);
+            $telegram->sendMessage("✅ <b>Đơn hàng đã được thanh toán thành công:</b>\nMã đơn: #FDL-{$order->id}\nTổng tiền: " . number_format($order->total_amount, 0, ',', '.') . " VNĐ\nPhương thức: Trực tuyến (PayOS)\nBếp đang chuẩn bị.");
+        } catch (\Exception $telError) {
+            \Illuminate\Support\Facades\Log::warning('Telegram sending warning: ' . $telError->getMessage());
+        }
+
+        if (Auth::check()) {
+            return redirect()->route('giohang')->with('success', 'Thanh toán đơn hàng FDL-'.$order->id.' thành công! Đơn hàng đang được nhà hàng chuẩn bị.');
+        } else {
+            $guestUser = $order->user;
+            return redirect()->route('tracuu', [
+                'order_id' => $order->id,
+                'email' => $guestUser ? $guestUser->email : '',
+                'phone' => $guestUser ? $guestUser->phone : '',
+            ])->with('success', 'Thanh toán đơn hàng FDL-'.$order->id.' thành công! Đơn hàng đang được nhà hàng chuẩn bị.');
+        }
+    }
+
+    // Webhook của PayOS gọi tự động khi thanh toán hoàn tất từ ngân hàng
+    public function payosWebhook(Request $request)
+    {
+        $webhookData = $request->all();
+        $payOS = app(\App\Services\PayOSService::class);
+
+        \Illuminate\Support\Facades\Log::info('PayOS Webhook received', $webhookData);
+
+        if ($payOS->validateWebhook($webhookData)) {
+            $data = $webhookData['data'];
+            $orderCode = $data['orderCode'];
+
+            $order = Order::find($orderCode);
+            if ($order && $order->payment_status !== 'paid') {
+                $order->payment_status = 'paid';
+                $order->save();
+
+                try {
+                    event(new \App\Events\OrderUpdated($order, 'paid'));
+                } catch (\Exception $broadcastException) {
+                    \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
+                }
+
+                // Gửi email xác nhận đặt hàng thành công sau khi thanh toán thành công qua Webhook
+                try {
+                    Mail::to($order->user->email)->send(new OrderPlacedMail($order));
+                } catch (\Exception $mailError) {
+                    \Illuminate\Support\Facades\Log::warning('OrderPlacedMail sending warning: ' . $mailError->getMessage());
+                }
+
+                // Gửi thông báo Telegram khi đã thanh toán trực tuyến thành công (realtime webhook)
+                try {
+                    $telegram = app(\App\Services\TelegramService::class);
+                    $telegram->sendMessage("✅ <b>Đơn hàng đã thanh toán qua Webhook:</b>\nMã đơn: #FDL-{$order->id}\nTổng tiền: " . number_format($order->total_amount, 0, ',', '.') . " VNĐ\nTrạng thái: Đã nhận tiền. Bếp đang chuẩn bị món!");
+                } catch (\Exception $telError) {
+                    \Illuminate\Support\Facades\Log::warning('Telegram sending warning: ' . $telError->getMessage());
+                }
+            }
+
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Invalid signature'], 400);
+    }
+
+    // AJAX Polling for Order updates
+    public function pollOrders(Request $request)
+    {
+        $since = $request->query('since');
+
+        if (!$since) {
+            return response()->json([
+                'updates' => [],
+                'timestamp' => now()->toDateTimeString(),
+            ]);
+        }
+
+        try {
+            $sinceDate = \Carbon\Carbon::parse($since);
+        } catch (\Exception $e) {
+            return response()->json([
+                'updates' => [],
+                'timestamp' => now()->toDateTimeString(),
+            ]);
+        }
+
+        $query = \App\Models\Order::with(['user', 'orderItems.dish']);
+
+        if (\Illuminate\Support\Facades\Auth::check() && in_array(\Illuminate\Support\Facades\Auth::user()->role, ['admin', 'staff'])) {
+            // Admins and staff get updates for all orders
+        } else {
+            // Regular customers get updates only for their own orders
+            $query->where('user_id', \Illuminate\Support\Facades\Auth::id());
+        }
+
+        $orders = $query->where('updated_at', '>', $sinceDate)
+                        ->orderBy('updated_at', 'asc')
+                        ->get();
+
+        $updates = [];
+        foreach ($orders as $order) {
+            $action = 'status_updated';
+            
+            if ($order->created_at->gt($sinceDate) || $order->created_at->eq($order->updated_at)) {
+                $action = 'created';
+            } elseif ($order->order_status === 'cancelled') {
+                $action = 'cancelled';
+            } elseif ($order->payment_status === 'paid' && $order->updated_at->gt($sinceDate)) {
+                $action = 'paid';
+            } elseif ($order->payment_status === 'refunded') {
+                $action = 'refund_processed';
+            }
+
+            $orderData = $order->toArray();
+            $orderData['is_reviewed'] = \App\Models\Review::where('order_id', $order->id)->exists();
+            $orderData['has_refund_request'] = strpos($order->health_notes ?? '', '[Yêu cầu hoàn tiền') !== false;
+
+            $updates[] = [
+                'order' => $orderData,
+                'action' => $action,
+            ];
+        }
+
+        return response()->json([
+            'updates' => $updates,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
+
+    public function validateCoupon(Request $request)
+    {
+        $code = strtoupper($request->input('code'));
+        $totalAmount = floatval($request->input('total_amount'));
+
+        $coupon = \App\Models\Coupon::where('coupon_code', $code)->first();
+
+        if (!$coupon) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã giảm giá không tồn tại.'
+            ]);
+        }
+
+        // Check date
+        $now = now()->format('Y-m-d');
+        if ($coupon->start_date && $now < $coupon->start_date) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chương trình khuyến mãi chưa bắt đầu.'
+            ]);
+        }
+
+        if ($coupon->end_date && $now > $coupon->end_date) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã giảm giá đã hết hạn sử dụng.'
+            ]);
+        }
+
+        // Check min order value
+        if ($coupon->min_order_value && $totalAmount < $coupon->min_order_value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Giá trị đơn hàng chưa đạt tối thiểu (' . number_format($coupon->min_order_value, 0, ',', '.') . 'đ) để áp dụng mã.'
+            ]);
+        }
+
+        // Check usage limit
+        if ($coupon->usage_limit !== null && $coupon->usage_limit <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã giảm giá đã hết lượt sử dụng.'
+            ]);
+        }
+
+        // Calculate discount
+        $discountAmount = 0;
+        if ($coupon->discount_type === 'percent') {
+            $discountAmount = $totalAmount * ($coupon->discount_value / 100);
+        } else {
+            $discountAmount = $coupon->discount_value;
+        }
+
+        if ($discountAmount > $totalAmount) {
+            $discountAmount = $totalAmount;
+        }
+
+        return response()->json([
+            'success' => true,
+            'discount_amount' => $discountAmount,
+            'final_amount' => $totalAmount - $discountAmount,
+            'message' => 'Áp dụng mã giảm giá thành công!'
+        ]);
     }
 }
+

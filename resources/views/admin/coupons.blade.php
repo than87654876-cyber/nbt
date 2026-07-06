@@ -64,7 +64,7 @@
             <div class="card-body text-dark">
                 <div class="row">
 
-                    <div class="col-xl-4 col-md-12 mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card border-top-danger h-100 py-3 bg-white shadow-sm">
                             <div class="card-body">
                                 <h6 class="font-weight-bold text-danger mb-3"><i
@@ -105,7 +105,7 @@
                         </div>
                     </div>
 
-                    <div class="col-xl-4 col-md-12 mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card border-top-warning h-100 py-3 bg-white shadow-sm">
                             <div class="card-body">
                                 <h6 class="font-weight-bold text-warning mb-3"><i
@@ -137,7 +137,7 @@
                         </div>
                     </div>
 
-                    <div class="col-xl-4 col-md-12 mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
                         <div class="card border-top-success h-100 py-3 bg-white shadow-sm">
                             <div class="card-body">
                                 <h6 class="font-weight-bold text-success mb-3"><i
@@ -167,6 +167,23 @@
                                 <small class="text-muted d-block mt-2">Phù hợp kích thích khách
                                     vừa tạo
                                     tài khoản thực hiện đơn đầu tiên.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card border-top-primary h-100 py-3 bg-white shadow-sm">
+                            <div class="card-body">
+                                <h6 class="font-weight-bold text-primary mb-3"><i
+                                        class="fas fa-paper-plane mr-1"></i> 4. Gửi đích danh Email</h6>
+                                <div class="form-group">
+                                    <label for="target_email"
+                                        class="small font-weight-bold text-muted">Địa chỉ Gmail khách hàng:</label>
+                                    <input type="email" class="form-control font-weight-bold text-primary"
+                                        id="target_email" name="target_email"
+                                        placeholder="customer@gmail.com">
+                                </div>
+                                <small class="text-muted d-block mt-2">Điền ô này để gửi cho duy nhất khách hàng này (bỏ qua bộ lọc hạng/thời gian).</small>
                             </div>
                         </div>
                     </div>

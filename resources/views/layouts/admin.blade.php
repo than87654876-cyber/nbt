@@ -14,6 +14,7 @@
     <!-- Custom styles for this template-->
     <link href="{{ asset('admin/css/sb-admin-2.min.css') }}" rel="stylesheet">
     @yield('styles')
+    @vite(['resources/js/app.js'])
 </head>
 
 <body id="page-top">
@@ -58,8 +59,8 @@
 
             <!-- Nav Item - Cấu hình trang chủ -->
             @if(Auth::user()->role === 'admin')
-            <li class="nav-item {{ Route::is('quanly_trangchu') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('quanly_trangchu') }}">
+            <li class="nav-item {{ Route::is('quanly_cauhinh') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('quanly_cauhinh') }}">
                     <i class="fas fa-fw fa-cogs"></i>
                     <span>Cấu hình trang chủ</span>
                 </a>
@@ -151,7 +152,7 @@
 
             <!-- Nav Item - Khách hàng Collapse Menu -->
             @php 
-                $inCustomers = Route::is('quanly_khachhang') || Route::is('quanly_guima') || Route::is('khachhang_xem') || Route::is('khachhang_chinhsua');
+                $inCustomers = Route::is('quanly_khachhang') || Route::is('quanly_guima') || Route::is('khachhang_xem') || Route::is('khachhang_chinhsua') || Route::is('quanly_khachvanglai');
             @endphp
             <li class="nav-item {{ $inCustomers ? 'active' : '' }}">
                 <a class="nav-link {{ $inCustomers ? '' : 'collapsed' }}" href="#" data-toggle="collapse" data-target="#collapsePages"
@@ -162,7 +163,8 @@
                 <div id="collapsePages" class="collapse {{ $inCustomers ? 'show' : '' }}" aria-labelledby="headingPages" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Quản lý khách hàng</h6>
-                        <a class="collapse-item {{ Route::is('quanly_khachhang') ? 'active' : '' }}" href="{{ route('quanly_khachhang') }}">Danh sách</a>
+                        <a class="collapse-item {{ Route::is('quanly_khachhang') ? 'active' : '' }}" href="{{ route('quanly_khachhang') }}">Danh sách thành viên</a>
+                        <a class="collapse-item {{ Route::is('quanly_khachvanglai') ? 'active' : '' }}" href="{{ route('quanly_khachvanglai') }}">Khách vãng lai</a>
                         @if(Auth::user()->role === 'admin')
                         <a class="collapse-item {{ Route::is('quanly_guima') ? 'active' : '' }}" href="{{ route('quanly_guima') }}">Gửi mã khuyến mãi</a>
                         @endif
@@ -217,7 +219,7 @@
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ Auth::user()->fullname }}</span>
-                                <img class="img-profile rounded-circle" src="{{ asset('logo.jpg') }}">
+                                <img class="img-profile rounded-circle setting-logo-img" src="{{ isset($settings['logo_url']) ? (\Illuminate\Support\Str::startsWith($settings['logo_url'], 'http') ? $settings['logo_url'] : asset($settings['logo_url'])) : asset('logo.jpg') }}">
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
@@ -344,6 +346,86 @@
     <script src="{{ asset('admin/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
     <script src="{{ asset('admin/js/sb-admin-2.min.js') }}"></script>
     @yield('scripts')
-</body>
+    <!-- Realtime Echo Listener for Kitchen / Admin (Disabled in favor of AJAX Polling) -->
+    <!--
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (window.Echo) {
+                window.Echo.channel('kitchen-channel')
+                    .listen('OrderUpdated', (e) => {
+                        console.log('Realtime Order Event received:', e);
+                        if (e.action === 'created') {
+                            alert(`🔔 [Realtime] Có đơn hàng mới #${e.order.id}! Tổng tiền: ${new Intl.NumberFormat('vi-VN').format(e.order.total_amount)} đ. Vui lòng kiểm tra và chế biến!`);
+                            if (window.location.href.indexOf('quanly_donhang') > -1 || window.location.href.indexOf('quanly_bep') > -1) {
+                                window.location.reload();
+                            }
+                        }
+                    });
+            }
+        });
+    </script>
+    -->
+    <!-- Realtime AJAX Polling for Kitchen / Admin -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let lastCheckedTime = null;
 
+            // Get initial server time
+            fetch("{{ route('api.orders.poll') }}")
+                .then(response => response.json())
+                .then(data => {
+                    lastCheckedTime = data.timestamp;
+                    console.log('Admin Polling initialized at:', lastCheckedTime);
+                    setInterval(pollUpdates, 2000);
+                })
+                .catch(err => console.error('Error initializing admin polling:', err));
+
+            function pollUpdates() {
+                if (!lastCheckedTime) return;
+
+                fetch(`{{ route('api.orders.poll') }}?since=${encodeURIComponent(lastCheckedTime)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        lastCheckedTime = data.timestamp;
+                        if (data.updates && data.updates.length > 0) {
+                            data.updates.forEach(e => {
+                                console.log('Polling Order Event received:', e);
+                                const path = window.location.pathname;
+                                const isManagerPage = path.includes('quanly') || path.includes('donhang') || path.includes('yeucauhoan') || path.includes('goidangky') || path.includes('bep');
+                                
+                                if (e.action === 'created') {
+                                    alert(`🔔 [Realtime] Có đơn hàng mới #${e.order.id}! Vui lòng kiểm tra!`);
+                                    if (isManagerPage) {
+                                        window.location.reload();
+                                    }
+                                } else if (isManagerPage) {
+                                    window.location.reload();
+                                }
+                            });
+                        }
+                    })
+                    .catch(err => console.error('Error during admin polling:', err));
+            }
+
+            // Real-time Settings/Logo polling for Admin panel
+            let currentLogoUrl = "{{ isset($settings['logo_url']) ? (\Illuminate\Support\Str::startsWith($settings['logo_url'], 'http') ? $settings['logo_url'] : asset($settings['logo_url'])) : asset('logo.jpg') }}";
+            
+            function pollAdminSettings() {
+                fetch("{{ route('api.settings.poll') }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        const newLogo = data.settings.logo_url;
+                        if (newLogo && newLogo !== currentLogoUrl) {
+                            currentLogoUrl = newLogo;
+                            document.querySelectorAll('.setting-logo-img').forEach(img => {
+                                img.src = newLogo;
+                            });
+                        }
+                    })
+                    .catch(err => console.error('Error polling settings in Admin layout:', err));
+            }
+            setInterval(pollAdminSettings, 2000);
+        });
+    </script>
+</body>
 </html>

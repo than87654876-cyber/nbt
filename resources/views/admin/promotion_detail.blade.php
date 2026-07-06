@@ -25,17 +25,17 @@
                         </tr>
                         <tr>
                             <th>Loại chiết khấu:</th>
-                            <td>{{ $promotion->discount_type === 'percent' ? 'Giảm giá theo phần trăm (%)' : 'Giảm số tiền cố định ($)' }}</td>
+                            <td>{{ $promotion->discount_type === 'percent' ? 'Giảm giá theo phần trăm (%)' : 'Giảm số tiền cố định (đ)' }}</td>
                         </tr>
                         <tr>
                             <th>Giá trị giảm giá:</th>
                             <td class="text-danger font-weight-bold">
-                                {{ number_format($promotion->discount_value, 2) }} {{ $promotion->discount_type === 'percent' ? '%' : ' $' }}
+                                {{ number_format($promotion->discount_value, 0, ',', '.') }} {{ $promotion->discount_type === 'percent' ? '%' : ' đ' }}
                             </td>
                         </tr>
                         <tr>
                             <th>Giá trị đơn hàng tối thiểu:</th>
-                            <td>{{ number_format($promotion->min_order_value, 2) }} $</td>
+                            <td>{{ number_format($promotion->min_order_value, 0, ',', '.') }} đ</td>
                         </tr>
                         <tr>
                             <th>Thời hạn áp dụng:</th>

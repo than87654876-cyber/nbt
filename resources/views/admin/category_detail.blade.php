@@ -50,7 +50,7 @@
                             <tr>
                                 <td>{{ $index + 1 }}</td>
                                 <td class="font-weight-bold">{{ $dish->dish_name }}</td>
-                                <td class="text-danger font-weight-bold">${{ number_format($dish->price, 2) }}</td>
+                                <td class="text-danger font-weight-bold">{{ number_format($dish->price, 0, ',', '.') }} đ</td>
                                 <td>
                                     @if($dish->is_available)
                                         <span class="badge badge-success">Đang bán</span>

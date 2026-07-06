@@ -122,6 +122,14 @@ class AdminSubscriptionController extends Controller
             $subscription->save();
         }
 
+        if ($subscription->order) {
+            try {
+                event(new \App\Events\OrderUpdated($subscription->order, 'daily_dispatch'));
+            } catch (\Exception $broadcastException) {
+                \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
+            }
+        }
+
         return back()->with('success', 'Đã khởi tạo vận đơn giao món ăn "'.$schedule->dish->dish_name.'" thành công!');
     }
 

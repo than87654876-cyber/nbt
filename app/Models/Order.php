@@ -21,7 +21,28 @@ class Order extends Model
         'payment_status',
         'order_status',
         'health_notes',
+        'points_accumulated',
     ];
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted()
+    {
+        static::saved(function ($order) {
+            // Check if the order is paid and points have not been accumulated yet
+            if ($order->payment_status === 'paid' && !$order->points_accumulated) {
+                $user = $order->user;
+                if ($user) {
+                    $user->addPoints($order->final_amount);
+                    
+                    // Mark points as accumulated and save quietly to prevent infinite loop
+                    $order->points_accumulated = true;
+                    $order->saveQuietly();
+                }
+            }
+        });
+    }
 
     /**
      * Get the user that owns the order.

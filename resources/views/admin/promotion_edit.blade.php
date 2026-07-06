@@ -39,7 +39,7 @@
                         <label for="discount_type" class="font-weight-bold">Loại giảm giá <span class="text-danger">*</span></label>
                         <select class="form-control" id="discount_type" name="discount_type" required>
                             <option value="percent" {{ old('discount_type', $promotion->discount_type) === 'percent' ? 'selected' : '' }}>Giảm theo phần trăm (%)</option>
-                            <option value="fixed" {{ old('discount_type', $promotion->discount_type) === 'fixed' ? 'selected' : '' }}>Giảm tiền cố định ($)</option>
+                            <option value="fixed" {{ old('discount_type', $promotion->discount_type) === 'fixed' ? 'selected' : '' }}>Giảm tiền cố định (đ)</option>
                         </select>
                     </div>
                 </div>
@@ -47,11 +47,11 @@
                 <div class="row">
                     <div class="form-group col-md-6">
                         <label for="discount_value" class="font-weight-bold">Mức giảm giá <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" class="form-control text-danger font-weight-bold" id="discount_value" name="discount_value" value="{{ old('discount_value', $promotion->discount_value) }}" min="0" required>
+                        <input type="number" step="1" class="form-control text-danger font-weight-bold" id="discount_value" name="discount_value" value="{{ old('discount_value', (int)$promotion->discount_value) }}" min="0" required>
                     </div>
                     <div class="form-group col-md-6">
                         <label for="min_order_value" class="font-weight-bold">Giá trị đơn tối thiểu áp dụng <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" class="form-control" id="min_order_value" name="min_order_value" value="{{ old('min_order_value', $promotion->min_order_value) }}" min="0" required>
+                        <input type="number" step="1" class="form-control" id="min_order_value" name="min_order_value" value="{{ old('min_order_value', (int)$promotion->min_order_value) }}" min="0" required>
                     </div>
                 </div>
 

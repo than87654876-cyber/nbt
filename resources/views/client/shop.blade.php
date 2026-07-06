@@ -105,6 +105,7 @@
             border: 1px solid #ffd8bf;
         }
     </style>
+    @vite(['resources/js/app.js'])
 </head>
 
 <body class="index-page">
@@ -112,8 +113,8 @@
     <header id="header" class="header d-flex align-items-center sticky-top">
         <div class="container position-relative d-flex align-items-center justify-content-between">
 
-            <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-                <img src="{{ asset('logo.jpg') }}" alt="">
+            <a href="{{ route('trangchu') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+                <img src="{{ isset($settings['logo_url']) ? (Str::startsWith($settings['logo_url'], 'http') ? $settings['logo_url'] : asset($settings['logo_url'])) : asset('logo.jpg') }}" alt="" class="setting-logo-img">
                 <h1 class="sitename">FOODELICIOUS</h1>
                 <span>.</span>
             </a>
@@ -131,6 +132,7 @@
                     </li>
                     <li><a href="#events">Chương trình</a></li>
                     <li><a href="#contact">Liên hệ</a></li>
+                    <li><a href="{{ route('tracuu') }}">Tra cứu đơn hàng</a></li>
                 </ul>
                 <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </nav>
@@ -381,9 +383,31 @@
                                 <div id="cart-items-container">
                                     <!-- Sẽ được tải động bằng JS -->
                                 </div>
-                                <div class="d-flex justify-content-between small pt-2 px-2 border-top">
-                                    <span class="fw-bold">Tổng tiền hàng tạm tính:</span>
-                                    <span class="fw-bold text-danger fs-5" id="cart-total-price">$0.00</span>
+                                <div class="pt-2 px-2 border-top">
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span class="text-muted">Tổng tiền hàng tạm tính:</span>
+                                        <span class="fw-bold text-dark" id="cart-subtotal-price">0 đ</span>
+                                    </div>
+                                    <div id="cart-discount-row" class="d-flex justify-content-between small mb-1 d-none text-success">
+                                        <span>Khuyến mãi giảm giá:</span>
+                                        <span class="fw-bold" id="cart-discount-price">-0 đ</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Tổng tiền thanh toán:</span>
+                                        <span class="fw-bold text-danger fs-5" id="cart-total-price">0 đ</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mã giảm giá (Coupon) Section -->
+                            <h6 class="fw-bold border-bottom pb-2 text-danger mt-4"><i class="bi bi-tag-fill text-danger"></i> 3. Mã giảm giá (Coupon)</h6>
+                            <div class="row align-items-center mb-2">
+                                <div class="col-md-8 mb-2 mb-md-0">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control text-uppercase font-weight-bold text-danger" id="coupon_code" name="coupon_code" placeholder="Nhập mã giảm giá (ví dụ: FOODELICIOUS2026)...">
+                                        <button class="btn btn-dark fw-bold px-3" type="button" onclick="applyCoupon()">Áp dụng</button>
+                                    </div>
+                                    <div id="coupon-message" class="small mt-1 d-none"></div>
                                 </div>
                             </div>
  
@@ -391,11 +415,25 @@
                                 2. Thông
                                 tin giao nhận hàng</h6>
                             <div class="row">
+                                <div class="form-group col-md-6 mb-3">
+                                    <label for="cart_fullname" class="form-label small fw-bold">Họ và tên <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm" id="cart_fullname" name="cart_fullname"
+                                        placeholder="Nhập họ và tên" required>
+                                </div>
+                                <div class="form-group col-md-6 mb-3">
+                                    <label for="cart_email" class="form-label small fw-bold">Địa chỉ Email <span
+                                            class="text-danger">*</span></label>
+                                    <input type="email" class="form-control form-control-sm" id="cart_email" name="cart_email"
+                                        placeholder="name@example.com" required>
+                                </div>
+                            </div>
+                            <div class="row">
                                 <div class="form-group col-md-4 mb-3">
                                     <label for="cart_phone" class="form-label small fw-bold">Số điện thoại <span
                                             class="text-danger">*</span></label>
                                     <input type="tel" class="form-control form-control-sm" id="cart_phone" name="cart_phone"
-                                        value="{{ Auth::check() ? Auth::user()->phone : '0901234567' }}" required>
+                                        value="" required>
                                 </div>
                                 <div class="form-group col-md-8 mb-3">
                                     <label for="cart_time" class="form-label small fw-bold">Thời gian nhận hàng <span
@@ -453,15 +491,14 @@
             <div class="container">
                 <div class="row gy-4 justify-content-center justify-content-lg-between">
                     <div class="col-lg-5 order-2 order-lg-1 d-flex flex-column justify-content-center">
-                        <h1 data-aos="fade-up">Bạn đã sẵn sàng<br>Để tận hưởng những bữa sáng ngon lành </h1>
-                        <p data-aos="fade-up" data-aos-delay="100">Đồng hành cùng bạn trên hành trình khám phá những ẩm
-                            thực</p>
+                        <h1 data-aos="fade-up" class="setting-banner-title">{!! $settings['banner_title'] ?? 'Bạn đã sẵn sàng<br>Để tận hưởng những bữa sáng ngon lành' !!}</h1>
+                        <p data-aos="fade-up" data-aos-delay="100" class="setting-banner-subtitle">{{ $settings['banner_subtitle'] ?? 'Đồng hành cùng bạn trên hành trình khám phá những ẩm thực' }}</p>
                         <div class="d-flex" data-aos="fade-up" data-aos-delay="200">
-                            <a href="#book-a-table" class="btn-get-started">Đăng nhập</a>
+                            <a href="{{ route('trangchu/dangnhap') }}" class="btn-get-started">Đăng nhập</a>
                         </div>
                     </div>
                     <div class="col-lg-5 order-1 order-lg-2 hero-img" data-aos="zoom-out">
-                        <img src="{{ asset('client/assets/img/hero-img.png') }}" class="img-fluid animated" alt="">
+                        <img src="{{ isset($settings['banner_image']) ? (Str::startsWith($settings['banner_image'], 'http') ? $settings['banner_image'] : asset($settings['banner_image'])) : asset('client/assets/img/hero-img.png') }}" class="img-fluid animated setting-banner-image" alt="">
                     </div>
                 </div>
             </div>
@@ -478,7 +515,7 @@
                         <img src="{{ asset('client/assets/img/about.jpg') }}" class="img-fluid mb-4" alt="">
                         <div class="book-a-table">
                             <h3>Số điện thoại tư vấn:</h3>
-                            <p>+1 5589 55488 55</p>
+                            <p>{{ $settings['contact_phone'] ?? '+1 5589 55488 55' }}</p>
                         </div>
                     </div>
                     <div class="col-lg-5" data-aos="fade-up" data-aos-delay="250">
@@ -649,7 +686,7 @@
                                                 </a>
                                                 <h4>{{ $dish->dish_name }}</h4>
                                                 <p class="ingredients">{{ $dish->description }}</p>
-                                                <p class="price">${{ number_format($dish->price, 2) }}</p>
+                                                <p class="price">{{ number_format($dish->price, 0, ',', '.') }} đ</p>
                                             </div>
                                         @endforeach
                                     </div>
@@ -740,20 +777,46 @@
             </div>
 
             <div class="container" data-aos="fade-up" data-aos-delay="100">
+                @php
+                    $mapUrl = $settings['map_embed_url'] ?? 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.1415053648486!2d106.6917926!3d10.8004543!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317528c2576b92dd%3A0x6e9ca9bc8926958b!2zMTIzIEzDqiBI4buTbmcgUGjDuW5nLCBRdeG6rW4gMywgVFAuSENN!5e0!3m2!1svi!2s!4v1539943755621';
+                    $mapSrc = $mapUrl;
+                    if (preg_match('/src="([^"]+)"/', $mapUrl, $match)) {
+                        $mapSrc = $match[1];
+                    } elseif ($mapUrl && !str_contains($mapUrl, 'output=embed')) {
+                        $mapSrc = "https://maps.google.com/maps?q=" . urlencode($mapUrl) . "&output=embed";
+                    }
+                @endphp
                 <div class="mb-5">
                     <iframe style="width: 100%; height: 400px;"
-                        src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d12097.433213460943!2d-74.0062269!3d40.7101282!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0xb89d1fe6bc499443!2sDowntown+Conference+Center!5e0!3m2!1smk!2sbg!4v1539943755621"
-                        frameborder="0" allowfullscreen=""></iframe>
+                        src="{{ $mapSrc }}"
+                        frameborder="0" allowfullscreen="" class="setting-map-iframe"></iframe>
                 </div>
 
-                <div class="row gy-4">
-                    <div class="col-md-6">
-                        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="200">
+                <div class="row gy-4 mb-4">
+                    <div class="col-md-4">
+                        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="200" style="height: 100%;">
                             <i class="icon bi bi-geo-alt flex-shrink-0"></i>
                             <div>
                                 <h3>Địa chỉ</h3>
-                                <p>Tầng 12, Tòa nhà Saigon Innovation Tower, 154 Nguyễn Thị Minh Khai, Phường Võ Thị
-                                    Sáu, Quận 3, TP. Hồ Chí Minh.</p>
+                                <p class="setting-contact-address">{{ $settings['contact_address'] ?? 'Tầng 12, Tòa nhà Saigon Innovation Tower, 154 Nguyễn Thị Minh Khai, Phường Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh.' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="300" style="height: 100%;">
+                            <i class="icon bi bi-telephone flex-shrink-0"></i>
+                            <div>
+                                <h3>Điện thoại</h3>
+                                <p class="setting-contact-phone">{{ $settings['contact_phone'] ?? '+1 5589 55488 55' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item d-flex align-items-center" data-aos="fade-up" data-aos-delay="400" style="height: 100%;">
+                            <i class="icon bi bi-envelope flex-shrink-0"></i>
+                            <div>
+                                <h3>Email</h3>
+                                <p class="setting-contact-email">{{ $settings['contact_email'] ?? 'contact@example.com' }}</p>
                             </div>
                         </div>
                     </div>
@@ -880,7 +943,7 @@
                     
                     document.getElementById("modal-product-id").value = productId;
                     document.getElementById("modal-product-name").innerText = productName;
-                    document.getElementById("modal-product-price").innerText = "$" + parseFloat(productPrice).toFixed(2);
+                    document.getElementById("modal-product-price").innerText = new Intl.NumberFormat('vi-VN').format(productPrice) + " đ";
                     document.getElementById("quantity").value = 1;
                     document.getElementById("order_notes").value = "";
                 });
@@ -893,7 +956,7 @@
                     e.preventDefault();
                     const productId = document.getElementById("modal-product-id").value;
                     const productName = document.getElementById("modal-product-name").innerText;
-                    const productPrice = parseFloat(document.getElementById("modal-product-price").innerText.replace('$', ''));
+                    const productPrice = parseFloat(document.getElementById("modal-product-price").innerText.replace(/[^0-9]/g, ''));
                     const quantity = parseInt(document.getElementById("quantity").value) || 1;
                     const notes = document.getElementById("order_notes").value;
 
@@ -944,12 +1007,13 @@
                         return;
                     }
 
-                    if (!isLoggedIn) {
-                        e.preventDefault();
-                        alert("Bạn cần đăng nhập để đặt hàng. Hệ thống sẽ chuyển hướng bạn đến trang đăng nhập.");
-                        window.location.href = "{{ route('trangchu/dangnhap') }}";
-                        return;
-                    }
+                    // Populate the hidden input with JSON cart items
+                    document.getElementById('cartItemsInput').value = JSON.stringify(cart);
+                    
+                    // Xóa giỏ hàng khi submit thành công
+                    setTimeout(() => {
+                        localStorage.removeItem('fdl_cart');
+                    }, 500);
                 });
             }
 
@@ -963,51 +1027,221 @@
                 });
             }
 
-            // 2. Xử lý Modal & Swipe - Gói dịch vụ
+            // 2. Xử lý Modal & Click - Gói dịch vụ
             const packageSelectElement = document.getElementById("package_type");
             const myModal = new bootstrap.Modal(document.getElementById('subscribePackageModal'));
-            const swiperWrapper = document.querySelector(".events .swiper-wrapper");
 
-            if (swiperWrapper) {
-                const SWIPE_THRESHOLD = 30;
-                let startX = 0;
-                let startY = 0;
-                let isSwiping = false;
-                let currentItem = null;
-
-                swiperWrapper.addEventListener("pointerdown", (e) => {
-                    if (!e.target.closest(".event-item")) return;
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    isSwiping = false;
-                    currentItem = e.target.closest(".event-item");
-                }, true);
-
-                document.addEventListener("pointermove", (e) => {
-                    if (!currentItem) return;
-                    const moveX = Math.abs(e.clientX - startX);
-                    const moveY = Math.abs(e.clientY - startY);
-
-                    if (moveX > SWIPE_THRESHOLD || moveY > SWIPE_THRESHOLD) {
-                        isSwiping = true;
-                    }
-                });
-
-                document.addEventListener("pointerup", () => {
-                    if (!currentItem || isSwiping) {
-                        currentItem = null;
-                        return;
-                    }
-
-                    const packageValue = currentItem.getAttribute("data-package-select");
+            const eventItems = document.querySelectorAll(".events .event-item");
+            eventItems.forEach(item => {
+                item.addEventListener("click", function () {
+                    const packageValue = this.getAttribute("data-package-select");
                     if (packageSelectElement && packageValue) {
                         packageSelectElement.value = packageValue;
                     }
                     myModal.show();
-                    currentItem = null;
                 });
+                item.style.cursor = "pointer";
+            });
+
+            // --- AJAX Polling for Settings and Database structural updates ---
+            let currentFingerprint = null;
+            let currentTimestamps = null;
+            
+            function pollSettings() {
+                fetch("{{ route('api.settings.poll') }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!currentFingerprint) {
+                            currentFingerprint = data.fingerprint;
+                            currentTimestamps = data.timestamps;
+                            console.log('Settings polling initialized with fingerprint:', currentFingerprint);
+                            return;
+                        }
+                        
+                        if (data.fingerprint !== currentFingerprint) {
+                            console.log('Data change detected! Fingerprint:', data.fingerprint);
+                            
+                            // Check if structural tables changed (Dishes, Categories, Coupons, ServicePackages)
+                            let structuralChanged = false;
+                            if (currentTimestamps) {
+                                for (let key in data.timestamps) {
+                                    if (data.timestamps[key] !== currentTimestamps[key]) {
+                                        structuralChanged = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (structuralChanged) {
+                                console.log('Structural data change detected. Reloading page...');
+                                window.location.reload();
+                                return;
+                            }
+                            
+                            // Otherwise, it was just a settings change. Update settings in-place:
+                            currentFingerprint = data.fingerprint;
+                            currentTimestamps = data.timestamps;
+                            const s = data.settings;
+                            
+                            // 1. Logo
+                            if (s.logo_url) {
+                                document.querySelectorAll('.setting-logo-img').forEach(img => {
+                                    if (img.src !== s.logo_url) img.src = s.logo_url;
+                                });
+                            }
+                            
+                            // 2. Banner Title
+                            if (s.banner_title) {
+                                document.querySelectorAll('.setting-banner-title').forEach(el => {
+                                    if (el.innerHTML !== s.banner_title) el.innerHTML = s.banner_title;
+                                });
+                            }
+                            
+                            // 3. Banner Subtitle
+                            if (s.banner_subtitle) {
+                                document.querySelectorAll('.setting-banner-subtitle').forEach(el => {
+                                    if (el.innerText !== s.banner_subtitle) el.innerText = s.banner_subtitle;
+                                });
+                            }
+                            
+                            // 4. Banner Image
+                            if (s.banner_image) {
+                                document.querySelectorAll('.setting-banner-image').forEach(img => {
+                                    if (img.src !== s.banner_image) img.src = s.banner_image;
+                                });
+                            }
+                            
+                            // 5. Contact Phone
+                            if (s.contact_phone) {
+                                document.querySelectorAll('.setting-contact-phone').forEach(el => {
+                                    if (el.innerText !== s.contact_phone) el.innerText = s.contact_phone;
+                                });
+                            }
+                            
+                            // 6. Contact Address
+                            if (s.contact_address) {
+                                document.querySelectorAll('.setting-contact-address').forEach(el => {
+                                    if (el.innerText !== s.contact_address) el.innerText = s.contact_address;
+                                    if (typeof storeAddress !== 'undefined') storeAddress = s.contact_address;
+                                });
+                            }
+                            
+                            // 7. Contact Email
+                            if (s.contact_email) {
+                                document.querySelectorAll('.setting-contact-email').forEach(el => {
+                                    if (el.innerText !== s.contact_email) el.innerText = s.contact_email;
+                                });
+                            }
+                            
+                            // 8. Map
+                            if (s.map_embed_url) {
+                                const mapIframe = document.querySelector('.setting-map-iframe');
+                                if (mapIframe) {
+                                    let newSrc = s.map_embed_url;
+                                    const match = s.map_embed_url.match(/src="([^"]+)"/);
+                                    if (match) {
+                                        newSrc = match[1];
+                                    } else if (s.map_embed_url && !s.map_embed_url.includes('output=embed')) {
+                                        newSrc = "https://maps.google.com/maps?q=" + encodeURIComponent(s.map_embed_url) + "&output=embed";
+                                    }
+                                    if (mapIframe.src !== newSrc) {
+                                        mapIframe.src = newSrc;
+                                    }
+                                }
+                            }
+                        }
+                    })
+                    .catch(err => console.error('Error during settings polling:', err));
             }
+            
+            setInterval(pollSettings, 2000);
         });
+
+        let appliedCouponCode = null;
+        let discountValue = 0;
+
+        function applyCoupon() {
+            const codeInput = document.getElementById('coupon_code');
+            if (!codeInput) return;
+            const code = codeInput.value.trim().toUpperCase();
+            if (!code) {
+                alert('Vui lòng nhập mã giảm giá!');
+                return;
+            }
+
+            const cart = getCart();
+            let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            if (total === 0) {
+                alert('Giỏ hàng của bạn đang trống.');
+                return;
+            }
+
+            fetch("{{ route('api.coupon.validate') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ code: code, total_amount: total })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const msgEl = document.getElementById('coupon-message');
+                if (!msgEl) return;
+                msgEl.classList.remove('d-none', 'text-success', 'text-danger');
+                if (data.success) {
+                    appliedCouponCode = code;
+                    discountValue = data.discount_amount;
+                    msgEl.classList.add('text-success');
+                    msgEl.innerText = data.message;
+                    renderCartItems();
+                } else {
+                    appliedCouponCode = null;
+                    discountValue = 0;
+                    msgEl.classList.add('text-danger');
+                    msgEl.innerText = data.message;
+                    renderCartItems();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Có lỗi xảy ra khi áp dụng mã giảm giá.');
+            });
+        }
+
+        function revalidateCoupon() {
+            if (!appliedCouponCode) return;
+            const cart = getCart();
+            let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            fetch("{{ route('api.coupon.validate') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ code: appliedCouponCode, total_amount: total })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const msgEl = document.getElementById('coupon-message');
+                if (data.success) {
+                    discountValue = data.discount_amount;
+                } else {
+                    appliedCouponCode = null;
+                    discountValue = 0;
+                    if (msgEl) {
+                        msgEl.classList.remove('d-none', 'text-success');
+                        msgEl.classList.add('text-danger');
+                        msgEl.innerText = data.message + ' (Đã hủy áp dụng mã)';
+                    }
+                    const inputEl = document.getElementById('coupon_code');
+                    if (inputEl) inputEl.value = '';
+                }
+                renderCartItems();
+            })
+            .catch(err => console.error(err));
+        }
 
         function renderCartItems() {
             const container = document.getElementById('cart-items-container');
@@ -1016,7 +1250,12 @@
             const cart = getCart();
             if (cart.length === 0) {
                 container.innerHTML = `<div class="p-3 text-center text-muted">Giỏ hàng trống. Hãy chọn món ăn ngon từ thực đơn!</div>`;
-                document.getElementById('cart-total-price').innerText = "$0.00";
+                document.getElementById('cart-total-price').innerText = "0 đ";
+                document.getElementById('cart-subtotal-price').innerText = "0 đ";
+                const discountRow = document.getElementById('cart-discount-row');
+                if (discountRow) discountRow.classList.add('d-none');
+                appliedCouponCode = null;
+                discountValue = 0;
                 return;
             }
 
@@ -1032,7 +1271,7 @@
                     <div style="flex: 1;">
                         <div class="fw-bold">${item.name}</div>
                         <small class="text-muted">${item.notes ? 'Ghi chú: ' + item.notes : ''}</small>
-                        <div class="small text-secondary">$${item.price.toFixed(2)} x ${item.quantity}</div>
+                        <div class="small text-secondary">${new Intl.NumberFormat('vi-VN').format(item.price)} đ x ${item.quantity}</div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="changeQty(${index}, -1)">-</button>
@@ -1041,14 +1280,31 @@
                         <button type="button" class="btn btn-sm btn-danger ms-2 py-0 px-2" onclick="removeCartItem(${index})"><i class="bi bi-trash"></i></button>
                     </div>
                     <div class="text-end fw-bold text-danger ms-3" style="min-width: 70px;">
-                        $${itemTotal.toFixed(2)}
+                        ${new Intl.NumberFormat('vi-VN').format(itemTotal)} đ
                     </div>
                 </div>
                 `;
             });
 
             container.innerHTML = html;
-            document.getElementById('cart-total-price').innerText = "$" + total.toFixed(2);
+            
+            const subtotalEl = document.getElementById('cart-subtotal-price');
+            if (subtotalEl) {
+                subtotalEl.innerText = new Intl.NumberFormat('vi-VN').format(total) + " đ";
+            }
+            
+            const discountRow = document.getElementById('cart-discount-row');
+            const discountEl = document.getElementById('cart-discount-price');
+            
+            if (appliedCouponCode && discountValue > 0) {
+                if (discountRow) discountRow.classList.remove('d-none');
+                if (discountEl) discountEl.innerText = "-" + new Intl.NumberFormat('vi-VN').format(discountValue) + " đ";
+            } else {
+                if (discountRow) discountRow.classList.add('d-none');
+            }
+
+            const finalTotal = Math.max(0, total - discountValue);
+            document.getElementById('cart-total-price').innerText = new Intl.NumberFormat('vi-VN').format(finalTotal) + " đ";
         }
 
         function changeQty(index, delta) {
@@ -1059,7 +1315,11 @@
                     cart.splice(index, 1);
                 }
                 saveCart(cart);
-                renderCartItems();
+                if (appliedCouponCode) {
+                    revalidateCoupon();
+                } else {
+                    renderCartItems();
+                }
             }
         }
 
@@ -1068,7 +1328,11 @@
             if (cart[index]) {
                 cart.splice(index, 1);
                 saveCart(cart);
-                renderCartItems();
+                if (appliedCouponCode) {
+                    revalidateCoupon();
+                } else {
+                    renderCartItems();
+                }
             }
         }
     </script>
@@ -1121,7 +1385,6 @@
             </div>
         </div>
     </div>
-
+    @include('client.chatbot')
 </body>
-
 </html>

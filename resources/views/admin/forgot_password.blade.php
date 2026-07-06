@@ -45,15 +45,35 @@
                                         <p class="mb-4">Chúng tôi hiểu mà, có nhiều thứ xảy ra. Chỉ cần nhập địa chỉ
                                             email của bạn ở phía dưới và chúng tôi sẽ gửi bạn mã để đổi lại mật khẩu</p>
                                     </div>
-                                    <form class="user">
+
+                                    @if(session('success'))
+                                        <div class="alert alert-success alert-dismissible fade show small" role="alert">
+                                            {{ session('success') }}
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                    @endif
+
+                                    @if($errors->any())
+                                        <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+                                            {{ $errors->first() }}
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                    @endif
+
+                                    <form action="{{ route('quenmatkhau.post') }}" method="POST" class="user">
+                                        @csrf
                                         <div class="form-group">
                                             <input type="email" class="form-control form-control-user"
-                                                id="exampleInputEmail" aria-describedby="emailHelp"
-                                                placeholder="Nhập địa chỉ Email...">
+                                                id="exampleInputEmail" name="email" aria-describedby="emailHelp"
+                                                placeholder="Nhập địa chỉ Email..." value="{{ old('email') }}" required>
                                         </div>
-                                        <a href="{{ route('dangnhap') }}" class="btn btn-primary btn-user btn-block">
+                                        <button type="submit" class="btn btn-primary btn-user btn-block">
                                             Đặt lại mật khẩu
-                                        </a>
+                                        </button>
                                     </form>
                                     <hr>
                                     <div class="text-center">

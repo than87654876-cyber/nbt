@@ -151,6 +151,7 @@ class AdminCrudTest extends TestCase
             'role' => 'customer',
             'status' => true,
             'membership' => 'gold',
+            'email' => 'testcustomer@gmail.com',
         ]);
 
         $response = $this->actingAs($this->admin)->post(route('quanly_guima.post'), [
@@ -329,9 +330,13 @@ class AdminCrudTest extends TestCase
             ]);
         }
 
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $file = \Illuminate\Http\UploadedFile::fake()->image('cancel_proof.jpg');
+
         $response = $this->actingAs($customer)->post(route('goidichvu.cancel'), [
             'subscription_id' => $subscription->id,
-            'cancel_reason' => 'Too busy',
+            'cancel_reason' => 'Tôi muốn hủy gói vì lý do đi công tác xa dài ngày không thể nhận món ăn tại nhà được nữa.',
+            'cancel_image' => $file,
         ]);
         $response->assertRedirect();
 
@@ -487,4 +492,82 @@ class AdminCrudTest extends TestCase
         $responseSub->assertRedirect(route('goidichvu'));
         $responseSub->assertSessionHas('success', 'Đăng ký thành công gói dịch vụ "Gói Gia Đình Hàng Ngày"!');
     }
+
+    /**
+     * Test Service Package CRUD
+     */
+    public function test_service_package_crud_operations(): void
+    {
+        $category = Category::create([
+            'category_name' => 'Test Category for Package',
+            'status' => true,
+        ]);
+
+        $dish1 = Dish::create([
+            'category_id' => $category->id,
+            'dish_name' => 'Dish for Package 1',
+            'price' => 50000,
+            'is_available' => true,
+        ]);
+        $dish2 = Dish::create([
+            'category_id' => $category->id,
+            'dish_name' => 'Dish for Package 2',
+            'price' => 30000,
+            'is_available' => true,
+        ]);
+
+        // 1. Create Service Package
+        $response = $this->actingAs($this->admin)->post(route('goidichvu_them.post'), [
+            'package_name' => 'Gói Siêu Cấp',
+            'duration_days' => 15,
+            'price' => 450000,
+            'status' => 'active',
+            'description' => 'Mô tả gói siêu cấp',
+            'dishes' => [$dish1->id, $dish2->id],
+        ]);
+        $response->assertRedirect(route('quanly_goidichvu'));
+        $this->assertDatabaseHas('service_packages', [
+            'package_name' => 'Gói Siêu Cấp',
+            'duration_days' => 15,
+            'price' => 450000,
+        ]);
+
+        $package = ServicePackage::where('package_name', 'Gói Siêu Cấp')->first();
+        $this->assertEquals(2, $package->dishes()->count());
+
+        // 2. Read package views
+        $response = $this->actingAs($this->admin)->get(route('quanly_goidichvu'));
+        $response->assertStatus(200);
+
+        $response = $this->actingAs($this->admin)->get(route('goidichvu_xem', $package->id));
+        $response->assertStatus(200);
+
+        $response = $this->actingAs($this->admin)->get(route('goidichvu_chinhsua', $package->id));
+        $response->assertStatus(200);
+
+        // 3. Update Service Package (remove dish2, add description)
+        $response = $this->actingAs($this->admin)->post(route('goidichvu_chinhsua.post', $package->id), [
+            'package_name' => 'Gói Siêu Cấp Cập Nhật',
+            'duration_days' => 20,
+            'price' => 500000,
+            'status' => 'inactive',
+            'description' => 'Mô tả cập nhật',
+            'dishes' => [$dish1->id],
+        ]);
+        $response->assertRedirect(route('quanly_goidichvu'));
+        $this->assertDatabaseHas('service_packages', [
+            'id' => $package->id,
+            'package_name' => 'Gói Siêu Cấp Cập Nhật',
+            'duration_days' => 20,
+            'price' => 500000,
+            'status' => 0,
+        ]);
+        $this->assertEquals(1, $package->fresh()->dishes()->count());
+
+        // 4. Delete Service Package
+        $response = $this->actingAs($this->admin)->post(route('goidichvu_xoa', $package->id));
+        $response->assertRedirect(route('quanly_goidichvu'));
+        $this->assertDatabaseMissing('service_packages', ['id' => $package->id]);
+    }
 }
+

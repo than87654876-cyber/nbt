@@ -67,7 +67,7 @@ class FullSystemWorkflowTest extends TestCase
         ];
 
         $response = $this->post(route('trangchu/dangky.post'), $registrationData);
-        $response->assertRedirect(route('trangchu/dangnhap'));
+        $response->assertRedirect(route('trangchu'));
 
         $this->assertDatabaseHas('users', [
             'email' => 'customer_a@example.com',
@@ -80,12 +80,12 @@ class FullSystemWorkflowTest extends TestCase
 
         // 3. Test Customer login
         $loginData = [
-            'phone' => '0987654321',
+            'login_input' => '0987654321',
             'password' => 'password123',
         ];
 
         $response = $this->post(route('trangchu/dangnhap.post'), $loginData);
-        $response->assertRedirect(route('trangchu_dangnhap'));
+        $response->assertRedirect(route('trangchu'));
         $this->assertAuthenticatedAs($user);
 
         // 4. Test Cart Checkout

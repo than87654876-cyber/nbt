@@ -97,10 +97,19 @@
                 <p class="text-muted small mb-0">ĐỔI LẠI MẬT KHẨU</p>
             </div>
 
-            <form action="#" method="POST">
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+                    {{ $errors->first() }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            <form action="{{ route('trangchu/doimatkhau.post') }}" method="POST">
+                @csrf
+                <input type="hidden" name="token" value="{{ $token }}">
                 <div class="row">
                     <div class="form-group col-md-6 mb-3">
-                        <label for="password" class="form-label small fw-bold">Mật khẩu khóa <span
+                        <label for="password" class="form-label small fw-bold">Mật khẩu mới <span
                                 class="text-danger">*</span></label>
                         <input type="password" class="form-control" id="password" name="password"
                             placeholder="Tối thiểu 6 ký tự" required>

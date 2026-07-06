@@ -55,7 +55,7 @@
                 <div class="form-group col-md-6">
                     <label for="is_available" class="font-weight-bold text-dark">Trạng thái phục vụ</label>
                     <div class="form-check pt-2">
-                        <input type="checkbox" class="form-check-input" id="is_available" name="is_available" value="1" {{ old('is_available', $dish->is_available) ? 'checked' : '' }}>
+                        <input type="checkbox" class="form-check-input" id="is_available" name="is_available" value="1" {{ (session()->hasOldInput() ? old('is_available') : $dish->is_available) ? 'checked' : '' }}>
                         <label class="form-check-label text-success font-weight-bold" for="is_available">Đang bán (Available)</label>
                     </div>
                 </div>

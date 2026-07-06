@@ -65,10 +65,10 @@
                         <tr class="text-dark">
                             <td>{{ $index + 1 }}</td>
                             <td class="font-weight-bold text-primary">{{ $promo->coupon_code }}</td>
-                            <td>Đơn tối thiểu: {{ number_format($promo->min_order_value) }} $</td>
+                            <td>Đơn tối thiểu: {{ number_format($promo->min_order_value, 0, ',', '.') }} đ</td>
                             <td>
                                 <span class="badge badge-success font-weight-bold p-2">
-                                    {{ $promo->discount_type === 'percent' ? 'Giảm ' . $promo->discount_value . '%' : 'Giảm ' . number_format($promo->discount_value) . ' $' }}
+                                    {{ $promo->discount_type === 'percent' ? 'Giảm ' . number_format($promo->discount_value, 0, ',', '.') . '%' : 'Giảm ' . number_format($promo->discount_value, 0, ',', '.') . ' đ' }}
                                 </span>
                             </td>
                             <td>{{ $promo->start_date->format('d/m/Y') }} - {{ $promo->end_date->format('d/m/Y') }}</td>

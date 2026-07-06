@@ -10,7 +10,8 @@
         </a>
     </div>
 
-    <form action="#" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('goidichvu_them.post') }}" method="POST" enctype="multipart/form-data">
+        @csrf
         <div class="row">
             <div class="col-lg-12">
                 <div class="card shadow mb-4">
@@ -19,35 +20,31 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="form-group col-md-3">
-                                <label class="font-weight-bold text-dark">Mã định danh gói (ID)</label>
-                                <input type="text" class="form-control bg-light" value="#PKG-2026" readonly>
-                            </div>
                             <div class="form-group col-md-5">
-                                <label for="combo_name" class="font-weight-bold text-dark">Tên gói món ăn <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="combo_name" name="combo_name" placeholder="Ví dụ: Gói cơm văn phòng tuần" required>
+                                <label for="package_name" class="font-weight-bold text-dark">Tên gói món ăn <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control font-weight-bold" id="package_name" name="package_name" value="{{ old('package_name') }}" placeholder="Ví dụ: Gói cơm văn phòng tuần" required>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="duration_days" class="font-weight-bold text-dark">Số ngày hiệu lực <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="duration_days" name="duration_days" value="{{ old('duration_days', 30) }}" placeholder="Ví dụ: 30" required min="1">
                             </div>
                             <div class="form-group col-md-4">
-                                <label for="created_at" class="font-weight-bold text-dark">Ngày tạo gói</label>
-                                <input type="date" class="form-control" id="created_at" name="created_at" value="{{ date('Y-m-d') }}">
+                                <label for="price" class="font-weight-bold text-dark">Giá gói tích hợp (vnđ) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control text-danger font-weight-bold" id="price" name="price" value="{{ old('price') }}" placeholder="Nhập số tiền" required min="0">
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="form-group col-md-4">
-                                <label for="combo_price" class="font-weight-bold text-dark">Giá gói tích hợp (vnđ) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control text-danger font-weight-bold" id="combo_price" name="combo_price" placeholder="Nhập số tiền" required min="0">
-                            </div>
-                            <div class="form-group col-md-4">
                                 <label for="status" class="font-weight-bold text-dark">Trạng thái áp dụng</label>
-                                <select class="form-control" id="status" name="status">
-                                    <option value="active" selected>Đang kích hoạt (Active)</option>
-                                    <option value="inactive">Tạm ngưng (Inactive)</option>
+                                <select class="form-control font-weight-bold" id="status" name="status">
+                                    <option value="active" {{ old('status') === 'active' ? 'selected' : '' }}>Đang kích hoạt (Active)</option>
+                                    <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>Tạm ngưng (Inactive)</option>
                                 </select>
                             </div>
-                            <div class="form-group col-md-4">
-                                <label for="combo_image" class="font-weight-bold text-dark">Hình ảnh gói món ăn</label>
-                                <input type="file" class="form-control-file mb-1" id="combo_image" name="combo_image" accept="image/*">
+                            <div class="form-group col-md-8">
+                                <label for="description" class="font-weight-bold text-dark">Mô tả chi tiết gói món ăn</label>
+                                <textarea class="form-control" id="description" name="description" rows="2" placeholder="Mô tả thực đơn gói, các tùy chọn giao hàng...">{{ old('description') }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -70,71 +67,36 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted small">* Tích chọn vào ô đầu dòng để thêm món ăn vào gói và cập nhật số lượng tương ứng.</p>
+                        <p class="text-muted small">* Tích chọn vào ô đầu dòng để thêm món ăn thành phần vào cấu hình gói dịch vụ này.</p>
                         <div class="table-responsive">
                             <table class="table table-bordered table-hover text-dark">
                                 <thead class="bg-light">
                                     <tr>
                                         <th style="width: 8%" class="text-center">Chọn</th>
-                                        <th style="width: 12%">Hình ảnh</th>
-                                        <th style="width: 40%">Tên món ăn đơn</th>
-                                        <th style="width: 20%">Giá gốc lẻ</th>
-                                        <th style="width: 20%">Số lượng trong gói</th>
+                                        <th style="width: 15%">Hình ảnh</th>
+                                        <th style="width: 45%">Tên món ăn đơn</th>
+                                        <th style="width: 20%">Giá gốc bán lẻ</th>
+                                        <th style="width: 12%">Trạng thái</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @forelse($dishes as $dish)
                                     <tr>
                                         <td class="text-center align-middle">
-                                            <input type="checkbox" name="dishes[]" value="1" style="width: 18px; height: 18px;" checked>
+                                            <input type="checkbox" name="dishes[]" value="{{ $dish->id }}" style="width: 18px; height: 18px;" {{ old('dishes') && in_array($dish->id, old('dishes')) ? 'checked' : '' }}>
                                         </td>
                                         <td>
-                                            <img src="{{ asset('logo.jpg') }}" alt="Món 1" class="img-thumbnail" style="max-height: 45px;">
+                                            <img src="{{ $dish->image_url ? (Str::startsWith($dish->image_url, 'http') ? $dish->image_url : asset($dish->image_url)) : asset('logo.jpg') }}" alt="{{ $dish->dish_name }}" class="img-thumbnail" style="max-height: 45px;">
                                         </td>
-                                        <td class="align-middle font-weight-bold">Cơm tấm sườn bì chả</td>
-                                        <td class="align-middle text-secondary">45.000 vnđ</td>
-                                        <td>
-                                            <input type="number" class="form-control form-control-sm" name="quantity[1]" value="1" min="1" style="max-width: 100px;">
-                                        </td>
+                                        <td class="align-middle font-weight-bold">{{ $dish->dish_name }}</td>
+                                        <td class="align-middle text-secondary">{{ number_format($dish->price, 0, ',', '.') }} đ</td>
+                                        <td class="align-middle text-success font-weight-bold">Có sẵn</td>
                                     </tr>
+                                    @empty
                                     <tr>
-                                        <td class="text-center align-middle">
-                                            <input type="checkbox" name="dishes[]" value="2" style="width: 18px; height: 18px;" checked>
-                                        </td>
-                                        <td>
-                                            <img src="{{ asset('logo.jpg') }}" alt="Món 2" class="img-thumbnail" style="max-height: 45px;">
-                                        </td>
-                                        <td class="align-middle font-weight-bold">Cà phê sữa đá pha phin</td>
-                                        <td class="align-middle text-secondary">29.000 vnđ</td>
-                                        <td>
-                                            <input type="number" class="form-control form-control-sm" name="quantity[2]" value="1" min="1" style="max-width: 100px;">
-                                        </td>
+                                        <td colspan="5" class="text-center text-muted">Không có món ăn đơn lẻ nào trong hệ thống.</td>
                                     </tr>
-                                    <tr>
-                                        <td class="text-center align-middle">
-                                            <input type="checkbox" name="dishes[]" value="3" style="width: 18px; height: 18px;" checked>
-                                        </td>
-                                        <td>
-                                            <img src="{{ asset('logo.jpg') }}" alt="Món 3" class="img-thumbnail" style="max-height: 45px;">
-                                        </td>
-                                        <td class="align-middle font-weight-bold">Canh khổ qua thác lác đi kèm</td>
-                                        <td class="align-middle text-secondary">20.000 vnđ</td>
-                                        <td>
-                                            <input type="number" class="form-control form-control-sm" name="quantity[3]" value="1" min="1" style="max-width: 100px;">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-center align-middle">
-                                            <input type="checkbox" name="dishes[]" value="4" style="width: 18px; height: 18px;">
-                                        </td>
-                                        <td>
-                                            <img src="{{ asset('logo.jpg') }}" alt="Món 4" class="img-thumbnail" style="max-height: 45px;">
-                                        </td>
-                                        <td class="align-middle text-muted">Trà đào sả cam miếng lớn</td>
-                                        <td class="align-middle text-secondary">35.000 vnđ</td>
-                                        <td>
-                                            <input type="number" class="form-control form-control-sm" name="quantity[4]" value="0" min="0" style="max-width: 100px;">
-                                        </td>
-                                    </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>

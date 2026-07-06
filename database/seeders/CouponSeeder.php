@@ -40,6 +40,15 @@ class CouponSeeder extends Seeder
                 'end_date' => now()->addMonths(1)->format('Y-m-d'),
                 'usage_limit' => 50,
             ],
+            [
+                'coupon_code' => 'FOODELICIOUS2026',
+                'discount_type' => 'percent',
+                'discount_value' => 10.00,
+                'min_order_value' => 0.00,
+                'start_date' => now()->format('Y-m-d'),
+                'end_date' => now()->addYears(5)->format('Y-m-d'),
+                'usage_limit' => null,
+            ],
         ];
 
         foreach ($coupons as $coupon) {

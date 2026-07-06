@@ -72,7 +72,7 @@
                         </td>
                         <td class="font-weight-bold text-primary">{{ $dish->dish_name }}</td>
                         <td>{{ $dish->category->category_name }}</td>
-                        <td class="font-weight-bold text-danger">${{ number_format($dish->price, 2) }}</td>
+                        <td class="font-weight-bold text-danger">{{ number_format($dish->price, 0, ',', '.') }} đ</td>
                         <td>
                             @if($dish->is_available)
                                 <span class="badge badge-success">Đang bán</span>

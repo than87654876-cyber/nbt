@@ -7,26 +7,26 @@
 @endsection
 
 @section('content')
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Quản lý Khách hàng</h1>
+    <!-- Filters Row -->
+    <div class="mb-4">
+        <div class="btn-group shadow-sm" role="group" aria-label="Customer Filters">
+            <a href="{{ route('quanly_khachhang') }}" class="btn btn-sm btn-{{ !isset($filter) || !$filter ? 'primary font-weight-bold' : 'light text-dark' }}">
+                Tất cả khách hàng
+            </a>
+            <a href="{{ route('quanly_khachhang', ['filter' => 'first_order']) }}" class="btn btn-sm btn-{{ isset($filter) && $filter === 'first_order' ? 'primary font-weight-bold' : 'light text-dark' }}">
+                Đã đặt hàng
+            </a>
+            <a href="{{ route('quanly_khachhang', ['filter' => 'active_package']) }}" class="btn btn-sm btn-{{ isset($filter) && $filter === 'active_package' ? 'primary font-weight-bold' : 'light text-dark' }}">
+                Đang dùng gói
+            </a>
+            <a href="{{ route('quanly_khachhang', ['filter' => 'refunded']) }}" class="btn btn-sm btn-{{ isset($filter) && $filter === 'refunded' ? 'primary font-weight-bold' : 'light text-dark' }}">
+                Đã hoàn tiền
+            </a>
+            <a href="{{ route('quanly_khachhang', ['filter' => 'inactive_3m']) }}" class="btn btn-sm btn-{{ isset($filter) && $filter === 'inactive_3m' ? 'primary font-weight-bold' : 'light text-dark' }}">
+                Không hoạt động >3 tháng
+            </a>
+        </div>
     </div>
-
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show mb-4 text-dark" role="alert">
-        <strong><i class="fas fa-check-circle mr-1"></i> Thành công!</strong> {{ session('success') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show mb-4 text-dark" role="alert">
-        <strong><i class="fas fa-exclamation-triangle mr-1"></i> Lỗi!</strong> {{ session('error') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">

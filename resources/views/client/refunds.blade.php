@@ -114,8 +114,8 @@
 <body class="index-page">
     <header id="header" class="header d-flex align-items-center sticky-top">
         <div class="container position-relative d-flex align-items-center justify-content-between">
-            <a href="#" class="logo d-flex align-items-center me-auto me-xl-0">
-                <img src="logo.jpg" alt="">
+            <a href="{{ route('trangchu') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+                <img src="{{ isset($settings['logo_url']) ? (\Illuminate\Support\Str::startsWith($settings['logo_url'], 'http') ? $settings['logo_url'] : asset($settings['logo_url'])) : asset('logo.jpg') }}" alt="" class="setting-logo-img">
                 <h1 class="sitename">FOODELICIOUS</h1><span>.</span>
             </a>
     </header>
@@ -185,6 +185,19 @@
                         if (preg_match('/\[Admin Phản hồi: ([^\]\)]+)/', $notes, $matches)) {
                             $adminResponse = $matches[1];
                         }
+
+                        $reqAmountText = number_format($order->final_amount, 0, ',', '.') . ' đ';
+                        if (preg_match('/Số tiền yêu cầu: ([^,\]]+)/', $notes, $matches)) {
+                            $reqAmountText = $matches[1];
+                        }
+                        
+                        $imageLink = '';
+                        if (preg_match('/Hình ảnh minh chứng: ([^,\]]+)/', $notes, $matches)) {
+                            $imageLink = trim($matches[1]);
+                            if ($imageLink === 'Không có') {
+                                $imageLink = '';
+                            }
+                        }
                     @endphp
                     <div class="refund-card text-dark">
                         <div class="refund-header">
@@ -207,8 +220,16 @@
                         <div class="refund-body">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="detail-item"><strong>Số tiền yêu cầu:</strong> <span class="text-danger fw-bold">{{ number_format($order->final_amount, 0, ',', '.') }} đ</span></div>
+                                    <div class="detail-item"><strong>Số tiền yêu cầu:</strong> <span class="text-danger fw-bold">{{ $reqAmountText }}</span></div>
                                     <div class="detail-item"><strong>Lý do:</strong> {{ $reasonText }}</div>
+                                    @if($imageLink)
+                                        <div class="mt-2 small">
+                                            <strong>Hình ảnh minh chứng:</strong><br>
+                                            <a href="{{ $imageLink }}" target="_blank">
+                                                <img src="{{ $imageLink }}" class="img-thumbnail mt-1" style="max-height: 80px; object-fit: cover;">
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="col-md-6">
                                     <div class="detail-item"><strong>Nhận tiền qua:</strong> {{ $methodText }}</div>
@@ -240,6 +261,29 @@
 
     <script src="client/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="client/assets/vendor/aos/aos.js"></script>
+    
+    <!-- Real-time settings and logo polling -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let currentLogoUrl = "{{ isset($settings['logo_url']) ? (\Illuminate\Support\Str::startsWith($settings['logo_url'], 'http') ? $settings['logo_url'] : asset($settings['logo_url'])) : asset('logo.jpg') }}";
+            
+            function pollRefundsSettings() {
+                fetch("{{ route('api.settings.poll') }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        const newLogo = data.settings.logo_url;
+                        if (newLogo && newLogo !== currentLogoUrl) {
+                            currentLogoUrl = newLogo;
+                            document.querySelectorAll('.setting-logo-img').forEach(img => {
+                                img.src = newLogo;
+                            });
+                        }
+                    })
+                    .catch(err => console.error('Error polling settings in refunds view:', err));
+            }
+            setInterval(pollRefundsSettings, 2000);
+        });
+    </script>
 </body>
 
 </html>

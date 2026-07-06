@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['fullname', 'email', 'phone', 'password', 'status', 'role', 'points', 'membership', 'notes'])]
+#[Fillable(['fullname', 'email', 'phone', 'password', 'status', 'role', 'points', 'membership', 'notes', 'password_reset_token', 'password_reset_expires_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -29,6 +29,8 @@ class User extends Authenticatable
         'membership',
         'notes',
         'remember_token',
+        'password_reset_token',
+        'password_reset_expires_at',
     ];
 
     /**
@@ -67,5 +69,37 @@ class User extends Authenticatable
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Add points and automatically update membership rank.
+     */
+    public function addPoints(float $amount): void
+    {
+        // Calculate points to add: 10 points for every 1 unit of final_amount
+        $pointsToAdd = (int) round($amount * 10);
+        if ($pointsToAdd <= 0) {
+            return;
+        }
+
+        $this->points += $pointsToAdd;
+
+        // Update membership rank based on new points
+        // Thresholds:
+        // - Bronze: < 100 points
+        // - Silver: 100 to < 500 points
+        // - Gold: 500 to < 2000 points
+        // - Diamond: >= 2000 points
+        if ($this->points >= 2000) {
+            $this->membership = 'diamond';
+        } elseif ($this->points >= 500) {
+            $this->membership = 'gold';
+        } elseif ($this->points >= 100) {
+            $this->membership = 'silver';
+        } else {
+            $this->membership = 'bronze';
+        }
+
+        $this->save();
     }
 }

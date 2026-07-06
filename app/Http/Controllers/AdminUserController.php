@@ -13,11 +13,33 @@ class AdminUserController extends Controller
     // ==========================================
 
     // Danh sách khách hàng
-    public function customersList()
+    public function customersList(Request $request)
     {
-        $customers = User::where('role', 'customer')->orderBy('created_at', 'desc')->get();
+        $filter = $request->input('filter');
+        $query = User::where('role', 'customer')->orderBy('created_at', 'desc');
 
-        return view('admin.customers', compact('customers'));
+        if ($filter === 'first_order') {
+            $query->whereHas('orders');
+        } elseif ($filter === 'active_package') {
+            $query->whereHas('subscriptions', function ($q) {
+                $q->where('status', 'active');
+            });
+        } elseif ($filter === 'refunded') {
+            $query->whereHas('orders', function ($q) {
+                $q->where('payment_status', 'refunded')
+                  ->orWhere('health_notes', 'like', '%hoàn tiền%');
+            });
+        } elseif ($filter === 'inactive_3m') {
+            $threeMonthsAgo = now()->subMonths(3);
+            $query->where('created_at', '<', $threeMonthsAgo)
+                  ->whereDoesntHave('orders', function($q) use ($threeMonthsAgo) {
+                      $q->where('created_at', '>=', $threeMonthsAgo);
+                  });
+        }
+
+        $customers = $query->get();
+
+        return view('admin.customers', compact('customers', 'filter'));
     }
 
     // Chi tiết khách hàng
@@ -68,6 +90,13 @@ class AdminUserController extends Controller
         $customer->delete();
 
         return redirect()->route('quanly_khachhang')->with('success', 'Đã xóa tài khoản khách hàng thành công!');
+    }
+
+    // Danh sách khách vãng lai
+    public function guestsList()
+    {
+        $guests = User::where('role', 'guest')->withCount('orders')->orderBy('created_at', 'desc')->get();
+        return view('admin.guests', compact('guests'));
     }
 
     // ==========================================
@@ -169,5 +198,44 @@ class AdminUserController extends Controller
         $employee->delete();
 
         return redirect()->route('quanly_nhanvien')->with('success', 'Đã xóa tài khoản nhân viên thành công!');
+    }
+
+    // Xuất báo cáo khách hàng (CSV UTF-8 BOM)
+    public function exportCustomersCsv()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="danh-sach-khach-hang.csv"',
+        ];
+
+        $callback = function() {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            fputcsv($file, ['Mã KH', 'Họ và tên', 'Email', 'Số điện thoại', 'Vai trò', 'Điểm tích lũy', 'Hạng thành viên', 'Trạng thái', 'Ngày đăng ký']);
+
+            $users = User::whereIn('role', ['customer', 'guest'])->orderBy('created_at', 'desc')->get();
+
+            foreach ($users as $user) {
+                $roleText = $user->role === 'customer' ? 'Thành viên' : 'Khách vãng lai';
+                $statusText = $user->status ? 'Hoạt động' : 'Bị khóa';
+                
+                fputcsv($file, [
+                    'KH-' . sprintf('%03d', $user->id),
+                    $user->fullname,
+                    $user->email,
+                    $user->phone ?? 'Chưa cập nhật',
+                    $roleText,
+                    $user->points,
+                    strtoupper($user->membership),
+                    $statusText,
+                    $user->created_at->format('d/m/Y H:i'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

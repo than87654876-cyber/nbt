@@ -232,13 +232,14 @@
             }
         }
     </style>
+    @vite(['resources/js/app.js'])
 </head>
 
 <body class="index-page">
     <header id="header" class="header d-flex align-items-center sticky-top">
         <div class="container position-relative d-flex align-items-center justify-content-between">
-            <a href="#" class="logo d-flex align-items-center me-auto me-xl-0">
-                <img src="logo.jpg" alt="">
+            <a href="{{ route('trangchu') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+                <img src="{{ isset($settings['logo_url']) ? (\Illuminate\Support\Str::startsWith($settings['logo_url'], 'http') ? $settings['logo_url'] : asset($settings['logo_url'])) : asset('logo.jpg') }}" alt="" class="setting-logo-img">
                 <h1 class="sitename">FOODELICIOUS</h1><span>.</span>
             </a>
     </header>
@@ -376,13 +377,15 @@
                                     @php
                                         $hasRefundRequest = strpos($order->health_notes, '[Yêu cầu hoàn tiền') !== false;
                                     @endphp
-                                    @if(!$hasRefundRequest)
+                                    @if($order->payment_status === 'refunded')
+                                        <span class="badge bg-dark text-white d-flex align-items-center px-3"><i class="bi bi-arrow-counterclockwise me-1"></i> Đã hoàn tiền</span>
+                                    @elseif($hasRefundRequest)
+                                        <span class="badge bg-secondary text-white d-flex align-items-center px-3"><i class="bi bi-clock me-1"></i> Đã yêu cầu hoàn tiền</span>
+                                    @else
                                         <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-toggle="modal"
-                                            data-bs-target="#refundOrderModal" data-order-id="{{ $order->id }}" data-amount="{{ number_format($order->final_amount, 0, ',', '.') }} đ">
+                                            data-bs-target="#refundOrderModal" data-order-id="{{ $order->id }}" data-amount="{{ number_format($order->final_amount, 0, ',', '.') }} đ" data-raw-amount="{{ $order->final_amount }}">
                                             <i class="bi bi-arrow-counterclockwise me-1"></i> Yêu cầu hoàn tiền
                                         </button>
-                                    @else
-                                        <span class="badge bg-secondary text-white d-flex align-items-center px-3"><i class="bi bi-clock me-1"></i> Đã yêu cầu hoàn tiền</span>
                                     @endif
                                 @endif
                             </div>
@@ -490,34 +493,27 @@
         </div>
     </div>
 
-    <!-- MODAL 3: YÊU CẦU HOÀN TIỀN (CẬP NHẬT CHỌN PHƯƠNG THỨC) -->
+    <!-- MODAL 3: YÊU CẦU HOÀN TIỀN (CẬP NHẬT CHỌN PHƯƠNG THỨC VÀ HÌNH ẢNH) -->
     <div class="modal fade" id="refundOrderModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content text-dark">
                 <div class="modal-header bg-secondary text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-arrow-counterclockwise me-2"></i>Yêu cầu hoàn trả
-                        tiền
-                        đơn hàng</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-arrow-counterclockwise me-2"></i>Yêu cầu hoàn tiền đơn hàng</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="{{ route('order.refund') }}" method="POST">
+                <form action="{{ route('order.refund') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="order_id" id="refund_order_id_input">
                     <div class="modal-body text-start">
                         <div class="alert alert-info py-2 small border-0">
-                            Số tiền dự kiến hoàn trả: <strong id="refund-amount-display" class="text-danger">0
-                                đ</strong>
+                            Số tiền dự kiến hoàn trả: <strong id="refund-amount-display" class="text-danger">0 đ</strong>
                         </div>
-                        <p>Hệ thống hỗ trợ gửi yêu cầu hoàn tiền cho đơn hàng <strong
-                                id="refund-order-id-display">#</strong>. Vui lòng hoàn thiện các thông tin khiếu nại
-                            dưới
-                            đây:</p>
+                        <p>Hệ thống hỗ trợ gửi yêu cầu khiếu nại hoàn tiền cho đơn hàng <strong id="refund-order-id-display">#</strong>. Vui lòng điền các thông tin dưới đây:</p>
 
                         <div class="row">
                             <!-- Lý do khiếu nại -->
                             <div class="form-group col-md-6 mb-3">
-                                <label class="form-label small fw-bold">Lý do yêu cầu hoàn tiền <span
-                                        class="text-danger">*</span></label>
+                                <label class="form-label small fw-bold">Lý do yêu cầu hoàn tiền <span class="text-danger">*</span></label>
                                 <select class="form-select" name="refund_reason" required>
                                     <option value="" selected disabled>-- Chọn nguyên do khiếu nại --</option>
                                     <option value="wrong_dish">Giao sai món ăn / Nhầm lẫn thực đơn</option>
@@ -526,83 +522,83 @@
                                 </select>
                             </div>
 
-                            <!-- BỔ SUNG: Chọn phương thức hoàn tiền -->
+                            <!-- Chọn phương thức hoàn tiền -->
                             <div class="form-group col-md-6 mb-3">
-                                <label for="refund_method" class="form-label small fw-bold">Phương thức nhận tiền hoàn
-                                    <span class="text-danger">*</span></label>
-                                <select class="form-select fw-bold text-primary" id="refund_method" name="refund_method"
-                                    required onchange="toggleRefundFields(this.value)">
+                                <label for="refund_method" class="form-label small fw-bold">Phương thức nhận tiền hoàn <span class="text-danger">*</span></label>
+                                <select class="form-select fw-bold text-primary" id="refund_method" name="refund_method" required onchange="toggleRefundFields(this.value)">
                                     <option value="bank" selected>Chuyển khoản Ngân hàng nội địa</option>
                                     <option value="momo">Chuyển về Ví điện tử MoMo</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- KHU VỰC ĐIỀN THÔNG TIN TÀI KHOẢN NHẬN TIỀN (Sẽ thay đổi theo Javascript) -->
+                        <!-- KHU VỰC ĐIỀN THÔNG TIN TÀI KHOẢN NHẬN TIỀN -->
                         <div class="card bg-light border-0 p-3 mb-3">
-                            <h6 class="fw-bold small text-secondary mb-2"><i class="bi bi-wallet2 me-1"></i> Thông tin
-                                tài
-                                khoản đích</h6>
+                            <h6 class="fw-bold small text-secondary mb-2"><i class="bi bi-wallet2 me-1"></i> Thông tin tài khoản đích</h6>
 
-                            <!-- Trường nhập cho Ngân Hàng (Mặc định hiển thị) -->
+                            <!-- Trường nhập cho Ngân Hàng -->
                             <div id="bank_fields_group">
                                 <div class="row">
                                     <div class="form-group col-md-4 mb-2">
                                         <label class="small">Tên Ngân hàng <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-sm bank-input"
-                                            name="bank_name" placeholder="Ví dụ: Vietcombank, Techcombank..." required>
+                                        <input type="text" class="form-control form-control-sm bank-input" name="bank_name" placeholder="Ví dụ: Vietcombank, Techcombank..." required>
                                     </div>
                                     <div class="form-group col-md-4 mb-2">
                                         <label class="small">Số tài khoản <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-sm bank-input"
-                                            name="bank_account" placeholder="Nhập số tài khoản" required>
+                                        <input type="text" class="form-control form-control-sm bank-input" name="bank_account" placeholder="Nhập số tài khoản" required>
                                     </div>
                                     <div class="form-group col-md-4 mb-2">
                                         <label class="small">Tên chủ thẻ <span class="text-danger">*</span></label>
-                                        <input type="text"
-                                            class="form-control form-control-sm bank-input text-uppercase"
-                                            name="bank_user" placeholder="NGUYEN VAN A" required>
+                                        <input type="text" class="form-control form-control-sm bank-input text-uppercase" name="bank_user" placeholder="NGUYEN VAN A" required>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Trường nhập cho MoMo (Mặc định ẩn) -->
+                            <!-- Trường nhập cho MoMo -->
                             <div id="momo_fields_group" class="d-none">
                                 <div class="row">
                                     <div class="form-group col-md-6 mb-2">
-                                        <label class="small">Số điện thoại đăng ký MoMo <span
-                                                class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-sm momo-input"
-                                            id="momo_phone" name="momo_phone" placeholder="09xxxxxxxx">
+                                        <label class="small">Số điện thoại đăng ký MoMo <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-sm momo-input" id="momo_phone" name="momo_phone" placeholder="09xxxxxxxx">
                                     </div>
                                     <div class="form-group col-md-6 mb-2">
-                                        <label class="small">Tên chủ tài khoản MoMo <span
-                                                class="text-danger">*</span></label>
-                                        <input type="text"
-                                            class="form-control form-control-sm momo-input text-uppercase"
-                                            id="momo_user" name="momo_user" placeholder="NGUYEN VAN A">
+                                        <label class="small">Tên chủ tài khoản MoMo <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-sm momo-input text-uppercase" id="momo_user" name="momo_user" placeholder="NGUYEN VAN A">
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Số tiền muốn hoàn trả & Hình ảnh minh chứng -->
+                        <div class="row mb-3">
+                            <div class="form-group col-md-6">
+                                <label for="refund_amount" class="form-label small fw-bold">Số tiền muốn hoàn trả (đ) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control font-weight-bold text-danger" id="refund_amount_input" name="refund_amount" required min="0">
+                                <small class="text-muted">Nhập số tiền muốn hoàn trả (tối đa bằng giá trị đơn hàng).</small>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="refund_image" class="form-label small fw-bold">Hình ảnh minh chứng (nếu có)</label>
+                                <input type="file" class="form-control" id="refund_image" name="refund_image" accept="image/*">
+                                <small class="text-muted">Định dạng hỗ trợ: jpg, png, jpeg, gif. Tối đa: 2MB.</small>
                             </div>
                         </div>
 
                         <!-- Miêu tả sự cố -->
                         <div class="form-group">
                             <label class="form-label small fw-bold">Chi tiết sự cố gặp phải:</label>
-                            <textarea class="form-control" name="refund_detail" rows="2"
-                                placeholder="Vui lòng miêu tả ngắn gọn tình huống đơn hàng để hệ thống đối chiếu camera/shipper..."
-                                required></textarea>
+                            <textarea class="form-control" name="refund_detail" rows="2" placeholder="Vui lòng miêu tả ngắn gọn sự cố để cửa hàng đối chiếu..." required></textarea>
                         </div>
                     </div>
                     <div class="modal-footer bg-light">
-                        <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal">Hủy
-                            bỏ</button>
+                        <button type="button" class="btn btn-secondary shadow-sm" data-bs-dismiss="modal">Hủy bỏ</button>
                         <button type="submit" class="btn btn-primary shadow-sm px-4">Gửi đơn khiếu nại</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+
 
     <!-- Footer -->
     <footer id="footer" class="footer dark-background">
@@ -671,11 +667,294 @@
                     const button = event.relatedTarget;
                     const orderId = button.getAttribute('data-order-id');
                     const amount = button.getAttribute('data-amount');
+                    const rawAmount = button.getAttribute('data-raw-amount');
+                    
                     document.getElementById('refund-order-id-display').innerText = '#FDL-' + orderId;
                     document.getElementById('refund_order_id_input').value = orderId;
                     document.getElementById('refund-amount-display').innerText = amount;
+                    
+                    const amountInput = document.getElementById('refund_amount_input');
+                    if (amountInput) {
+                        amountInput.value = rawAmount;
+                        amountInput.max = rawAmount;
+                    }
                 });
             }
+
+            // 4. Lắng nghe sự kiện truyền tải Realtime từ Laravel Echo (Disabled in favor of Polling)
+            /*
+            if (window.Echo) {
+                const userId = {{ Auth::id() }};
+                window.Echo.private('App.Models.User.' + userId)
+                    .listen('OrderUpdated', (e) => {
+                        console.log('Order update received:', e);
+                        const order = e.order;
+                        
+                        // Cập nhật thẻ Order Card trên màn hình
+                        const orderCard = document.getElementById('order-card-' + order.id);
+                        if (orderCard) {
+                            // 1. Cập nhật Badge Trạng thái đơn hàng
+                            const headerCol = orderCard.querySelector('.order-header .col-md-6.text-md-end');
+                            if (headerCol) {
+                                let badgeHtml = '';
+                                if (order.order_status === 'pending') {
+                                    badgeHtml = '<span class="badge bg-secondary text-white"><i class="bi bi-hourglass-split me-1"></i> Chờ xác nhận</span>';
+                                } else if (order.order_status === 'confirmed') {
+                                    badgeHtml = '<span class="badge bg-info text-white"><i class="bi bi-check-circle me-1"></i> Đã xác nhận</span>';
+                                } else if (order.order_status === 'preparing') {
+                                    badgeHtml = '<span class="badge bg-warning text-dark"><i class="bi bi-fire me-1"></i> Đang chuẩn bị</span>';
+                                } else if (order.order_status === 'delivering') {
+                                    badgeHtml = '<span class="badge bg-primary text-white"><i class="bi bi-truck me-1"></i> Đang giao</span>';
+                                } else if (order.order_status === 'completed') {
+                                    badgeHtml = '<span class="badge bg-success text-white"><i class="bi bi-check2-all me-1"></i> Đã hoàn thành</span>';
+                                } else if (order.order_status === 'cancelled') {
+                                    badgeHtml = '<span class="badge bg-danger text-white"><i class="bi bi-x-circle me-1"></i> Đã hủy</span>';
+                                }
+                                headerCol.innerHTML = badgeHtml;
+                            }
+
+                            // 2. Cập nhật Badge Trạng thái thanh toán
+                            const paymentBadge = orderCard.querySelector('.info-section span.badge');
+                            if (paymentBadge) {
+                                paymentBadge.className = 'badge';
+                                if (order.payment_status === 'pending') {
+                                    paymentBadge.classList.add('bg-warning', 'text-dark');
+                                    paymentBadge.innerText = 'Chờ thanh toán';
+                                } else if (order.payment_status === 'paid') {
+                                    paymentBadge.classList.add('bg-success', 'text-white');
+                                    paymentBadge.innerText = 'Đã thanh toán';
+                                } else if (order.payment_status === 'failed') {
+                                    paymentBadge.classList.add('bg-danger', 'text-white');
+                                    paymentBadge.innerText = 'Thất bại';
+                                } else if (order.payment_status === 'refunded') {
+                                    paymentBadge.classList.add('bg-info', 'text-dark');
+                                    paymentBadge.innerText = 'Đã hoàn tiền';
+                                }
+                            }
+
+                            // 3. Hiển thị thông báo Alert trên thẻ đơn hàng
+                            let statusText = '';
+                            switch(order.order_status) {
+                                case 'pending': statusText = 'chờ xác nhận'; break;
+                                case 'confirmed': statusText = 'đã xác nhận'; break;
+                                case 'preparing': statusText = 'đang chuẩn bị món'; break;
+                                case 'delivering': statusText = 'đang được giao'; break;
+                                case 'completed': statusText = 'đã hoàn tất giao nhận'; break;
+                                case 'cancelled': statusText = 'đã bị hủy'; break;
+                            }
+
+                            const alertDiv = document.createElement('div');
+                            alertDiv.className = 'alert alert-info alert-dismissible fade show mt-3 mb-2';
+                            alertDiv.role = 'alert';
+                            alertDiv.innerHTML = `
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                Đơn hàng <strong>#FDL-${order.id}</strong> của bạn vừa cập nhật trạng thái: <strong class="text-uppercase">${statusText}</strong>!
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            `;
+                            
+                            // Xóa các Alert cũ nếu có trong card
+                            const oldAlerts = orderCard.querySelectorAll('.alert-info');
+                            oldAlerts.forEach(el => el.remove());
+                            
+                            orderCard.querySelector('.order-header').after(alertDiv);
+
+                            // 4. Phát âm thanh bíp thông báo
+                            try {
+                                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                                const oscillator = audioCtx.createOscillator();
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+                                oscillator.connect(audioCtx.destination);
+                                oscillator.start();
+                                oscillator.stop(audioCtx.currentTime + 0.2);
+                            } catch (err) {
+                                console.log('Audio error:', err);
+                            }
+                        }
+                    });
+            }
+            */
+
+            // 4. AJAX Polling for Realtime updates
+            const userId = {{ Auth::id() }};
+            if (userId) {
+                let lastCheckedTime = null;
+
+                // Initialize Order Polling
+                fetch("{{ route('api.orders.poll') }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        lastCheckedTime = data.timestamp;
+                        console.log('Cart Polling initialized at:', lastCheckedTime);
+                        setInterval(pollUpdates, 2000);
+                    })
+                    .catch(err => console.error('Error initializing cart polling:', err));
+
+                function pollUpdates() {
+                    if (!lastCheckedTime) return;
+
+                    fetch(`{{ route('api.orders.poll') }}?since=${encodeURIComponent(lastCheckedTime)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            lastCheckedTime = data.timestamp;
+                            if (data.updates && data.updates.length > 0) {
+                                data.updates.forEach(e => {
+                                    console.log('Cart Polling Order update received:', e);
+                                    const order = e.order;
+                                    
+                                    // Cập nhật thẻ Order Card trên màn hình
+                                    const orderCard = document.getElementById('order-card-' + order.id);
+                                    if (orderCard) {
+                                        // 1. Cập nhật Badge Trạng thái đơn hàng
+                                        const headerCol = orderCard.querySelector('.order-header .col-md-6.text-md-end');
+                                        if (headerCol) {
+                                            let badgeHtml = '';
+                                            if (order.order_status === 'pending') {
+                                                badgeHtml = '<span class="badge bg-secondary text-white"><i class="bi bi-hourglass-split me-1"></i> Chờ xác nhận</span>';
+                                            } else if (order.order_status === 'confirmed') {
+                                                badgeHtml = '<span class="badge bg-info text-white"><i class="bi bi-check-circle me-1"></i> Đã xác nhận</span>';
+                                            } else if (order.order_status === 'preparing') {
+                                                badgeHtml = '<span class="badge bg-warning text-dark"><i class="bi bi-fire me-1"></i> Đang chuẩn bị</span>';
+                                            } else if (order.order_status === 'delivering') {
+                                                badgeHtml = '<span class="badge bg-primary text-white"><i class="bi bi-truck me-1"></i> Đang giao</span>';
+                                            } else if (order.order_status === 'completed') {
+                                                badgeHtml = '<span class="badge bg-success text-white"><i class="bi bi-check2-all me-1"></i> Đã hoàn thành</span>';
+                                            } else if (order.order_status === 'cancelled') {
+                                                badgeHtml = '<span class="badge bg-danger text-white"><i class="bi bi-x-circle me-1"></i> Đã hủy</span>';
+                                            }
+                                            headerCol.innerHTML = badgeHtml;
+                                        }
+
+                                        // 2. Cập nhật Badge Trạng thái thanh toán
+                                        const paymentBadge = orderCard.querySelector('.info-section span.badge');
+                                        
+                                        // 2.1 Cập nhật Nút thao tác (Action buttons)
+                                        const actionButtons = orderCard.querySelector('.action-buttons');
+                                        if (actionButtons) {
+                                            let buttonsHtml = '';
+                                            if (order.order_status === 'pending') {
+                                                buttonsHtml = `
+                                                    <button type="button" class="btn btn-outline-danger btn-sm px-3" data-bs-toggle="modal"
+                                                        data-bs-target="#cancelOrderModal" data-order-id="${order.id}">
+                                                        <i class="bi bi-trash3 me-1"></i> Hủy đơn hàng này
+                                                    </button>
+                                                `;
+                                            } else if (order.order_status === 'completed') {
+                                                if (order.is_reviewed) {
+                                                    buttonsHtml += `
+                                                        <button type="button" class="btn btn-outline-success btn-sm px-3" disabled>
+                                                            <i class="bi bi-check-circle-fill me-1"></i> Đã đánh giá
+                                                        </button>
+                                                    `;
+                                                } else {
+                                                    buttonsHtml += `
+                                                        <button type="button" class="btn btn-warning text-dark btn-sm fw-bold px-3"
+                                                            data-bs-toggle="modal" data-bs-target="#reviewOrderModal" data-order-id="${order.id}">
+                                                            <i class="bi bi-star-fill me-1"></i> Viết đánh giá
+                                                        </button>
+                                                    `;
+                                                }
+
+                                                if (order.payment_status === 'refunded') {
+                                                    buttonsHtml += `
+                                                        <span class="badge bg-dark text-white d-flex align-items-center px-3"><i class="bi bi-arrow-counterclockwise me-1"></i> Đã hoàn tiền</span>
+                                                    `;
+                                                } else if (order.has_refund_request) {
+                                                    buttonsHtml += `
+                                                        <span class="badge bg-secondary text-white d-flex align-items-center px-3"><i class="bi bi-clock me-1"></i> Đã yêu cầu hoàn tiền</span>
+                                                    `;
+                                                } else {
+                                                    buttonsHtml += `
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-toggle="modal"
+                                                            data-bs-target="#refundOrderModal" data-order-id="${order.id}" data-amount="${new Intl.NumberFormat('vi-VN').format(order.final_amount)} đ" data-raw-amount="${order.final_amount}">
+                                                            <i class="bi bi-arrow-counterclockwise me-1"></i> Yêu cầu hoàn tiền
+                                                        </button>
+                                                    `;
+                                                }
+                                            }
+                                            actionButtons.innerHTML = buttonsHtml;
+                                        }
+
+                                        if (paymentBadge) {
+                                            paymentBadge.className = 'badge';
+                                            if (order.payment_status === 'pending') {
+                                                paymentBadge.classList.add('bg-warning', 'text-dark');
+                                                paymentBadge.innerText = 'Chờ thanh toán';
+                                            } else if (order.payment_status === 'paid') {
+                                                paymentBadge.classList.add('bg-success', 'text-white');
+                                                paymentBadge.innerText = 'Đã thanh toán';
+                                            } else if (order.payment_status === 'failed') {
+                                                paymentBadge.classList.add('bg-danger', 'text-white');
+                                                paymentBadge.innerText = 'Thất bại';
+                                            } else if (order.payment_status === 'refunded') {
+                                                paymentBadge.classList.add('bg-info', 'text-dark');
+                                                paymentBadge.innerText = 'Đã hoàn tiền';
+                                            }
+                                        }
+
+                                        // 3. Hiển thị thông báo Alert trên thẻ đơn hàng
+                                        let statusText = '';
+                                        switch(order.order_status) {
+                                            case 'pending': statusText = 'chờ xác nhận'; break;
+                                            case 'confirmed': statusText = 'đã xác nhận'; break;
+                                            case 'preparing': statusText = 'đang chuẩn bị món'; break;
+                                            case 'delivering': statusText = 'đang được giao'; break;
+                                            case 'completed': statusText = 'đã hoàn tất giao nhận'; break;
+                                            case 'cancelled': statusText = 'đã bị hủy'; break;
+                                        }
+
+                                        const alertDiv = document.createElement('div');
+                                        alertDiv.className = 'alert alert-info alert-dismissible fade show mt-3 mb-2';
+                                        alertDiv.role = 'alert';
+                                        alertDiv.innerHTML = `
+                                            <i class="bi bi-info-circle-fill me-2"></i>
+                                            Đơn hàng <strong>#FDL-${order.id}</strong> của bạn vừa cập nhật trạng thái: <strong class="text-uppercase">${statusText}</strong>!
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        `;
+                                        
+                                        // Xóa các Alert cũ nếu có trong card
+                                        const oldAlerts = orderCard.querySelectorAll('.alert-info');
+                                        oldAlerts.forEach(el => el.remove());
+                                        
+                                        orderCard.querySelector('.order-header').after(alertDiv);
+
+                                        // 4. Phát âm thanh bíp thông báo
+                                        try {
+                                            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                                            const oscillator = audioCtx.createOscillator();
+                                            oscillator.type = 'sine';
+                                            oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+                                            oscillator.connect(audioCtx.destination);
+                                            oscillator.start();
+                                            oscillator.stop(audioCtx.currentTime + 0.2);
+                                        } catch (err) {
+                                            console.log('Audio error:', err);
+                                        }
+                                    }
+                                });
+                            }
+                        })
+                        .catch(err => console.error('Error during cart polling:', err));
+            }
+            
+            // Settings/Logo Polling in Cart view
+            let currentLogoUrl = "{{ isset($settings['logo_url']) ? (\Illuminate\Support\Str::startsWith($settings['logo_url'], 'http') ? $settings['logo_url'] : asset($settings['logo_url'])) : asset('logo.jpg') }}";
+            
+            function pollCartSettings() {
+                fetch("{{ route('api.settings.poll') }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        const newLogo = data.settings.logo_url;
+                        if (newLogo && newLogo !== currentLogoUrl) {
+                            currentLogoUrl = newLogo;
+                            document.querySelectorAll('.setting-logo-img').forEach(img => {
+                                img.src = newLogo;
+                            });
+                        }
+                    })
+                    .catch(err => console.error('Error polling settings in cart view:', err));
+            }
+            setInterval(pollCartSettings, 2000);
         });
     </script>
 </body>

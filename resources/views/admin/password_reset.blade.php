@@ -43,19 +43,31 @@
                                     <div class="text-center">
                                         <h1 class="h4 text-gray-900 mb-4">ĐỔI LẠI MẬT KHẨU</h1>
                                     </div>
-                                    <form class="user">
+                                    @if($errors->any())
+                                        <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+                                            {{ $errors->first() }}
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                    @endif
+
+                                    <form action="{{ route('doimatkhau.post') }}" method="POST" class="user">
+                                        @csrf
+                                        <input type="hidden" name="token" value="{{ $token }}">
                                         <div class="form-group">
                                             <input type="password" class="form-control form-control-user"
-                                                id="exampleInputEmail" aria-describedby="exampleInputPassword"
-                                                placeholder="Nhập mật khẩu mới...">
+                                                id="exampleInputPassword" name="password"
+                                                placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)..." required>
                                         </div>
                                         <div class="form-group">
                                             <input type="password" class="form-control form-control-user"
-                                                id="exampleInputPassword" placeholder="Nhập lại mật khẩu...">
+                                                id="exampleInputPasswordConfirm" name="password_confirmation" 
+                                                placeholder="Nhập lại mật khẩu..." required>
                                         </div>
-                                        <a href="{{ route('quanly') }}" class="btn btn-primary btn-user btn-block">
+                                        <button type="submit" class="btn btn-primary btn-user btn-block">
                                             Đổi mật khẩu
-                                        </a>
+                                        </button>
                                     </form>
                                     <hr>
                                 </div>

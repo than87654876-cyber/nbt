@@ -121,8 +121,8 @@
 <body class="index-page">
     <header id="header" class="header d-flex align-items-center sticky-top">
         <div class="container position-relative d-flex align-items-center justify-content-between">
-            <a href="{{ route('trangchu_dangnhap') }}" class="logo d-flex align-items-center me-auto me-xl-0">
-                <img src="{{ asset('logo.jpg') }}" alt="">
+            <a href="{{ route('trangchu') }}" class="logo d-flex align-items-center me-auto me-xl-0">
+                <img src="{{ isset($settings['logo_url']) ? (\Illuminate\Support\Str::startsWith($settings['logo_url'], 'http') ? $settings['logo_url'] : asset($settings['logo_url'])) : asset('logo.jpg') }}" alt="" class="setting-logo-img">
                 <h1 class="sitename">FOODELICIOUS</h1><span>.</span>
             </a>
             <nav id="navmenu" class="navmenu">
@@ -376,15 +376,20 @@
                     <h5 class="modal-title fw-bold"><i class="bi bi-x-octagon me-2"></i>Yêu cầu chấm dứt/Hủy ngang gói dịch vụ</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="{{ route('goidichvu.cancel') }}" method="POST">
+                <form action="{{ route('goidichvu.cancel') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="subscription_id" id="cancel-sub-id-input">
                     <div class="modal-body">
                         <div class="alert alert-warning border-0 small"><i class="bi bi-info-circle-fill me-1"></i> Tiền tương ứng với các ngày ăn chưa sử dụng còn lại sẽ được ban quản lý thẩm định và hoàn trả lại tài khoản ngân hàng của bạn sau khi đối soát.</div>
-                        <div class="form-group">
-                            <label for="cancel_reason" class="form-label small fw-bold">Vui lòng cho cửa hàng biết lý do hủy:</label>
-                            <textarea class="form-control" id="cancel_reason" name="cancel_reason" rows="2"
-                                placeholder="Lý do cá nhân, đổi văn phòng, món ăn không hợp vị..." required></textarea>
+                        <div class="form-group mb-3">
+                            <label for="cancel_reason" class="form-label small fw-bold">Vui lòng cho cửa hàng biết lý do hủy (Tối thiểu 50 ký tự): <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="cancel_reason" name="cancel_reason" rows="3"
+                                minlength="50" placeholder="Vui lòng giải thích chi tiết lý do bạn muốn hủy gói dịch vụ ăn uống (tối thiểu 50 ký tự)..." required></textarea>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="cancel_image" class="form-label small fw-bold">Hình ảnh minh chứng lý do hủy: <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="cancel_image" name="cancel_image" accept="image/*" required>
+                            <small class="text-muted d-block mt-1">* Vui lòng chụp hình ảnh đơn viết tay hoặc lỗi dịch vụ để ban quản trị duyệt nhanh chóng.</small>
                         </div>
                     </div>
                     <div class="modal-footer bg-light border-0">
@@ -505,6 +510,25 @@
                     document.getElementById('review-sub-id-input').value = subId;
                 });
             }
+
+            // Settings/Logo Polling in Sub Packages view
+            let currentLogoUrl = "{{ isset($settings['logo_url']) ? (\Illuminate\Support\Str::startsWith($settings['logo_url'], 'http') ? $settings['logo_url'] : asset($settings['logo_url'])) : asset('logo.jpg') }}";
+            
+            function pollPackagesSettings() {
+                fetch("{{ route('api.settings.poll') }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        const newLogo = data.settings.logo_url;
+                        if (newLogo && newLogo !== currentLogoUrl) {
+                            currentLogoUrl = newLogo;
+                            document.querySelectorAll('.setting-logo-img').forEach(img => {
+                                img.src = newLogo;
+                            });
+                        }
+                    })
+                    .catch(err => console.error('Error polling settings in packages view:', err));
+            }
+            setInterval(pollPackagesSettings, 2000);
         });
     </script>
 </body>

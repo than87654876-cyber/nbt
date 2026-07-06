@@ -31,7 +31,7 @@ class ServicePackage extends Model
      */
     public function dishes(): BelongsToMany
     {
-        return $this->belongsToMany(Dish::class, 'package_dishes');
+        return $this->belongsToMany(Dish::class, 'package_dishes', 'package_id', 'dish_id');
     }
 
     /**

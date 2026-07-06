@@ -9,6 +9,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\CouponPromoMail;
 
 class AdminPromotionController extends Controller
 {
@@ -126,52 +128,76 @@ class AdminPromotionController extends Controller
             'message_body' => 'required|string',
         ]);
 
-        // 1. Thực hiện truy vấn lọc người dùng
-        $query = User::where('role', 'customer')->where('status', 1);
+        // 1. Thực hiện truy vấn lọc người dùng hoặc tìm kiếm email đích danh
+        if ($request->filled('target_email')) {
+            $targetEmail = trim($request->target_email);
 
-        // Lọc theo hạng thành viên
-        if ($request->has('ranks')) {
-            $ranks = $request->ranks;
-            // Map standard to bronze
-            if (in_array('standard', $ranks)) {
-                $ranks[] = 'bronze';
-            }
-            $query->whereIn('membership', $ranks);
-        }
-
-        // Lọc theo ngày đăng ký tài khoản (Khách hàng mới)
-        if ($request->filled('new_customer_range') && $request->new_customer_range !== 'all') {
-            $days = 7;
-            if ($request->new_customer_range === '15_days') {
-                $days = 15;
-            } elseif ($request->new_customer_range === '30_days') {
-                $days = 30;
-            }
-            $query->where('created_at', '>=', Carbon::now()->subDays($days));
-        }
-
-        // Lấy danh sách khách hàng ban đầu
-        $customers = $query->get();
-
-        // Lọc theo thời gian chưa mua hàng (inactive period)
-        if ($request->filled('inactive_period') && $request->inactive_period !== 'all') {
-            $months = 1;
-            if ($request->inactive_period === '6_months') {
-                $months = 6;
-            } elseif ($request->inactive_period === '1_year') {
-                $months = 12;
+            // Kiểm tra xem email có đuôi @gmail.com hay không
+            if (!str_ends_with(strtolower($targetEmail), '@gmail.com')) {
+                return back()->with('error', 'Chỉ hỗ trợ gửi mã khuyến mãi đến địa chỉ Gmail kết thúc bằng @gmail.com!');
             }
 
-            $cutoffDate = Carbon::now()->subMonths($months);
+            // Kết nối với tài khoản khách hàng để xem có dữ liệu hay không
+            $customer = User::where('role', 'customer')
+                ->where('email', $targetEmail)
+                ->first();
 
-            $customers = $customers->filter(function ($customer) use ($cutoffDate) {
-                $lastOrder = Order::where('user_id', $customer->id)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
+            // Nếu tài khoản đó không khớp (không có data), không gửi
+            if (!$customer) {
+                return back()->with('error', 'Địa chỉ Gmail nhập vào không khớp với tài khoản khách hàng nào có sẵn trong hệ thống!');
+            }
 
-                // Nếu chưa từng đặt hàng hoặc đặt hàng lần cuối trước mốc cutoff
-                return ! $lastOrder || Carbon::parse($lastOrder->created_at)->lt($cutoffDate);
-            });
+            $customers = collect([$customer]);
+        } else {
+            // Thực hiện lọc hàng loạt
+            $query = User::where('role', 'customer')
+                ->where('status', 1)
+                ->where('email', 'like', '%@gmail.com');
+
+            // Lọc theo hạng thành viên
+            if ($request->has('ranks')) {
+                $ranks = $request->ranks;
+                // Map standard to bronze
+                if (in_array('standard', $ranks)) {
+                    $ranks[] = 'bronze';
+                }
+                $query->whereIn('membership', $ranks);
+            }
+
+            // Lọc theo ngày đăng ký tài khoản (Khách hàng mới)
+            if ($request->filled('new_customer_range') && $request->new_customer_range !== 'all') {
+                $days = 7;
+                if ($request->new_customer_range === '15_days') {
+                    $days = 15;
+                } elseif ($request->new_customer_range === '30_days') {
+                    $days = 30;
+                }
+                $query->where('created_at', '>=', Carbon::now()->subDays($days));
+            }
+
+            // Lấy danh sách khách hàng ban đầu
+            $customers = $query->get();
+
+            // Lọc theo thời gian chưa mua hàng (inactive period)
+            if ($request->filled('inactive_period') && $request->inactive_period !== 'all') {
+                $months = 1;
+                if ($request->inactive_period === '6_months') {
+                    $months = 6;
+                } elseif ($request->inactive_period === '1_year') {
+                    $months = 12;
+                }
+
+                $cutoffDate = Carbon::now()->subMonths($months);
+
+                $customers = $customers->filter(function ($customer) use ($cutoffDate) {
+                    $lastOrder = Order::where('user_id', $customer->id)
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+
+                    // Nếu chưa từng đặt hàng hoặc đặt hàng lần cuối trước mốc cutoff
+                    return ! $lastOrder || Carbon::parse($lastOrder->created_at)->lt($cutoffDate);
+                });
+            }
         }
 
         if ($customers->isEmpty()) {
@@ -186,7 +212,11 @@ class AdminPromotionController extends Controller
 
         DB::beginTransaction();
         try {
+            $phpMailer = app(\App\Services\PHPMailerService::class);
             foreach ($customers as $customer) {
+                if (!str_ends_with(strtolower($customer->email), '@gmail.com')) {
+                    continue;
+                }
                 // Tạo mã ngẫu nhiên độc nhất
                 $randomString = strtoupper(Str::random($request->code_length));
                 $couponCode = $prefix.'-'.$randomString;
@@ -204,7 +234,7 @@ class AdminPromotionController extends Controller
                     'discount_value' => $request->discount_value,
                     'min_order_value' => $request->min_order,
                     'start_date' => Carbon::now()->format('Y-m-d'),
-                    'end_date' => Carbon::now()->addDays($request->expiry_days)->format('Y-m-d'),
+                    'end_date' => Carbon::now()->addDays((int) $request->expiry_days)->format('Y-m-d'),
                     'usage_limit' => 1, // Mã cá nhân dùng 1 lần
                 ]);
 
@@ -215,6 +245,24 @@ class AdminPromotionController extends Controller
                     [$couponCode, $request->expiry_days],
                     $request->message_body
                 );
+
+                // Gửi email đồng bộ ngay lập tức để kiểm chứng việc gửi có thành công hay không
+                $sentSuccess = $phpMailer->sendWithTemplate(
+                    $customer->email,
+                    $msgSubject,
+                    'emails.coupon_promo',
+                    [
+                        'fullname' => $customer->fullname,
+                        'couponCode' => $couponCode,
+                        'subjectText' => $msgSubject,
+                        'bodyText' => $msgBody,
+                        'expiryDays' => $request->expiry_days,
+                    ]
+                );
+
+                if (!$sentSuccess) {
+                    throw new \Exception('Không thể gửi thư đến địa chỉ: ' . $customer->email . '. Vui lòng kiểm tra lại SMTP.');
+                }
 
                 $details[] = [
                     'fullname' => $customer->fullname,
@@ -231,7 +279,7 @@ class AdminPromotionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()->with('error', 'Đã xảy ra lỗi khi tạo mã khuyến mãi: '.$e->getMessage());
+            return back()->with('error', 'Gửi email khuyến mãi thất bại! Hệ thống đã hủy bỏ toàn bộ mã và không gửi cho ai. Chi tiết lỗi: '.$e->getMessage());
         }
 
         // Tạo chuỗi thông báo kết quả chi tiết

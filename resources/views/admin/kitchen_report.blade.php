@@ -94,3 +94,139 @@
     </div>
 </div>
 @endsection
+
+@section('scripts')
+<!-- Realtime Echo Listener for Kitchen (Disabled in favor of AJAX Polling) -->
+<!--
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (window.Echo) {
+            window.Echo.channel('kitchen-channel')
+                .listen('OrderUpdated', (e) => {
+                    console.log('Order update received in Kitchen:', e);
+                    
+                    if (e.action === 'created' || e.action === 'status_updated' || e.action === 'daily_dispatch') {
+                        try {
+                            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                            
+                            // Beep 1
+                            const osc1 = audioCtx.createOscillator();
+                            osc1.type = 'sawtooth';
+                            osc1.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+                            osc1.connect(audioCtx.destination);
+                            osc1.start();
+                            osc1.stop(audioCtx.currentTime + 0.15);
+                            
+                            // Beep 2
+                            setTimeout(() => {
+                                const osc2 = audioCtx.createOscillator();
+                                osc2.type = 'sawtooth';
+                                osc2.frequency.setValueAtTime(1046.50, audioCtx.currentTime); // C6 note
+                                osc2.connect(audioCtx.destination);
+                                osc2.start();
+                                osc2.stop(audioCtx.currentTime + 0.2);
+                            }, 200);
+                        } catch (err) {
+                            console.log('Audio error:', err);
+                        }
+
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-warning alert-dismissible fade show shadow-sm mb-4';
+                        alertDiv.role = 'alert';
+                        alertDiv.innerHTML = `
+                            <i class="fas fa-bell mr-2 text-danger"></i>
+                            <strong>Có cập nhật đơn hàng mới hoặc điều phối!</strong> Bảng chuẩn bị món ăn của bếp đang tự động tải lại...
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        `;
+                        document.querySelector('.container-fluid').prepend(alertDiv);
+
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1200);
+                    }
+                });
+        }
+    });
+</script>
+-->
+<!-- Realtime AJAX Polling for Kitchen -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let lastCheckedTime = null;
+
+        // Get initial server time
+        fetch("{{ route('api.orders.poll') }}")
+            .then(response => response.json())
+            .then(data => {
+                lastCheckedTime = data.timestamp;
+                console.log('Kitchen Polling initialized at:', lastCheckedTime);
+                setInterval(pollUpdates, 2000);
+            })
+            .catch(err => console.error('Error initializing kitchen polling:', err));
+
+        function pollUpdates() {
+            if (!lastCheckedTime) return;
+
+            fetch(`{{ route('api.orders.poll') }}?since=${encodeURIComponent(lastCheckedTime)}`)
+                .then(response => response.json())
+                .then(data => {
+                    lastCheckedTime = data.timestamp;
+                    if (data.updates && data.updates.length > 0) {
+                        let shouldReload = false;
+                        data.updates.forEach(e => {
+                            console.log('Polling Kitchen Event received:', e);
+                            if (e.action === 'created' || e.action === 'status_updated' || e.action === 'daily_dispatch') {
+                                shouldReload = true;
+                            }
+                        });
+
+                        if (shouldReload) {
+                            try {
+                                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                                
+                                // Beep 1
+                                const osc1 = audioCtx.createOscillator();
+                                osc1.type = 'sawtooth';
+                                osc1.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+                                osc1.connect(audioCtx.destination);
+                                osc1.start();
+                                osc1.stop(audioCtx.currentTime + 0.15);
+                                
+                                // Beep 2
+                                setTimeout(() => {
+                                    const osc2 = audioCtx.createOscillator();
+                                    osc2.type = 'sawtooth';
+                                    osc2.frequency.setValueAtTime(1046.50, audioCtx.currentTime); // C6 note
+                                    osc2.connect(audioCtx.destination);
+                                    osc2.start();
+                                    osc2.stop(audioCtx.currentTime + 0.2);
+                                }, 200);
+                            } catch (err) {
+                                console.log('Audio error:', err);
+                            }
+
+                            const alertDiv = document.createElement('div');
+                            alertDiv.className = 'alert alert-warning alert-dismissible fade show shadow-sm mb-4';
+                            alertDiv.role = 'alert';
+                            alertDiv.innerHTML = `
+                                <i class="fas fa-bell mr-2 text-danger"></i>
+                                <strong>Có cập nhật đơn hàng mới hoặc điều phối!</strong> Bảng chuẩn bị món ăn của bếp đang tự động tải lại...
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            `;
+                            document.querySelector('.container-fluid').prepend(alertDiv);
+
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1200);
+                        }
+                    }
+                })
+                .catch(err => console.error('Error during kitchen polling:', err));
+        }
+    });
+</script>
+@endsection

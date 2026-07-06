@@ -87,28 +87,41 @@
     <div class="auth-container">
         <div class="card auth-card p-4 text-dark">
             <div class="auth-header mb-4">
-                <div class="fs-1 mb-2" style="color: #ce1126;"><i class="bi bi-shield-lock-fill"></i></div>
+                <div class="fs-1 mb-2" style="color: #ce1126;"><i class="bi bi-envelope-check-fill"></i></div>
                 <h4 class="fw-bold mb-1" style="color: #ce1126;">QUÊN MẬT KHẨU?</h4>
-                <p class="text-muted small mb-0">Nhập số điện thoại tài khoản của bạn để nhận mã xác thực OTP đặt lại
-                    mật khẩu khóa</p>
+                <p class="text-muted small mb-0">Nhập email đăng ký tài khoản của bạn để nhận mã xác thực OTP khôi phục mật khẩu</p>
             </div>
 
-            <form action="#" method="POST">
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show small" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+                    {{ $errors->first() }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            <form action="{{ route('trangchu/quenmatkhau.post') }}" method="POST">
+                @csrf
                 <div class="mb-4">
-                    <label for="phone" class="form-label small fw-bold">Số điện thoại đăng ký tài khoản <span
+                    <label for="email" class="form-label small fw-bold">Email đăng ký tài khoản <span
                             class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light text-muted"><i class="bi bi-telephone"></i></span>
-                        <input type="tel" class="form-control" id="phone" name="phone"
-                            placeholder="Nhập số điện thoại xác minh" required>
+                        <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                        <input type="email" class="form-control" id="email" name="email"
+                            placeholder="example@gmail.com" value="{{ old('email') }}" required>
                     </div>
                     <div class="form-text small text-muted mt-2">
-                        <i class="bi bi-info-circle"></i> Hệ thống SMS Brandname của quán sẽ gửi một tin nhắn chứa mã
-                        OTP xác minh gồm 6 chữ số đến thiết bị này.
+                        <i class="bi bi-info-circle"></i> Hệ thống sẽ gửi một email có chứa mã xác thực OTP (6 số) vào hòm thư này.
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-auth w-100 rounded shadow-sm mb-3">TIẾP TỤC XÁC MINH</button>
+                <button type="submit" class="btn btn-auth w-100 rounded shadow-sm mb-3">GỬI MÃ XÁC THỰC OTP</button>
 
                 <div class="text-center small mt-2">
                     <a href="{{ route('trangchu/dangnhap') }}" class="auth-link"><i class="bi bi-arrow-left me-1"></i> Quay lại Đăng
