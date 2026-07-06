@@ -200,9 +200,9 @@ Route::middleware(['admin'])->group(function () {
     Route::post('/khachhang_xoa/{id}', [AdminUserController::class, 'customerDestroy'])->name('khachhang_xoa');
     Route::get('/quanly_khachvanglai', [AdminUserController::class, 'guestsList'])->name('quanly_khachvanglai');
 
-    // Báo cáo & Xuất CSV (Excel)
+    // Báo cáo & Xuất CSV / Excel
     Route::get('/quanly/baocao/xuat-orders', [AdminOrderController::class, 'exportOrdersCsv'])->name('baocao_xuat_orders');
-    Route::get('/quanly/baocao/xuat-customers', [AdminUserController::class, 'exportCustomersCsv'])->name('baocao_xuat_customers');
+    Route::get('/quanly/baocao/xuat-customers', [AdminUserController::class, 'exportCustomersExcel'])->name('baocao_xuat_customers');
     Route::get('/quanly/baocao/xuat-dishes', [AdminDishController::class, 'exportDishesCsv'])->name('baocao_xuat_dishes');
     Route::get('/quanly/baocao/xuat-refunds', [AdminOrderController::class, 'exportRefundsCsv'])->name('baocao_xuat_refunds');
 });

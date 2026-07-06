@@ -8,7 +8,7 @@
 
 @section('content')
     <!-- Filters Row -->
-    <div class="mb-4">
+    <div class="mb-4 d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2">
         <div class="btn-group shadow-sm" role="group" aria-label="Customer Filters">
             <a href="{{ route('quanly_khachhang') }}" class="btn btn-sm btn-{{ !isset($filter) || !$filter ? 'primary font-weight-bold' : 'light text-dark' }}">
                 Tất cả khách hàng
@@ -26,6 +26,9 @@
                 Không hoạt động >3 tháng
             </a>
         </div>
+        <a href="{{ route('baocao_xuat_customers') }}{{ isset($filter) && $filter ? '?filter='.$filter : '' }}" class="btn btn-sm btn-success shadow-sm">
+            <i class="fas fa-file-excel mr-2"></i> Xuất Excel
+        </a>
     </div>
 
     <div class="card shadow mb-4">

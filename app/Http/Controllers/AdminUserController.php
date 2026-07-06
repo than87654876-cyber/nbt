@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -17,7 +18,15 @@ class AdminUserController extends Controller
     {
         $filter = $request->input('filter');
         $query = User::where('role', 'customer')->orderBy('created_at', 'desc');
+        $query = $this->applyCustomerFilter($query, $filter);
 
+        $customers = $query->get();
+
+        return view('admin.customers', compact('customers', 'filter'));
+    }
+
+    private function applyCustomerFilter(Builder $query, ?string $filter): Builder
+    {
         if ($filter === 'first_order') {
             $query->whereHas('orders');
         } elseif ($filter === 'active_package') {
@@ -32,14 +41,12 @@ class AdminUserController extends Controller
         } elseif ($filter === 'inactive_3m') {
             $threeMonthsAgo = now()->subMonths(3);
             $query->where('created_at', '<', $threeMonthsAgo)
-                  ->whereDoesntHave('orders', function($q) use ($threeMonthsAgo) {
+                  ->whereDoesntHave('orders', function ($q) use ($threeMonthsAgo) {
                       $q->where('created_at', '>=', $threeMonthsAgo);
                   });
         }
 
-        $customers = $query->get();
-
-        return view('admin.customers', compact('customers', 'filter'));
+        return $query;
     }
 
     // Chi tiết khách hàng
@@ -200,42 +207,99 @@ class AdminUserController extends Controller
         return redirect()->route('quanly_nhanvien')->with('success', 'Đã xóa tài khoản nhân viên thành công!');
     }
 
-    // Xuất báo cáo khách hàng (CSV UTF-8 BOM)
-    public function exportCustomersCsv()
+    // Xuất báo cáo khách hàng (Excel .xlsx)
+    public function exportCustomersExcel(Request $request)
     {
+        $filter = $request->input('filter');
+        $query = User::whereIn('role', ['customer', 'guest'])->orderBy('created_at', 'desc');
+        $query = $this->applyCustomerFilter($query, $filter);
+
+        $users = $query->with([
+            'orders' => function ($q) {
+                $q->orderBy('created_at', 'desc');
+            },
+            'subscriptions',
+        ])->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Khách hàng');
+
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="danh-sach-khach-hang.csv"',
+            'Mã KH',
+            'Họ và tên',
+            'Email',
+            'Số điện thoại',
+            'Vai trò',
+            'Điểm tích lũy',
+            'Hạng thành viên',
+            'Trạng thái tài khoản',
+            'Ngày đăng ký',
+            'Tổng đơn hàng',
+            'Tổng chi tiêu (đã thanh toán)',
+            'Số đơn hoàn tiền',
+            'Lần đặt đơn gần nhất',
+            'Đang dùng gói',
+            'Ghi chú nội bộ',
         ];
 
-        $callback = function() {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
-            fputcsv($file, ['Mã KH', 'Họ và tên', 'Email', 'Số điện thoại', 'Vai trò', 'Điểm tích lũy', 'Hạng thành viên', 'Trạng thái', 'Ngày đăng ký']);
+        $columnIndex = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($columnIndex++, 1, $header);
+        }
 
-            $users = User::whereIn('role', ['customer', 'guest'])->orderBy('created_at', 'desc')->get();
+        $rowNumber = 2;
+        foreach ($users as $user) {
+            $roleText = $user->role === 'customer' ? 'Thành viên' : 'Khách vãng lai';
+            $membershipLabel = match ($user->membership) {
+                'diamond' => 'Kim cương',
+                'gold' => 'Vàng',
+                'silver' => 'Bạc',
+                default => 'Đồng',
+            };
+            $statusText = $user->status ? 'Hoạt động' : 'Bị khóa';
+            $totalOrders = $user->orders->count();
+            $refundedOrders = $user->orders->where('payment_status', 'refunded')->count();
+            $paidOrders = $user->orders->where('payment_status', 'paid');
+            $totalSpent = $paidOrders->sum('final_amount');
+            $lastOrderAt = $user->orders->first()?->created_at?->format('d/m/Y H:i') ?? 'Chưa có đơn';
+            $activePackageText = $user->subscriptions->where('status', 'active')->count() ? 'Có' : 'Không';
+            $notes = $user->notes ?: 'Không có';
 
-            foreach ($users as $user) {
-                $roleText = $user->role === 'customer' ? 'Thành viên' : 'Khách vãng lai';
-                $statusText = $user->status ? 'Hoạt động' : 'Bị khóa';
-                
-                fputcsv($file, [
-                    'KH-' . sprintf('%03d', $user->id),
-                    $user->fullname,
-                    $user->email,
-                    $user->phone ?? 'Chưa cập nhật',
-                    $roleText,
-                    $user->points,
-                    strtoupper($user->membership),
-                    $statusText,
-                    $user->created_at->format('d/m/Y H:i'),
-                ]);
-            }
+            $sheet->setCellValueByColumnAndRow(1, $rowNumber, 'KH-' . sprintf('%03d', $user->id));
+            $sheet->setCellValueByColumnAndRow(2, $rowNumber, $user->fullname);
+            $sheet->setCellValueByColumnAndRow(3, $rowNumber, $user->email);
+            $sheet->setCellValueByColumnAndRow(4, $rowNumber, $user->phone ?? 'Chưa cập nhật');
+            $sheet->setCellValueByColumnAndRow(5, $rowNumber, $roleText);
+            $sheet->setCellValueByColumnAndRow(6, $rowNumber, $user->points);
+            $sheet->setCellValueByColumnAndRow(7, $rowNumber, $membershipLabel);
+            $sheet->setCellValueByColumnAndRow(8, $rowNumber, $statusText);
+            $sheet->setCellValueByColumnAndRow(9, $rowNumber, $user->created_at->format('d/m/Y H:i'));
+            $sheet->setCellValueByColumnAndRow(10, $rowNumber, $totalOrders);
+            $sheet->setCellValueByColumnAndRow(11, $rowNumber, $totalSpent);
+            $sheet->setCellValueByColumnAndRow(12, $rowNumber, $refundedOrders);
+            $sheet->setCellValueByColumnAndRow(13, $rowNumber, $lastOrderAt);
+            $sheet->setCellValueByColumnAndRow(14, $rowNumber, $activePackageText);
+            $sheet->setCellValueByColumnAndRow(15, $rowNumber, $notes);
 
-            fclose($file);
-        };
+            $rowNumber++;
+        }
 
-        return response()->stream($callback, 200, $headers);
+        foreach (range('A', 'O') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'danh-sach-khach-hang.xlsx';
+
+        $headers = [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Cache-Control' => 'max-age=0',
+        ];
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, $headers);
     }
 }
