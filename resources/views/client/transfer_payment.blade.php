@@ -93,40 +93,13 @@
                 <div class="card shadow border-0 p-4 text-center">
                     <h5 class="fw-bold mb-4">Chọn phương thức quét mã QR</h5>
 
-                    @php
-                        $isMomo = (isset($payment_type) && $payment_type === 'momo') || !isset($payment_type);
-                    @endphp
-
-                    <ul class="nav nav-pills row g-2 mb-4" id="pills-tab" role="tablist">
-                        <li class="nav-item col-6" role="presentation">
-                            <button class="nav-link w-100 py-2.5 tab-momo {{ $isMomo ? 'active' : '' }}" id="pills-momo-tab"
-                                data-bs-toggle="pill" data-bs-target="#pills-momo" type="button" role="tab"
-                                aria-controls="pills-momo" aria-selected="{{ $isMomo ? 'true' : 'false' }}">
-                                <i class="bi bi-wallet2 me-2"></i>Ví MoMo
-                            </button>
-                        </li>
-                        <li class="nav-item col-6" role="presentation">
-                            <button class="nav-link w-100 py-2.5 tab-bank {{ !$isMomo ? 'active' : '' }}" id="pills-bank-tab" data-bs-toggle="pill"
-                                data-bs-target="#pills-bank" type="button" role="tab" aria-controls="pills-bank"
-                                aria-selected="{{ !$isMomo ? 'true' : 'false' }}">
-                                <i class="bi bi-bank me-2"></i>Ngân hàng (VietQR)
-                            </button>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content" id="pills-tabContent">
-
-                        <div class="tab-pane fade {{ $isMomo ? 'show active' : '' }}" id="pills-momo" role="tabpanel"
-                            aria-labelledby="pills-momo-tab">
-                            <div class="qr-box box-momo shadow-sm mb-3">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=Momo_Order_{{ $order_id }}_Amount_{{ $amount }}"
-                                    alt="Mã QR MoMo" class="img-fluid">
-                            </div>
-                            <p class="small text-muted mb-3"><i class="bi bi-phone-vibrate me-1"></i> Mở ứng dụng
-                                <strong>MoMo</strong> để quét mã chuyển tiền</p>
+                    <div>
+                        <div class="qr-box box-bank shadow-sm mb-3">
+                            <img src="{{ asset('uploads/1783301153260_498751122376481441_5835016170884865456_c9e2174cecac2b55bcfb2209c6c769f9.jpg') }}"
+                                alt="Mã VietQR" class="img-fluid">
                         </div>
 
-                        <div class="tab-pane fade {{ !$isMomo ? 'show active' : '' }}" id="pills-bank" role="tabpanel" aria-labelledby="pills-bank-tab">
+                        <div class="text-start bg-white p-3 rounded border mb-3 text-dark mx-auto" style="max-width: 320px;">
                             <div class="qr-box box-bank shadow-sm mb-3">
                                 <img src="{{ asset('uploads/1783301153260_498751122376481441_5835016170884865456_c9e2174cecac2b55bcfb2209c6c769f9.jpg') }}"
                                     alt="Mã VietQR" class="img-fluid">
@@ -159,22 +132,23 @@
                                 </div>
                             </div>
 
-                            <a href="https://img.vietqr.io/image/BIDV-8899408675-compact2.jpg?amount={{ $amount }}&addInfo=FDL-{{ $order_id }}&accountName=Tran%20Le%20Than" 
-                               target="_blank" 
-                               class="btn btn-sm btn-outline-primary fw-bold mb-3 d-inline-block w-100" 
-                               style="max-width: 320px;">
-                                <i class="bi bi-qr-code-scan me-1"></i> Liên kết chuyển khoản nhanh VietQR
-                            </a>
-                            
-                            <p class="small text-muted mb-3"><i class="bi bi-phone-vibrate me-1"></i> Sử dụng
-                                <strong>App Ngân hàng (Mobile Banking)</strong> để quét mã hoặc sử dụng thông tin trên để chuyển khoản.</p>
-                        </div>
+                        <a href="https://img.vietqr.io/image/BIDV-8899408675-compact2.jpg?amount={{ $amount }}&addInfo=FDL-{{ $order_id }}&accountName=Tran%20Le%20Than" 
+                           target="_blank" 
+                           class="btn btn-sm btn-outline-primary fw-bold mb-3 d-inline-block w-100" 
+                           style="max-width: 320px;">
+                            <i class="bi bi-qr-code-scan me-1"></i> Liên kết chuyển khoản nhanh VietQR
+                        </a>
 
+                        <p class="small text-muted mb-3"><i class="bi bi-phone-vibrate me-1"></i> Sử dụng
+                            <strong>App Ngân hàng (Mobile Banking)</strong> để quét mã hoặc sử dụng thông tin trên để chuyển khoản.</p>
                     </div>
 
                     <div class="mb-2 mt-2 small text-secondary">Thời gian giữ mã giao dịch còn lại:</div>
                     <div class="countdown-timer mb-2 shadow-sm"><i class="bi bi-clock-history me-2"></i><span
                             id="timer">10:00</span></div>
+                    <div id="payment-status" class="alert alert-info small mb-0">
+                        <i class="bi bi-hourglass-split me-2"></i>⏳ Đang chờ xác nhận thanh toán...
+                    </div>
                 </div>
             </div>
 
@@ -201,11 +175,10 @@
                     </div>
 
                     <div class="mt-4 pt-2 border-top">
-                        <form action="{{ route('thanhtoan_hoantat', $order_id) }}" method="GET">
-                            <button type="submit" class="btn btn-danger w-100 py-2.5 fw-bold shadow-sm mb-2" style="background-color: #ce1126;">
-                                <i class="bi bi-check2-circle me-1"></i> Tôi đã hoàn tất chuyển khoản
-                            </button>
-                        </form>
+                        <div class="alert alert-info text-start mb-3">
+                            <div class="fw-bold mb-2"><i class="bi bi-hourglass-split me-2"></i>Đang chờ hệ thống xác nhận giao dịch...</div>
+                            <div class="small">Sau khi ngân hàng xác nhận giao dịch thành công, đơn hàng sẽ tự động được cập nhật.</div>
+                        </div>
                         <a href="{{ route('trangchu_dangnhap') }}" class="btn btn-outline-secondary w-100 py-2.5 btn-sm">Quay lại trang chủ</a>
                     </div>
                 </div>
@@ -229,13 +202,60 @@
                 if (--timer < 0) {
                     clearInterval(interval);
                     display.textContent = "Hết hạn";
+                    document.getElementById('payment-status').className = 'alert alert-danger small mb-0';
+                    document.getElementById('payment-status').innerHTML = '<i class="bi bi-x-circle me-2"></i>❌ Mã QR đã hết hạn. Vui lòng tạo giao dịch mới.';
                 }
             }, 1000);
         }
+
+        function showSuccessModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal fade show';
+            modal.style.display = 'block';
+            modal.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content text-center p-3">
+                        <div class="modal-body">
+                            <div class="display-6 text-success mb-3"><i class="bi bi-check-circle-fill"></i></div>
+                            <h5 class="fw-bold">✅ Thanh toán thành công</h5>
+                            <p class="mb-2">Đơn hàng của bạn đã được thanh toán.</p>
+                            <p class="mb-3">Mã đơn hàng: #FDL-{{ $order_id }}</p>
+                            <p class="text-muted">Cảm ơn bạn đã sử dụng dịch vụ.</p>
+                            <div class="d-grid gap-2">
+                                <a href="{{ route('giohang') }}" class="btn btn-success">Xem đơn hàng</a>
+                                <a href="{{ route('trangchu') }}" class="btn btn-outline-secondary">Tiếp tục mua hàng</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            setTimeout(() => {
+                window.location.href = '{{ route('giohang') }}';
+            }, 3000);
+        }
+
         window.onload = function () {
             var tenMinutes = 60 * 10,
                 display = document.querySelector('#timer');
             startTimer(tenMinutes, display);
+
+            const poll = () => {
+                fetch('{{ route('api.orders.poll', ['since' => now()->toDateTimeString()]) }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const updatedOrder = (data.updates || []).find(item => item.order && item.order.id == {{ $order_id }});
+                        if (updatedOrder && updatedOrder.order.payment_status === 'paid') {
+                            document.getElementById('payment-status').className = 'alert alert-success small mb-0';
+                            document.getElementById('payment-status').innerHTML = '<i class="bi bi-check-circle me-2"></i>✅ Thanh toán thành công';
+                            showSuccessModal();
+                            return;
+                        }
+                    })
+                    .catch(() => {});
+            };
+
+            setInterval(poll, 4000);
+            poll();
         };
     </script>
 

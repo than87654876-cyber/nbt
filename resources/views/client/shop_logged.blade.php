@@ -555,10 +555,7 @@
                                             class="bi bi-cash-stack text-success"></i> Tiền mặt khi nhận (COD)</label>
                                 </div>
                                 <div class="form-check form-check-inline me-4">
-                                    <input class="form-check-input" type="radio" name="cart_payment" id="cart_pay_momo"
-                                        value="momo">
-                                    <label class="form-check-label small" for="cart_pay_momo"><i
-                                            class="bi bi-wallet2 text-primary"></i> Ví điện tử MoMo</label>
+                                    <!-- MoMo payment option removed -->
                                 </div>
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="cart_payment" id="cart_pay_atm"

@@ -22,6 +22,12 @@ class Order extends Model
         'order_status',
         'health_notes',
         'points_accumulated',
+        'payment_transaction_id',
+        'payment_bank_reference',
+        'payment_bank',
+        'payment_amount',
+        'payment_content',
+        'payment_paid_at',
     ];
 
     /**

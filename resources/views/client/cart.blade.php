@@ -525,9 +525,8 @@
                             <!-- Chọn phương thức hoàn tiền -->
                             <div class="form-group col-md-6 mb-3">
                                 <label for="refund_method" class="form-label small fw-bold">Phương thức nhận tiền hoàn <span class="text-danger">*</span></label>
-                                <select class="form-select fw-bold text-primary" id="refund_method" name="refund_method" required onchange="toggleRefundFields(this.value)">
+                                    <select class="form-select fw-bold text-primary" id="refund_method" name="refund_method" required onchange="toggleRefundFields(this.value)">
                                     <option value="bank" selected>Chuyển khoản Ngân hàng nội địa</option>
-                                    <option value="momo">Chuyển về Ví điện tử MoMo</option>
                                 </select>
                             </div>
                         </div>
@@ -554,19 +553,7 @@
                                 </div>
                             </div>
 
-                            <!-- Trường nhập cho MoMo -->
-                            <div id="momo_fields_group" class="d-none">
-                                <div class="row">
-                                    <div class="form-group col-md-6 mb-2">
-                                        <label class="small">Số điện thoại đăng ký MoMo <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-sm momo-input" id="momo_phone" name="momo_phone" placeholder="09xxxxxxxx">
-                                    </div>
-                                    <div class="form-group col-md-6 mb-2">
-                                        <label class="small">Tên chủ tài khoản MoMo <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-sm momo-input text-uppercase" id="momo_user" name="momo_user" placeholder="NGUYEN VAN A">
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- MoMo removed: refunds use bank transfer fields only -->
                         </div>
 
                         <!-- Số tiền muốn hoàn trả & Hình ảnh minh chứng -->
@@ -613,28 +600,12 @@
 
     <!-- Script điều phối gán Mã đơn hàng tương ứng vào từng cửa sổ Modal động -->
     <script>
-        function toggleRefundFields(method) {
-            const bankGroup = document.getElementById('bank_fields_group');
-            const momoGroup = document.getElementById('momo_fields_group');
-            const bankInputs = document.querySelectorAll('.bank-input');
-            const momoInputs = document.querySelectorAll('.momo-input');
-
-            if (method === 'momo') {
-                // Hiện khung MoMo, ẩn khung Ngân hàng
-                momoGroup.classList.remove('d-none');
-                bankGroup.classList.add('d-none');
-
-                // Bật bắt buộc nhập cho MoMo, tắt Ngân hàng
-                momoInputs.forEach(input => input.setAttribute('required', 'required'));
-                bankInputs.forEach(input => input.removeAttribute('required'));
-            } else {
-                // Hiện khung Ngân hàng, ẩn khung MoMo
+            function toggleRefundFields(method) {
+                const bankGroup = document.getElementById('bank_fields_group');
+                const bankInputs = document.querySelectorAll('.bank-input');
+                // Only bank transfer is supported for refunds now
                 bankGroup.classList.remove('d-none');
-                momoGroup.classList.add('d-none');
-
-                // Bật bắt buộc nhập cho Ngân hàng, tắt MoMo
                 bankInputs.forEach(input => input.setAttribute('required', 'required'));
-                momoInputs.forEach(input => input.removeAttribute('required'));
             }
         }
         document.addEventListener("DOMContentLoaded", function () {

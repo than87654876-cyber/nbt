@@ -437,22 +437,79 @@ class CartController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        if ($order->payment_status !== 'paid') {
-            $order->payment_status = 'paid';
-            if ($order->order_status === 'pending') {
-                $order->order_status = 'confirmed';
-            }
-            $order->save();
+        return redirect()->route('giohang')
+            ->with('info', 'Đơn hàng FDL-'.$order->id.' đang chờ hệ thống xác nhận thanh toán. Khi giao dịch được xác nhận, đơn hàng sẽ tự động cập nhật.');
+    }
 
-            try {
-                event(new \App\Events\OrderUpdated($order, 'paid'));
-            } catch (\Exception $broadcastException) {
-                \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
-            }
+    public function notifyBankTransferPayment(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required|integer|exists:orders,id',
+            'amount' => 'required|numeric',
+            'content' => 'required|string',
+            'status' => 'required|string|in:success,failed',
+            'transaction_id' => 'nullable|string',
+            'bank_reference' => 'nullable|string',
+            'bank_code' => 'nullable|string',
+            'paid_at' => 'nullable|date',
+        ]);
+
+        $order = Order::findOrFail($request->order_id);
+        $expectedContent = 'FDL-' . $order->id;
+        $expectedAmount = (float) $order->final_amount;
+        $receivedAmount = (float) $request->amount;
+
+        if ($request->status !== 'success') {
+            return response()->json(['success' => false, 'message' => 'Giao dịch chưa thành công.']);
         }
 
-        return redirect()->route('giohang')
-            ->with('success', 'Thanh toán đơn hàng FDL-'.$order->id.' thành công! Đơn hàng đang được nhà hàng chuẩn bị.');
+        if (trim($request->content) !== $expectedContent) {
+            \Illuminate\Support\Facades\Log::warning('Bank transfer content mismatch', [
+                'order_id' => $order->id,
+                'expected' => $expectedContent,
+                'received' => $request->content,
+            ]);
+            return response()->json(['success' => false, 'message' => 'Nội dung chuyển khoản không khớp.']);
+        }
+
+        if (abs($receivedAmount - $expectedAmount) > 0.01) {
+            \Illuminate\Support\Facades\Log::warning('Bank transfer amount mismatch', [
+                'order_id' => $order->id,
+                'expected' => $expectedAmount,
+                'received' => $receivedAmount,
+            ]);
+            return response()->json(['success' => false, 'message' => 'Số tiền chuyển khoản không đúng.']);
+        }
+
+        if ($order->payment_status === 'paid') {
+            return response()->json(['success' => true, 'message' => 'Đơn hàng đã được xác nhận trước đó.']);
+        }
+
+        $order->payment_status = 'paid';
+        $order->payment_transaction_id = $request->transaction_id;
+        $order->payment_bank_reference = $request->bank_reference;
+        $order->payment_bank = $request->bank_code;
+        $order->payment_amount = $receivedAmount;
+        $order->payment_content = $request->content;
+        $order->payment_paid_at = $request->paid_at ?: now();
+        if ($order->order_status === 'pending') {
+            $order->order_status = 'confirmed';
+        }
+        $order->save();
+
+        try {
+            event(new \App\Events\OrderUpdated($order, 'paid'));
+        } catch (\Exception $broadcastException) {
+            \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
+        }
+
+        try {
+            Mail::to($order->user->email)->send(new OrderPlacedMail($order));
+        } catch (\Exception $mailError) {
+            \Illuminate\Support\Facades\Log::warning('OrderPlacedMail sending warning: ' . $mailError->getMessage());
+        }
+
+        return response()->json(['success' => true, 'payment_status' => 'paid']);
     }
 
     public function payosWebhook(Request $request)

@@ -242,10 +242,7 @@
                                         class="bi bi-cash-stack text-success me-1"></i> Tiền mặt khi nhận (COD)</label>
                             </div>
                             <div class="form-check form-check-inline me-4">
-                                <input class="form-check-input" type="radio" name="payment_method" id="pay_momo"
-                                    value="momo">
-                                <label class="form-check-check-label" for="pay_momo"><i
-                                        class="bi bi-wallet2 text-primary me-1"></i> Ví điện tử MoMo</label>
+                                <!-- Ví MoMo removed: only bank transfer and COD are supported -->
                             </div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="payment_method" id="pay_atm"

@@ -240,16 +240,14 @@
                             <label class="form-label fw-bold d-block">Phương thức thanh toán trả trước gói dịch
                                 vụ</label>
                             <div class="form-check form-check-inline me-4">
-                                <input class="form-check-input" type="radio" name="sub_payment_method" id="sub_pay_momo"
-                                    value="momo" checked>
-                                <label class="form-check-label" for="sub_pay_momo"><i
-                                        class="bi bi-wallet2 text-primary me-1"></i> Tiền mặt (COD)</label>
+                                <input class="form-check-input" type="radio" name="sub_payment_method" id="sub_pay_cash"
+                                    value="cash" checked>
+                                <label class="form-check-label" for="sub_pay_cash"><i class="bi bi-cash-stack text-primary me-1"></i> Tiền mặt (COD)</label>
                             </div>
                             <div class="form-check form-check-inline me-4">
-                                <input class="form-check-input" type="radio" name="sub_payment_method" id="sub_pay_momo"
-                                    value="momo" checked>
-                                <label class="form-check-label" for="sub_pay_momo"><i
-                                        class="bi bi-wallet2 text-primary me-1"></i> Chuyển khoản</label>
+                                <input class="form-check-input" type="radio" name="sub_payment_method" id="sub_pay_bank"
+                                    value="bank_transfer">
+                                <label class="form-check-label" for="sub_pay_bank"><i class="bi bi-bank text-primary me-1"></i> Chuyển khoản</label>
                             </div>
                         </div>
                     </div>
@@ -457,22 +455,16 @@
                                     class="bi bi-credit-card-2-front-fill"></i> 3. Chọn phương thức thanh toán</h6>
                             <div class="form-group mb-2 py-1">
                                 <div class="form-check form-check-inline me-4">
-                                    <input class="form-check-input" type="radio" name="cart_payment" id="cart_pay_cod"
-                                        value="cod" checked>
-                                    <label class="form-check-label small" for="cart_pay_cod"><i
+                                    <input class="form-check-input" type="radio" name="cart_payment" id="cart_pay_cash"
+                                        value="cash" checked>
+                                    <label class="form-check-label small" for="cart_pay_cash"><i
                                             class="bi bi-cash-stack text-success"></i> Tiền mặt khi nhận (COD)</label>
-                                </div>
-                                <div class="form-check form-check-inline me-4">
-                                    <input class="form-check-input" type="radio" name="cart_payment" id="cart_pay_momo"
-                                        value="momo">
-                                    <label class="form-check-label small" for="cart_pay_momo"><i
-                                            class="bi bi-wallet2 text-primary"></i> Ví điện tử / QR Code</label>
                                 </div>
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="cart_payment" id="cart_pay_atm"
-                                        value="atm">
+                                        value="bank_transfer">
                                     <label class="form-check-label small" for="cart_pay_atm"><i
-                                            class="bi bi-credit-card"></i> Chuyển khoản ATM nội địa</label>
+                                            class="bi bi-credit-card"></i> Chuyển khoản / QR Code</label>
                                 </div>
                             </div>
                         </div>

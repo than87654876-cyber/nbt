@@ -205,7 +205,6 @@
                                     <label for="refund_method" class="font-weight-bold small">Phương thức hoàn tiền <span class="text-danger">*</span></label>
                                     <select class="form-control" id="refund_method" name="refund_method" required>
                                         <option value="bank" selected>Chuyển khoản Ngân hàng</option>
-                                        <option value="momo">Ví điện tử MoMo</option>
                                         <option value="cash">Tiền mặt</option>
                                         <option value="other">Khác</option>
                                     </select>

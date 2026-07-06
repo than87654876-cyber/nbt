@@ -69,6 +69,7 @@ Route::get('/muahang/thanhtoan/{id}', [CartController::class, 'paymentPage'])->n
 Route::post('/muahang/thanhtoan/confirm-cod/{id}', [CartController::class, 'confirmCod'])->name('muahang.thanhtoan.confirm-cod');
 Route::post('/muahang/thanhtoan/select-method/{id}', [CartController::class, 'selectPaymentMethod'])->name('muahang.thanhtoan.select');
 Route::get('/thanhtoan_hoantat/{id}', [CartController::class, 'completePayment'])->name('thanhtoan_hoantat');
+Route::post('/api/payments/bank-transfer/notify', [CartController::class, 'notifyBankTransferPayment'])->name('api.payments.bank-transfer.notify');
 
 // --- Phân hệ Khách hàng Đăng nhập ---
 Route::middleware(['auth'])->group(function () {

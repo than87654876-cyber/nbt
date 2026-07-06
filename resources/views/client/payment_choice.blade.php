@@ -35,8 +35,7 @@
                                 <label class="form-check-label" for="pay_atm">Chuyển khoản ATM/VietQR</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" id="pay_momo" value="momo" {{ $order->payment_method === 'momo' ? 'checked' : '' }}>
-                                <label class="form-check-label" for="pay_momo">Ví điện tử MoMo</label>
+                                <!-- MoMo option removed: only bank transfer and cash available -->
                             </div>
                         </div>
 
