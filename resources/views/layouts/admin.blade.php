@@ -167,6 +167,7 @@
                         <a class="collapse-item {{ Route::is('quanly_khachvanglai') ? 'active' : '' }}" href="{{ route('quanly_khachvanglai') }}">Khách vãng lai</a>
                         @if(Auth::user()->role === 'admin')
                         <a class="collapse-item {{ Route::is('quanly_guima') ? 'active' : '' }}" href="{{ route('quanly_guima') }}">Gửi mã khuyến mãi</a>
+                        <a class="collapse-item {{ Route::is('backup_khachhang_index') ? 'active' : '' }}" href="{{ route('backup_khachhang_index') }}">Sao lưu khách hàng</a>
                         @endif
                     </div>
                 </div>

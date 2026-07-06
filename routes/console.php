@@ -11,3 +11,4 @@ use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('orders:cancel-overdue')->everyMinute();
 Schedule::command('subscription:dispatch-daily')->dailyAt('05:00');
+Schedule::command('backup:customers')->dailyAt('00:00');

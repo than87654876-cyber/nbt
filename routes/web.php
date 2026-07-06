@@ -12,6 +12,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\StaffWorkspaceController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\CustomerBackupController;
 use Illuminate\Support\Facades\Route;
 
 // --- Giao diện khách vãng lai & Trang chủ ---
@@ -205,6 +206,13 @@ Route::middleware(['admin'])->group(function () {
     Route::get('/quanly/baocao/xuat-customers', [AdminUserController::class, 'exportCustomersExcel'])->name('baocao_xuat_customers');
     Route::get('/quanly/baocao/xuat-dishes', [AdminDishController::class, 'exportDishesCsv'])->name('baocao_xuat_dishes');
     Route::get('/quanly/baocao/xuat-refunds', [AdminOrderController::class, 'exportRefundsCsv'])->name('baocao_xuat_refunds');
+
+    // Sao lưu Khách hàng
+    Route::get('/quanly/backup-khachhang', [CustomerBackupController::class, 'index'])->name('backup_khachhang_index');
+    Route::post('/quanly/backup-khachhang/create', [CustomerBackupController::class, 'createBackup'])->name('backup_khachhang_create');
+    Route::get('/quanly/backup-khachhang/download/{id}', [CustomerBackupController::class, 'downloadBackup'])->name('backup_khachhang_download');
+    Route::post('/quanly/backup-khachhang/restore/{id}', [CustomerBackupController::class, 'restoreBackup'])->name('backup_khachhang_restore');
+    Route::delete('/quanly/backup-khachhang/delete/{id}', [CustomerBackupController::class, 'destroy'])->name('backup_khachhang_delete');
 });
 
 Route::get('/test-broadcast', function () {
