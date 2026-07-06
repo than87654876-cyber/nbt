@@ -94,18 +94,13 @@
                     <h5 class="fw-bold mb-4">Chọn phương thức quét mã QR</h5>
 
                     <div>
-                        <div class="qr-box box-bank shadow-sm mb-3">
-                            <img src="{{ asset('uploads/1783301153260_498751122376481441_5835016170884865456_c9e2174cecac2b55bcfb2209c6c769f9.jpg') }}"
-                                alt="Mã VietQR" class="img-fluid">
-                        </div>
-
                         <div class="text-start bg-white p-3 rounded border mb-3 text-dark mx-auto" style="max-width: 320px;">
                             <div class="qr-box box-bank shadow-sm mb-3">
                                 <img src="{{ asset('uploads/1783301153260_498751122376481441_5835016170884865456_c9e2174cecac2b55bcfb2209c6c769f9.jpg') }}"
                                     alt="Mã VietQR" class="img-fluid">
                             </div>
                             
-                            <div class="text-start bg-white p-3 rounded border mb-3 text-dark mx-auto" style="max-width: 320px;">
+                            <div class="row small mb-1">
                                 <div class="row small mb-1">
                                     <div class="col-5 text-muted">Ngân hàng:</div>
                                     <div class="col-7 fw-bold">BIDV</div>

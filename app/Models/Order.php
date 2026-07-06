@@ -35,6 +35,18 @@ class Order extends Model
      */
     protected static function booted()
     {
+        static::saving(function ($order) {
+            // Auto-confirm order when payment is successful.
+            if ($order->payment_status === 'paid' && $order->order_status === 'pending') {
+                $order->order_status = 'confirmed';
+            }
+
+            // Auto-cancel order when payment is refunded.
+            if ($order->payment_status === 'refunded' && $order->order_status !== 'cancelled') {
+                $order->order_status = 'cancelled';
+            }
+        });
+
         static::saved(function ($order) {
             // Check if the order is paid and points have not been accumulated yet
             if ($order->payment_status === 'paid' && !$order->points_accumulated) {

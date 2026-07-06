@@ -270,7 +270,7 @@ class SubscriptionController extends Controller
             'sub_phone' => 'required|string',
             'sub_email' => 'required|email',
             'sub_address' => 'required|string',
-            'sub_payment_method' => 'nullable|string',
+            'sub_payment_method' => 'required|string|in:cash,bank_transfer',
         ]);
 
         // Ánh xạ tên gói hiển thị sang tên gói lưu trong database
@@ -299,15 +299,26 @@ class SubscriptionController extends Controller
 
         DB::beginTransaction();
         try {
+            $paymentMethod = $request->sub_payment_method;
+            $orderStatus = 'confirmed';
+            $paymentStatus = 'paid';
+            $subscriptionStatus = 'active';
+
+            if ($paymentMethod === 'bank_transfer') {
+                $paymentStatus = 'pending';
+                $orderStatus = 'pending';
+                $subscriptionStatus = 'pending';
+            }
+
             // Tạo hóa đơn gói dịch vụ
             $order = new Order;
             $order->user_id = Auth::id();
             $order->order_type = 'subscription';
             $order->total_amount = $totalAmount;
             $order->final_amount = $totalAmount;
-            $order->payment_method = $request->sub_payment_method ?? 'cash';
-            $order->payment_status = 'paid'; // Mặc định kích hoạt trả trước gói ăn uống
-            $order->order_status = 'confirmed';
+            $order->payment_method = $paymentMethod;
+            $order->payment_status = $paymentStatus;
+            $order->order_status = $orderStatus;
             $order->health_notes = "Gói dịch vụ: {$servicePackage->package_name}. Khung giờ: {$slotLabel}. SĐT: {$request->sub_phone}. Địa chỉ: {$request->sub_address}";
             $order->save();
 
@@ -319,7 +330,7 @@ class SubscriptionController extends Controller
             $subscription->start_date = $request->start_date;
             $subscription->end_date = Carbon::parse($request->start_date)->addDays($request->package_duration - 1);
             $subscription->remaining_days = $request->package_duration;
-            $subscription->status = 'active';
+            $subscription->status = $subscriptionStatus;
             $subscription->save();
 
             // Sinh lịch giao hàng hàng ngày và chọn ngẫu nhiên món ăn cho mỗi ngày
@@ -341,6 +352,10 @@ class SubscriptionController extends Controller
             }
 
             DB::commit();
+
+            if ($paymentMethod === 'bank_transfer') {
+                return redirect()->route('thanhtoan_chuyenkhoan', ['order_id' => $order->id, 'amount' => $order->final_amount]);
+            }
 
             return redirect()->route('goidichvu')->with('success', "Đăng ký thành công gói dịch vụ \"{$servicePackage->package_name}\"!");
 

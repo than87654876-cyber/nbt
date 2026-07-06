@@ -286,7 +286,7 @@
                             <label class="form-label fw-bold d-block">Phương thức thanh toán trả trước gói dịch vụ</label>
                             <div class="form-check form-check-inline me-4">
                                 <input class="form-check-input" type="radio" name="sub_payment_method" id="sub_pay_cod"
-                                    value="cash" checked>
+                                    value="cash" required>
                                 <label class="form-check-label" for="sub_pay_cod"><i
                                         class="bi bi-cash text-primary me-1"></i> Tiền mặt (COD)</label>
                             </div>
@@ -294,8 +294,9 @@
                                 <input class="form-check-input" type="radio" name="sub_payment_method" id="sub_pay_transfer"
                                     value="bank_transfer">
                                 <label class="form-check-label" for="sub_pay_transfer"><i
-                                        class="bi bi-bank text-primary me-1"></i> Chuyển khoản</label>
+                                        class="bi bi-bank text-primary me-1"></i> Chuyển khoản (VietQR)</label>
                             </div>
+                            <div class="form-text text-muted mt-2">Chọn <strong>Chuyển khoản</strong> nếu bạn muốn nhận mã QR để thanh toán ngay.</div>
                         </div>
                     </div>
 
