@@ -64,6 +64,10 @@ Route::post('/doimatkhau', [AuthController::class, 'resetAdminPassword'])->name(
 
 Route::get('/muahang', [CartController::class, 'checkoutPage'])->name('muahang');
 Route::post('/muahang/process', [CartController::class, 'processCheckout'])->name('muahang.process');
+Route::get('/muahang/thanhtoan/{id}', [CartController::class, 'paymentPage'])->name('muahang.thanhtoan');
+Route::post('/muahang/thanhtoan/confirm-cod/{id}', [CartController::class, 'confirmCod'])->name('muahang.thanhtoan.confirm-cod');
+Route::post('/muahang/thanhtoan/select-method/{id}', [CartController::class, 'selectPaymentMethod'])->name('muahang.thanhtoan.select');
+Route::get('/thanhtoan_hoantat/{id}', [CartController::class, 'completePayment'])->name('thanhtoan_hoantat');
 
 // --- Phân hệ Khách hàng Đăng nhập ---
 Route::middleware(['auth'])->group(function () {
@@ -81,7 +85,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/thanhtoan_momo', [CartController::class, 'momoMethod'])->name('thanhtoan_momo');
     Route::get('/thanhtoan_ATM', [CartController::class, 'atmMethod'])->name('thanhtoan_ATM');
     Route::get('/thanhtoan_chuyenkhoan', [CartController::class, 'transferPayment'])->name('thanhtoan_chuyenkhoan');
-    Route::get('/thanhtoan_hoantat/{id}', [CartController::class, 'completePayment'])->name('thanhtoan_hoantat');
 
     Route::get('/yeucauhoan', [CartController::class, 'refundsList'])->name('yeucauhoan');
     Route::get('/api/orders/poll', [CartController::class, 'pollOrders'])->name('api.orders.poll');

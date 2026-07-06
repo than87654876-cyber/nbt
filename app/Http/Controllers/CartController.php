@@ -210,64 +210,11 @@ class CartController extends Controller
                 \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
             }
 
-            // Tích hợp thanh toán trực tuyến qua PayOS (VietQR) cho MoMo hoặc ATM chuyển khoản
-            if (in_array($request->cart_payment, ['atm', 'momo'])) {
-                $payOS = app(\App\Services\PayOSService::class);
-                $cancelUrl = Auth::check() ? route('giohang') . '?error=cancel_payment' : route('trangchu') . '?error=cancel_payment';
-                $returnUrl = route('thanhtoan_hoantat', ['id' => $order->id]);
-                if (!Auth::check()) {
-                    $returnUrl .= '?email=' . urlencode($request->cart_email) . '&phone=' . urlencode($request->cart_phone);
-                }
-
-                $res = $payOS->createPaymentLink([
-                    'orderCode' => $order->id,
-                    'amount' => $order->final_amount, // Use the discounted final amount
-                    'description' => 'FDL-' . $order->id,
-                    'cancelUrl' => $cancelUrl,
-                    'returnUrl' => $returnUrl
-                ]);
-
-                if ($res['success']) {
-                    DB::commit();
-                    
-                    // Gửi thông báo Telegram khi có đơn hàng mới chờ thanh toán
-                    try {
-                        $telegram = app(\App\Services\TelegramService::class);
-                        $telegram->sendMessage("🔔 <b>Đơn đặt món mới chờ thanh toán:</b>\nMã đơn: #FDL-{$order->id}\nTổng tiền: " . number_format($order->final_amount, 0, ',', '.') . " VNĐ\nPhương thức: Trực tuyến (PayOS)\nVui lòng kiểm tra cổng thanh toán.");
-                    } catch (\Exception $telError) {
-                        \Illuminate\Support\Facades\Log::warning('Telegram sending warning: ' . $telError->getMessage());
-                    }
-
-                    return redirect($res['data']['checkoutUrl']);
-                } else {
-                    throw new \Exception('Không thể tạo liên kết thanh toán PayOS: ' . $res['message']);
-                }
-            }
-
-            // Nếu COD thì gửi thông báo Telegram đặt hàng trực tiếp & về trang lịch sử với thông báo thành công
-            try {
-                $telegram = app(\App\Services\TelegramService::class);
-                $telegram->sendMessage("🔔 <b>Đơn đặt món mới (COD):</b>\nMã đơn: #FDL-{$order->id}\nTổng tiền: " . number_format($order->final_amount, 0, ',', '.') . " VNĐ\nPhương thức: Tiền mặt khi nhận (COD)\nVui lòng chuẩn bị và giao hàng.");
-            } catch (\Exception $telError) {
-                \Illuminate\Support\Facades\Log::warning('Telegram sending warning: ' . $telError->getMessage());
-            }
-
-            // Gửi email xác nhận đặt hàng
-            try {
-                Mail::to($order->user->email)->send(new OrderPlacedMail($order));
-            } catch (\Exception $mailError) {
-                \Illuminate\Support\Facades\Log::warning('OrderPlacedMail sending warning: ' . $mailError->getMessage());
-            }
-
             if (!Auth::check()) {
-                return redirect()->route('tracuu', [
-                    'order_id' => $order->id,
-                    'phone' => $request->cart_phone,
-                    'email' => $request->cart_email
-                ])->with('success', 'Đơn hàng FDL-'.$order->id.' đã được đặt thành công! Bạn có thể theo dõi tiến độ đơn hàng tại đây.');
+                Auth::loginUsingId($userId);
             }
 
-            return redirect()->route('giohang')->with('success', 'Đơn hàng FDL-'.$order->id.' đã được đặt thành công!');
+            return redirect()->route('muahang.thanhtoan', ['id' => $order->id]);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -415,7 +362,6 @@ class CartController extends Controller
         return view('client.transfer_payment', compact('order_id', 'amount', 'payment_type'));
     }
 
-    // Trang giả lập thanh toán ATM
     public function atmMethod(Request $request)
     {
         $order_id = $request->input('order_id');
@@ -425,70 +371,94 @@ class CartController extends Controller
         return view('client.transfer_payment', compact('order_id', 'amount', 'payment_type'));
     }
 
-    // Danh sách yêu cầu hoàn tiền của khách hàng
-    public function refundsList()
-    {
-        $orders = Order::where('user_id', Auth::id())
-            ->where('health_notes', 'like', '%[Yêu cầu hoàn tiền%')
-            ->orderBy('updated_at', 'desc')
-            ->get();
-
-        return view('client.refunds', compact('orders'));
-    }
-
-    // Trang giả lập Chuyển khoản (nếu cần)
     public function transferPayment(Request $request)
     {
-        $order_id = $request->input('order_id');
-        $amount = $request->input('amount');
-
-        return view('client.transfer_payment', compact('order_id', 'amount'));
+        return $this->atmMethod($request);
     }
 
-    // Hoàn tất thanh toán và chuyển hướng với thông báo thành công
-    public function completePayment($id)
+    public function paymentPage(Request $request, $id)
     {
-        $order = Order::where('id', $id)->firstOrFail();
-        $order->payment_status = 'paid';
+        $order = Order::with('user')->findOrFail($id);
+
+        if (!Auth::check() || Auth::id() !== $order->user_id) {
+            abort(403);
+        }
+
+        if ($order->payment_method === 'cash') {
+            return view('client.payment_choice', compact('order'));
+        }
+
+        if ($order->payment_method === 'momo') {
+            return redirect()->route('thanhtoan_momo', ['order_id' => $order->id, 'amount' => $order->final_amount]);
+        }
+
+        return redirect()->route('thanhtoan_chuyenkhoan', ['order_id' => $order->id, 'amount' => $order->final_amount]);
+    }
+
+    public function confirmCod(Request $request, $id)
+    {
+        $order = Order::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->where('payment_method', 'cash')
+            ->firstOrFail();
+
+        return redirect()->route('giohang')
+            ->with('success', 'Bạn đã chọn thanh toán tiền mặt khi nhận hàng. Shipper sẽ thu tiền khi giao đơn FDL-'.$order->id.'.');
+    }
+
+    public function selectPaymentMethod(Request $request, $id)
+    {
+        $request->validate([
+            'payment_method' => 'required|string|in:cash,bank_transfer,momo',
+        ]);
+
+        $order = Order::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $order->payment_method = $request->payment_method;
+        $order->payment_status = 'pending';
         $order->save();
 
-        try {
-            event(new \App\Events\OrderUpdated($order, 'paid'));
-        } catch (\Exception $broadcastException) {
-            \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
+        if ($request->payment_method === 'momo') {
+            return redirect()->route('thanhtoan_momo', ['order_id' => $order->id, 'amount' => $order->final_amount]);
         }
 
-        // Gửi email xác nhận đặt hàng thành công sau khi thanh toán thành công
-        try {
-            Mail::to($order->user->email)->send(new OrderPlacedMail($order));
-        } catch (\Exception $mailError) {
-            \Illuminate\Support\Facades\Log::warning('OrderPlacedMail sending warning: ' . $mailError->getMessage());
+        if ($request->payment_method === 'bank_transfer') {
+            return redirect()->route('thanhtoan_chuyenkhoan', ['order_id' => $order->id, 'amount' => $order->final_amount]);
         }
 
-        // Gửi thông báo Telegram khi đã thanh toán trực tuyến thành công
-        try {
-            $telegram = app(\App\Services\TelegramService::class);
-            $telegram->sendMessage("✅ <b>Đơn hàng đã được thanh toán thành công:</b>\nMã đơn: #FDL-{$order->id}\nTổng tiền: " . number_format($order->total_amount, 0, ',', '.') . " VNĐ\nPhương thức: Trực tuyến (PayOS)\nBếp đang chuẩn bị.");
-        } catch (\Exception $telError) {
-            \Illuminate\Support\Facades\Log::warning('Telegram sending warning: ' . $telError->getMessage());
-        }
-
-        if (Auth::check()) {
-            return redirect()->route('giohang')->with('success', 'Thanh toán đơn hàng FDL-'.$order->id.' thành công! Đơn hàng đang được nhà hàng chuẩn bị.');
-        } else {
-            $guestUser = $order->user;
-            return redirect()->route('tracuu', [
-                'order_id' => $order->id,
-                'email' => $guestUser ? $guestUser->email : '',
-                'phone' => $guestUser ? $guestUser->phone : '',
-            ])->with('success', 'Thanh toán đơn hàng FDL-'.$order->id.' thành công! Đơn hàng đang được nhà hàng chuẩn bị.');
-        }
+        return redirect()->route('muahang.thanhtoan', ['id' => $order->id]);
     }
 
-    // Webhook của PayOS gọi tự động khi thanh toán hoàn tất từ ngân hàng
+    public function completePayment($id)
+    {
+        $order = Order::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        if ($order->payment_status !== 'paid') {
+            $order->payment_status = 'paid';
+            if ($order->order_status === 'pending') {
+                $order->order_status = 'confirmed';
+            }
+            $order->save();
+
+            try {
+                event(new \App\Events\OrderUpdated($order, 'paid'));
+            } catch (\Exception $broadcastException) {
+                \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
+            }
+        }
+
+        return redirect()->route('giohang')
+            ->with('success', 'Thanh toán đơn hàng FDL-'.$order->id.' thành công! Đơn hàng đang được nhà hàng chuẩn bị.');
+    }
+
     public function payosWebhook(Request $request)
     {
         $webhookData = $request->all();
+
         $payOS = app(\App\Services\PayOSService::class);
 
         \Illuminate\Support\Facades\Log::info('PayOS Webhook received', $webhookData);
@@ -500,6 +470,9 @@ class CartController extends Controller
             $order = Order::find($orderCode);
             if ($order && $order->payment_status !== 'paid') {
                 $order->payment_status = 'paid';
+                if ($order->order_status === 'pending') {
+                    $order->order_status = 'confirmed';
+                }
                 $order->save();
 
                 try {
@@ -508,17 +481,15 @@ class CartController extends Controller
                     \Illuminate\Support\Facades\Log::warning('Broadcasting failed: ' . $broadcastException->getMessage());
                 }
 
-                // Gửi email xác nhận đặt hàng thành công sau khi thanh toán thành công qua Webhook
                 try {
                     Mail::to($order->user->email)->send(new OrderPlacedMail($order));
                 } catch (\Exception $mailError) {
                     \Illuminate\Support\Facades\Log::warning('OrderPlacedMail sending warning: ' . $mailError->getMessage());
                 }
 
-                // Gửi thông báo Telegram khi đã thanh toán trực tuyến thành công (realtime webhook)
                 try {
                     $telegram = app(\App\Services\TelegramService::class);
-                    $telegram->sendMessage("✅ <b>Đơn hàng đã thanh toán qua Webhook:</b>\nMã đơn: #FDL-{$order->id}\nTổng tiền: " . number_format($order->total_amount, 0, ',', '.') . " VNĐ\nTrạng thái: Đã nhận tiền. Bếp đang chuẩn bị món!");
+                    $telegram->sendMessage("✅ <b>Đơn hàng đã thanh toán qua Webhook:</b>\nMã đơn: #FDL-{$order->id}\nTổng tiền: " . number_format($order->final_amount, 0, ',', '.') . " VNĐ\nTrạng thái: Đã nhận tiền. Bếp đang chuẩn bị món!");
                 } catch (\Exception $telError) {
                     \Illuminate\Support\Facades\Log::warning('Telegram sending warning: ' . $telError->getMessage());
                 }

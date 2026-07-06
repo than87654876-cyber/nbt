@@ -80,6 +80,9 @@ class AdminOrderController extends Controller
         $order = Order::findOrFail($id);
         $order->order_status = $request->order_status;
         $order->payment_status = $request->payment_status;
+        if ($order->payment_status === 'paid' && $order->order_status === 'pending') {
+            $order->order_status = 'confirmed';
+        }
         if ($request->admin_notes) {
             $order->health_notes = ($order->health_notes ? $order->health_notes."\n" : '').'[Điều phối: '.$request->admin_notes.']';
         }
