@@ -241,6 +241,11 @@ class AdminUserController extends Controller
             return redirect()->route('quanly_nhanvien')->with('error', 'Bạn không thể tự xóa tài khoản của chính mình.');
         }
 
+        // Kiểm tra xem nhân viên có đơn hàng hoặc đăng ký gói không
+        if ($employee->orders()->count() > 0 || $employee->subscriptions()->count() > 0) {
+            return redirect()->route('quanly_nhanvien')->with('error', 'Không thể xóa nhân viên này vì đã có dữ liệu đơn hàng hoặc gói dịch vụ liên kết.');
+        }
+
         $employee->delete();
 
         return redirect()->route('quanly_nhanvien')->with('success', 'Đã xóa tài khoản nhân viên thành công!');
