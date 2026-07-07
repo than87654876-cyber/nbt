@@ -263,7 +263,7 @@
 
     <footer class="footer bg-light py-4 border-top mt-auto">
         <div class="container text-center text-secondary small">
-            <p class="mb-0">© 2026 FOODELICIOUS - Hệ thống quản lý thức ăn Jollibee. Mọi quyền được bảo lưu.</p>
+            <p class="mb-0">© 2026 FOODELICIOUS. Mọi quyền được bảo lưu.</p>
         </div>
     </footer>
 

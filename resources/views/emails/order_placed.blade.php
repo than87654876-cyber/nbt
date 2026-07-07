@@ -96,7 +96,7 @@
             <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
             <p style="font-size: 12px; color: #777; text-align: center; margin-bottom: 0;">
                 Cảm ơn bạn đã lựa chọn dịch vụ của chúng tôi!<br>
-                Hệ thống đặt món ăn trực tuyến FOODELICIOUS Jollibee.
+                Hệ thống đặt món ăn trực tuyến FOODELICIOUS.
             </p>
         </div>
     </div>

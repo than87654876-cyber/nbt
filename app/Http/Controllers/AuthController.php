@@ -55,14 +55,14 @@ class AuthController extends Controller
     // Chuyển hướng người dùng sang trang xác thực Google (Laravel Socialite)
     public function redirectToGoogle()
     {
-        return Socialite::driver('google')->redirect();
+        return Socialite::driver('google')->stateless()->redirect();
     }
 
     // Nhận dữ liệu phản hồi từ Google sau khi xác thực (Laravel Socialite Callback)
     public function handleGoogleCallback()
     {
         try {
-            $googleUser = Socialite::driver('google')->user();
+            $googleUser = Socialite::driver('google')->stateless()->user();
             
             $email = $googleUser->getEmail();
             $fullname = $googleUser->getName() ?? 'Google User';

@@ -1118,7 +1118,7 @@
                 clearTimeout(geocodeTimeout);
                 geocodeTimeout = setTimeout(() => {
                     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
-                    fetch(url, { headers: { 'User-Agent': 'FOODELICIOUS-Jollibee-App' } })
+                    fetch(url, { headers: { 'User-Agent': 'FOODELICIOUS-App' } })
                         .then(res => res.json())
                         .then(results => {
                             if (results && results.length > 0) {

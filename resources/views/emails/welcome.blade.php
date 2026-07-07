@@ -8,7 +8,7 @@
     <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
         <div style="background: linear-gradient(135deg, #ce1126, #a00d20); color: white; padding: 30px; text-align: center;">
             <h1 style="margin: 0; font-family: 'Amatic SC', Arial, sans-serif; font-size: 36px; letter-spacing: 2px;">FOODELICIOUS</h1>
-            <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Hương Vị Jollibee - Trọn Vẹn Niềm Vui</p>
+            <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Hương Vị Tuyệt Vời - Trọn Vẹn Niềm Vui</p>
         </div>
         <div style="padding: 30px; text-align: left;">
             <h2 style="color: #ce1126; margin-top: 0;">Xin chào {{ $fullname }},</h2>

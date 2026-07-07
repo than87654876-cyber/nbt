@@ -22,7 +22,7 @@ class GeminiService
     public function getSuggestion($userPrompt, $chatHistory = [])
     {
         if (empty($this->apiKey)) {
-            Log::warning('GEMINI_API_KEY is not set in .env. Returning simulated Jollibee Chatbot response.');
+            Log::warning('GEMINI_API_KEY is not set in .env. Returning simulated FOODELICIOUS Chatbot response.');
             return $this->getMockResponse($userPrompt);
         }
 
@@ -38,10 +38,10 @@ class GeminiService
 
         $dishesJson = json_encode($dishes, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
-        $systemInstruction = "Bạn là trợ lý ảo/Chatbot tư vấn ẩm thực của cửa hàng thức ăn nhanh Jollibee. "
+        $systemInstruction = "Bạn là trợ lý ảo/Chatbot tư vấn ẩm thực của cửa hàng thức ăn nhanh FOODELICIOUS. "
             . "Nhiệm vụ của bạn là lắng nghe nhu cầu của khách hàng, trả lời thân thiện, lịch sự và gợi ý món ăn phù hợp nhất từ thực đơn dưới đây. "
             . "Chỉ giới thiệu các món có trong danh sách thực đơn này. Trả lời ngắn gọn, có cấu trúc rõ ràng bằng tiếng Việt.\n\n"
-            . "Thực đơn Jollibee hiện tại:\n{$dishesJson}";
+            . "Thực đơn FOODELICIOUS hiện tại:\n{$dishesJson}";
 
         // Format contents including system context
         $contents = [];
@@ -90,17 +90,17 @@ class GeminiService
         $promptLower = mb_strtolower($prompt, 'UTF-8');
         
         if (str_contains($promptLower, 'gà') || str_contains($promptLower, 'chicken')) {
-            return "Dạ Jollibee có món **Gà Giòn Vui Vẻ (Chicken Joy)** rất giòn rụm và đậm đà đó ạ! Ngoài ra bạn có thể dùng kèm **Mì Ý Sốt Bò Bằm** hoặc gọi **Combo Gà Rán + Khoai Tây Chiên + Nước Ngọt** để tiết kiệm hơn nhé! Mời bạn thêm món vào giỏ hàng.";
+            return "Dạ FOODELICIOUS có món **Gà Rán** rất giòn rụm và đậm đà đó ạ! Ngoài ra bạn có thể dùng kèm **Mì Ý Sốt Bò Bằm** hoặc gọi **Combo Gà Rán + Khoai Tây Chiên + Nước Ngọt** để tiết kiệm hơn nhé! Mời bạn thêm món vào giỏ hàng.";
         }
         
         if (str_contains($promptLower, 'mì') || str_contains($promptLower, 'spaghetti') || str_contains($promptLower, 'ý')) {
-            return "Dạ món **Mì Ý Jollibee** sốt bò bằm ngọt dịu chuẩn vị, phủ phô mai béo ngậy là lựa chọn tuyệt vời ạ! Bạn có muốn kết hợp thêm một miếng **Gà Rán Giòn Vui Vẻ** không ạ?";
+            return "Dạ món **Mì Ý FOODELICIOUS** sốt bò bằm ngọt dịu chuẩn vị, phủ phô mai béo ngậy là lựa chọn tuyệt vời ạ! Bạn có muốn kết hợp thêm một miếng **Gà Rán Giòn Vui Vẻ** không ạ?";
         }
 
         if (str_contains($promptLower, 'khuyến mãi') || str_contains($promptLower, 'rẻ') || str_contains($promptLower, 'combo')) {
-            return "Chào bạn, Jollibee đang có các **Combo Tiết Kiệm** như Combo Gà Rán & Mì Ý giảm giá 15% kèm nước ngọt. Bạn cũng có thể áp dụng mã giảm giá trong phần thanh toán nhé!";
+            return "Chào bạn, FOODELICIOUS đang có các **Combo Tiết Kiệm** như Combo Gà Rán & Mì Ý giảm giá 15% kèm nước ngọt. Bạn cũng có thể áp dụng mã giảm giá trong phần thanh toán nhé!";
         }
 
-        return "Xin chào! Tôi là trợ lý ảo Jollibee. Tôi có thể giúp bạn gợi ý các món ăn ngon như **Gà Rán Giòn Vui Vẻ**, **Mì Ý Sốt Bò Bằm**, **Burger Tôm/Bò** và các phần **Combo**. Bạn muốn ăn gì hôm nay ạ?";
+        return "Xin chào! Tôi là trợ lý ảo FOODELICIOUS. Tôi có thể giúp bạn gợi ý các món ăn ngon như **Gà Rán**, **Mì Ý Sốt Bò Bằm**, **Burger Tôm/Bò** và các phần **Combo**. Bạn muốn ăn gì hôm nay ạ?";
     }
 }
