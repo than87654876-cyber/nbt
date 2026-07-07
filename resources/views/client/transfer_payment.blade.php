@@ -137,6 +137,13 @@
                             <i class="bi bi-qr-code-scan me-1"></i> Liên kết chuyển khoản nhanh VietQR
                         </a>
 
+                        <button type="button" 
+                                id="btn-confirm-payment" 
+                                class="btn btn-success fw-bold mb-3 w-100" 
+                                style="max-width: 320px;">
+                            <i class="bi bi-check-circle-fill me-1"></i> Xác nhận đã chuyển khoản thành công
+                        </button>
+
                         <p class="small text-muted mb-3"><i class="bi bi-phone-vibrate me-1"></i> Sử dụng
                             <strong>App Ngân hàng (Mobile Banking)</strong> để quét mã hoặc sử dụng thông tin trên để chuyển khoản.</p>
                     </div>
@@ -253,6 +260,49 @@
 
             setInterval(poll, 4000);
             poll();
+
+            document.getElementById('btn-confirm-payment').addEventListener('click', function() {
+                const btn = this;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Đang xử lý...';
+                
+                fetch('{{ route('api.payments.bank-transfer.notify') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        order_id: {{ $order_id }},
+                        amount: {{ $displayAmount }},
+                        content: 'FDL-{{ $order_id }}',
+                        status: 'success',
+                        transaction_id: 'MOCK_TX_' + Date.now(),
+                        bank_reference: 'MOCK_REF_' + Date.now(),
+                        bank_code: 'BIDV',
+                        paid_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.success) {
+                        document.getElementById('payment-status').className = 'alert alert-success small mb-0';
+                        document.getElementById('payment-status').innerHTML = '<i class="bi bi-check-circle me-2"></i>✅ Thanh toán thành công';
+                        showSuccessModal();
+                    } else {
+                        alert('Lỗi xác nhận: ' + (data.message || 'Không thể xác nhận giao dịch.'));
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Xác nhận đã chuyển khoản thành công';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Lỗi kết nối đến máy chủ.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Xác nhận đã chuyển khoản thành công';
+                });
+            });
         };
     </script>
 

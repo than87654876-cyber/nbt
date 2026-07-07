@@ -49,6 +49,8 @@
         $reqAmount = null;
         if (preg_match('/Số tiền yêu cầu: ([^,\]]+)/', $notes, $matches)) {
             $reqAmount = $matches[1];
+        } elseif (preg_match('/Số tiền hoàn lại ước tính: ([^,\]]+)/', $notes, $matches)) {
+            $reqAmount = $matches[1];
         }
 
         // Parse custom requested image proof if present
@@ -139,12 +141,35 @@
                             </div>
                         @endif
 
+                        @if($bankName && $bankAccount)
+                            <div class="mt-3 p-3 bg-white rounded border text-center">
+                                <div class="fw-bold mb-2 text-danger small"><i class="fas fa-qrcode mr-1"></i>Quét mã QR để hoàn tiền nhanh:</div>
+                                @php
+                                    // Clean amount: remove non-digit characters
+                                    $cleanAmount = $reqAmount ? preg_replace('/[^\d]/', '', $reqAmount) : $order->final_amount;
+                                    // If cleanAmount is less than 1000 (meaning it is a minor currency like 49.95), convert it to mock VND
+                                    if ($cleanAmount < 1000) {
+                                        $cleanAmount = $cleanAmount * 100;
+                                    }
+                                    $qrUrl = "https://img.vietqr.io/image/" . urlencode(trim($bankName)) . "-" . urlencode(trim($bankAccount)) . "-compact2.jpg?amount=" . (int)$cleanAmount . "&addInfo=" . urlencode("Hoan tien FDL-" . $order->id) . "&accountName=" . urlencode(trim($bankUser));
+                                @endphp
+                                <img src="{{ $qrUrl }}" alt="Mã QR hoàn tiền" class="img-fluid rounded border shadow-sm" style="max-height: 220px; object-fit: contain;">
+                                <div class="text-muted small mt-1 font-italic">Chủ tài khoản: {{ $bankUser }}</div>
+                            </div>
+                        @endif
+
                         <div class="mt-3 p-3 bg-gradient-light rounded border text-right text-dark">
                             @if($reqAmount)
                                 <div class="text-muted small">Tổng giá trị đơn hàng gốc:</div>
                                 <h5 class="font-weight-bold text-secondary mb-2">{{ number_format($order->final_amount, 0, ',', '.') }} đ</h5>
                                 <div class="text-muted small">Số tiền khách hàng yêu cầu hoàn trả:</div>
-                                <h3 class="font-weight-bold text-danger mb-0">{{ $reqAmount }}</h3>
+                                <h3 class="font-weight-bold text-danger mb-0">
+                                    @if(is_numeric($reqAmount))
+                                        {{ number_format($reqAmount, 0, ',', '.') }} đ
+                                    @else
+                                        {{ $reqAmount }}
+                                    @endif
+                                </h3>
                             @else
                                 <div class="text-muted small">Tổng giá trị thụ hưởng hoàn trả (Yêu cầu hoàn toàn bộ):</div>
                                 <h3 class="font-weight-bold text-danger mb-0">{{ number_format($order->final_amount, 0, ',', '.') }} đ</h3>

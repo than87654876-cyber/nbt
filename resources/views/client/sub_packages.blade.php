@@ -388,6 +388,26 @@
                             <textarea class="form-control" id="cancel_reason" name="cancel_reason" rows="3"
                                 minlength="50" placeholder="Vui lòng giải thích chi tiết lý do bạn muốn hủy gói dịch vụ ăn uống (tối thiểu 50 ký tự)..." required></textarea>
                         </div>
+
+                        <!-- KHU VỰC ĐIỀN THÔNG TIN TÀI KHOẢN NHẬN TIỀN HOÀN -->
+                        <div class="card bg-light border-0 p-3 mb-3 text-start">
+                            <h6 class="fw-bold small text-secondary mb-2"><i class="bi bi-wallet2 me-1"></i> Thông tin tài khoản đích nhận tiền hoàn</h6>
+                            <div class="row">
+                                <div class="form-group col-md-12 mb-2">
+                                    <label class="small fw-bold">Tên Ngân hàng <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm text-dark" name="bank_name" placeholder="Ví dụ: Vietcombank, BIDV, Techcombank..." required>
+                                </div>
+                                <div class="form-group col-md-6 mb-2">
+                                    <label class="small fw-bold">Số tài khoản <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm text-dark" name="bank_account" placeholder="Nhập số tài khoản" required>
+                                </div>
+                                <div class="form-group col-md-6 mb-2">
+                                    <label class="small fw-bold">Tên chủ thẻ <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm text-dark text-uppercase" name="bank_user" placeholder="NGUYEN VAN A" required>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="form-group mb-3">
                             <label for="cancel_image" class="form-label small fw-bold">Hình ảnh minh chứng lý do hủy: <span class="text-danger">*</span></label>
                             <input type="file" class="form-control" id="cancel_image" name="cancel_image" accept="image/*" required>

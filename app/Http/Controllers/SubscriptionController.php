@@ -187,6 +187,9 @@ class SubscriptionController extends Controller
             'subscription_id' => 'required|integer',
             'cancel_reason' => 'required|string|min:50',
             'cancel_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'bank_name' => 'nullable|string',
+            'bank_account' => 'nullable|string',
+            'bank_user' => 'nullable|string',
         ]);
 
         $subscription = Subscription::where('id', $request->subscription_id)
@@ -222,7 +225,12 @@ class SubscriptionController extends Controller
             }
 
             $imageLink = $imageUrl ? url($imageUrl) : 'Không có';
-            $refundText = '[Yêu cầu hoàn tiền - Lý do: Hủy gói ('.$request->cancel_reason.'), Hình ảnh minh chứng: '.$imageLink.', Phương thức: Chuyển khoản (Số tiền hoàn lại ước tính: '.$refundAmount.')]';
+            $refundText = '[Yêu cầu hoàn tiền - Lý do: Hủy gói ('.$request->cancel_reason.'), Hình ảnh minh chứng: '.$imageLink.', Phương thức: Chuyển khoản (Số tiền hoàn lại ước tính: '.$refundAmount.')';
+            if ($request->filled('bank_name')) {
+                $refundText .= ', Ngân hàng: ' . $request->bank_name . ', STK: ' . $request->bank_account . ', Chủ tài khoản: ' . $request->bank_user;
+            }
+            $refundText .= ']';
+            
             $order->health_notes = ($order->health_notes ? $order->health_notes."\n" : '').$refundText;
             $order->save();
         }
