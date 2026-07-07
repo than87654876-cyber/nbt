@@ -90,6 +90,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/yeucauhoan', [CartController::class, 'refundsList'])->name('yeucauhoan');
     Route::get('/api/orders/poll', [CartController::class, 'pollOrders'])->name('api.orders.poll');
+    Route::get('/api/orders/payment-status/{id}', [CartController::class, 'getOrderPaymentStatus'])->name('api.orders.payment-status');
 
     Route::get('/goidichvu', [SubscriptionController::class, 'index'])->name('goidichvu');
     Route::post('/goidichvu/buy', [SubscriptionController::class, 'buyPackage'])->name('goidichvu.buy');

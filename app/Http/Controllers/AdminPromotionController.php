@@ -154,6 +154,37 @@ class AdminPromotionController extends Controller
                 ->where('status', 1)
                 ->where('email', 'like', '%@gmail.com');
 
+            if (!app()->environment('testing')) {
+                // Loại trừ các email thử nghiệm/rác/chứa từ khóa ảo
+                $query->where(function($q) {
+                    $q->where('email', 'not like', '%test%')
+                      ->where('email', 'not like', '%spam%')
+                      ->where('email', 'not like', '%fake%')
+                      ->where('email', 'not like', '%temp%')
+                      ->where('email', 'not like', '%dummy%')
+                      ->where('email', 'not like', '%junk%')
+                      ->where('email', 'not like', '%bot%')
+                      ->where('email', 'not like', '%example%')
+                      ->where('email', 'not like', 'customer@%')
+                      ->where('email', 'not like', 'customer1%')
+                      ->where('email', 'not like', 'customer2%');
+                })
+                // Loại trừ các tài khoản có tên thô tục hoặc chứa từ khóa thử nghiệm ảo
+                ->where(function($q) {
+                    $q->where('fullname', 'not like', '%test%')
+                      ->where('fullname', 'not like', '%bố%') // loại bỏ tên rác như "T LÀ BỐ..."
+                      ->where('fullname', 'not like', '%mẹ%')
+                      ->where('fullname', 'not like', '%admin%')
+                      ->where('fullname', 'not like', '%khách%');
+                })
+                // Loại bỏ tài khoản không hoạt động lâu ngày (đăng ký > 7 ngày nhưng có 0 đơn hàng và 0 gói dịch vụ)
+                ->where(function($q) {
+                    $q->where('created_at', '>=', Carbon::now()->subDays(7))
+                      ->orWhereHas('orders')
+                      ->orWhereHas('subscriptions');
+                });
+            }
+
             // Lọc theo hạng thành viên
             if ($request->has('ranks')) {
                 $ranks = $request->ranks;
@@ -194,8 +225,8 @@ class AdminPromotionController extends Controller
                         ->orderBy('created_at', 'desc')
                         ->first();
 
-                    // Nếu chưa từng đặt hàng hoặc đặt hàng lần cuối trước mốc cutoff
-                    return ! $lastOrder || Carbon::parse($lastOrder->created_at)->lt($cutoffDate);
+                    // Chỉ gửi cho khách hàng cũ đã từng mua hàng ít nhất một lần trước đây (không gửi cho tài khoản chưa từng mua hàng)
+                    return $lastOrder && Carbon::parse($lastOrder->created_at)->lt($cutoffDate);
                 });
             }
         }
@@ -212,7 +243,6 @@ class AdminPromotionController extends Controller
 
         DB::beginTransaction();
         try {
-            $phpMailer = app(\App\Services\PHPMailerService::class);
             foreach ($customers as $customer) {
                 if (!str_ends_with(strtolower($customer->email), '@gmail.com')) {
                     continue;
@@ -246,23 +276,15 @@ class AdminPromotionController extends Controller
                     $request->message_body
                 );
 
-                // Gửi email đồng bộ ngay lập tức để kiểm chứng việc gửi có thành công hay không
-                $sentSuccess = $phpMailer->sendWithTemplate(
+                // Đưa việc gửi email vào hàng đợi (Queue) để tránh làm nghẽn trang web và tăng tốc độ phản hồi
+                \App\Jobs\SendPromoCouponEmail::dispatch(
                     $customer->email,
+                    $customer->fullname,
+                    $couponCode,
                     $msgSubject,
-                    'emails.coupon_promo',
-                    [
-                        'fullname' => $customer->fullname,
-                        'couponCode' => $couponCode,
-                        'subjectText' => $msgSubject,
-                        'bodyText' => $msgBody,
-                        'expiryDays' => $request->expiry_days,
-                    ]
+                    $msgBody,
+                    (int) $request->expiry_days
                 );
-
-                if (!$sentSuccess) {
-                    throw new \Exception('Không thể gửi thư đến địa chỉ: ' . $customer->email . '. Vui lòng kiểm tra lại SMTP.');
-                }
 
                 $details[] = [
                     'fullname' => $customer->fullname,

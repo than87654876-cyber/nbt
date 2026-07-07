@@ -457,6 +457,9 @@ class CartController extends Controller
         $order = Order::findOrFail($request->order_id);
         $expectedContent = 'FDL-' . $order->id;
         $expectedAmount = (float) $order->final_amount;
+        if ($expectedAmount < 1000) {
+            $expectedAmount = $expectedAmount * 100;
+        }
         $receivedAmount = (float) $request->amount;
 
         if ($request->status !== 'success') {
@@ -619,6 +622,21 @@ class CartController extends Controller
         return response()->json([
             'updates' => $updates,
             'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
+
+    public function getOrderPaymentStatus($id)
+    {
+        $order = Order::findOrFail($id);
+
+        if (!Auth::check() || Auth::id() !== $order->user_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'id' => $order->id,
+            'payment_status' => $order->payment_status,
+            'order_status' => $order->order_status,
         ]);
     }
 

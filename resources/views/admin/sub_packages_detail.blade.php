@@ -56,6 +56,8 @@
                         <span class="badge badge-warning text-dark font-weight-bold px-2 py-1">Tạm dừng (Còn {{ $subscription->remaining_days }} ngày)</span>
                         @elseif($subscription->status === 'expired')
                         <span class="badge badge-secondary font-weight-bold px-2 py-1">Hết hạn</span>
+                        @elseif($subscription->status === 'pending')
+                        <span class="badge badge-info font-weight-bold px-2 py-1">Chờ thanh toán (Còn {{ $subscription->remaining_days }} ngày)</span>
                         @else
                         <span class="badge badge-danger font-weight-bold px-2 py-1">Đã hủy</span>
                         @endif

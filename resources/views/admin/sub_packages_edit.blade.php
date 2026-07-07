@@ -31,6 +31,7 @@
                     <div class="form-group col-md-4">
                         <label class="font-weight-bold">Trạng thái hoạt động</label>
                         <select class="form-control font-weight-bold" name="status">
+                            <option value="pending" {{ $subscription->status === 'pending' ? 'selected' : '' }}>Chờ thanh toán (Pending)</option>
                             <option value="active" {{ $subscription->status === 'active' ? 'selected' : '' }}>Đang chạy dịch vụ (Active)</option>
                             <option value="paused" {{ $subscription->status === 'paused' ? 'selected' : '' }}>Tạm dừng giao (Paused)</option>
                             <option value="cancelled" {{ $subscription->status === 'cancelled' ? 'selected' : '' }}>Hủy ngang gói dịch vụ (Cancelled)</option>

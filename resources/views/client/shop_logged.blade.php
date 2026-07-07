@@ -994,9 +994,13 @@
             const mapIframe = document.getElementById('osm-map-iframe');
             const directionsLink = document.getElementById('directions-link');
 
+            const provinceContainer = provinceSelect ? provinceSelect.closest('.form-group') : null;
+            const districtContainer = districtSelect ? districtSelect.closest('.form-group') : null;
+            const wardContainer = wardSelect ? wardSelect.closest('.form-group') : null;
+
             if (provinceSelect) {
-                // Load Provinces
-                fetch('https://provinces.open-api.vn/api/?depth=3')
+                // Load Provinces v2 (sau sáp nhập)
+                fetch('https://provinces.open-api.vn/api/v2/?depth=2')
                     .then(response => response.json())
                     .then(data => {
                         provinceData = data;
@@ -1004,46 +1008,75 @@
                         data.forEach(p => {
                             provinceSelect.innerHTML += `<option value="${p.code}">${p.name}</option>`;
                         });
+
+                        // Kiểm tra nếu dữ liệu là dạng 2 cấp (không có districts nhưng có wards)
+                        const isTwoLevel = data.length > 0 && !data[0].districts && data[0].wards;
+                        if (isTwoLevel) {
+                            if (districtContainer) {
+                                districtContainer.classList.add('d-none');
+                            }
+                            if (districtSelect) {
+                                districtSelect.required = false;
+                                districtSelect.disabled = true;
+                            }
+                            if (provinceContainer) {
+                                provinceContainer.className = 'form-group col-md-6';
+                            }
+                            if (wardContainer) {
+                                wardContainer.className = 'form-group col-md-6';
+                            }
+                        }
                     })
                     .catch(err => console.error('Failed to load Vietnam provinces:', err));
 
                 provinceSelect.addEventListener('change', function () {
                     const code = this.value;
-                    districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                    if (districtSelect) districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
                     wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
-                    districtSelect.disabled = true;
+                    if (districtSelect) districtSelect.disabled = true;
                     wardSelect.disabled = true;
 
                     if (code) {
                         const province = provinceData.find(p => p.code == code);
-                        if (province && province.districts) {
-                            province.districts.forEach(d => {
-                                districtSelect.innerHTML += `<option value="${d.code}">${d.name}</option>`;
-                            });
-                            districtSelect.disabled = false;
+                        if (province) {
+                            if (province.districts) {
+                                // Hỗ trợ 3 cấp (tương thích ngược)
+                                province.districts.forEach(d => {
+                                    districtSelect.innerHTML += `<option value="${d.code}">${d.name}</option>`;
+                                });
+                                districtSelect.disabled = false;
+                            } else if (province.wards) {
+                                // Hỗ trợ 2 cấp sau sáp nhập
+                                province.wards.forEach(w => {
+                                    wardSelect.innerHTML += `<option value="${w.code}">${w.name}</option>`;
+                                });
+                                wardSelect.disabled = false;
+                            }
                         }
                     }
                     updateFullAddress();
                 });
 
-                districtSelect.addEventListener('change', function () {
-                    const code = this.value;
-                    wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
-                    wardSelect.disabled = true;
+                if (districtSelect) {
+                    districtSelect.addEventListener('change', function () {
+                        const code = this.value;
+                        wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+                        wardSelect.disabled = true;
 
-                    if (code) {
-                        const provinceCode = provinceSelect.value;
-                        const province = provinceData.find(p => p.code == provinceCode);
-                        const district = province.districts.find(d => d.code == code);
-                        if (district && district.wards) {
-                            district.wards.forEach(w => {
-                                wardSelect.innerHTML += `<option value="${w.code}">${w.name}</option>`;
-                            });
-                            wardSelect.disabled = false;
+                        if (code) {
+                            const provinceCode = provinceSelect.value;
+                            const province = provinceData.find(p => p.code == provinceCode);
+                            const district = province.districts.find(d => d.code == code);
+                            if (district && district.wards) {
+                                district.wards.forEach(w => {
+                                    wardSelect.innerHTML += `<option value="${w.code}">${w.name}</option>`;
+                                });
+                                wardSelect.disabled = false;
+                            }
                         }
-                    }
-                    updateFullAddress();
-                });
+                        updateFullAddress();
+                    });
+                }
 
                 wardSelect.addEventListener('change', updateFullAddress);
                 addressDetailInput.addEventListener('input', updateFullAddress);
@@ -1051,12 +1084,27 @@
 
             function updateFullAddress() {
                 const provName = provinceSelect.options[provinceSelect.selectedIndex]?.text || '';
-                const distName = districtSelect.options[districtSelect.selectedIndex]?.text || '';
+                const distName = districtSelect && districtContainer && !districtContainer.classList.contains('d-none')
+                    ? (districtSelect.options[districtSelect.selectedIndex]?.text || '')
+                    : '';
                 const wardName = wardSelect.options[wardSelect.selectedIndex]?.text || '';
                 const detail = addressDetailInput.value.trim();
 
-                if (provinceSelect.value && districtSelect.value && wardSelect.value && detail) {
-                    const fullAddress = `${detail}, ${wardName}, ${distName}, ${provName}`;
+                const isDistrictHidden = !districtSelect || !districtContainer || districtContainer.classList.contains('d-none');
+                
+                const isFormValid = provinceSelect.value && 
+                                    (isDistrictHidden || districtSelect.value) && 
+                                    wardSelect.value && 
+                                    detail;
+
+                if (isFormValid) {
+                    const addressParts = [detail, wardName];
+                    if (distName) {
+                        addressParts.push(distName);
+                    }
+                    addressParts.push(provName);
+                    
+                    const fullAddress = addressParts.join(', ');
                     hiddenAddressInput.value = fullAddress;
                     geocodeAddress(fullAddress);
                 } else {

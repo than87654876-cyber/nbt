@@ -19,7 +19,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date');
             $table->unsignedInteger('remaining_days')->default(0);
-            $table->enum('status', ['active', 'paused', 'expired', 'cancelled'])->default('active');
+            $table->enum('status', ['pending', 'active', 'paused', 'expired', 'cancelled'])->default('active');
             $table->timestamps();
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('restrict');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('restrict');

@@ -87,6 +87,9 @@
     </header>
 
     <main class="container my-5">
+        @php
+            $displayAmount = $amount < 1000 ? $amount * 100 : $amount;
+        @endphp
         <div class="row justify-content-center">
 
             <div class="col-lg-6 col-md-10 mb-4">
@@ -96,7 +99,7 @@
                     <div>
                         <div class="text-start bg-white p-3 rounded border mb-3 text-dark mx-auto" style="max-width: 320px;">
                             <div class="qr-box box-bank shadow-sm mb-3">
-                                <img src="{{ asset('uploads/1783301153260_498751122376481441_5835016170884865456_c9e2174cecac2b55bcfb2209c6c769f9.jpg') }}"
+                                <img src="https://img.vietqr.io/image/BIDV-8899408675-compact2.jpg?amount={{ $displayAmount }}&addInfo=FDL-{{ $order_id }}&accountName=Tran%20Le%20Than"
                                     alt="Mã VietQR" class="img-fluid">
                             </div>
                             
@@ -119,7 +122,7 @@
                                 </div>
                                 <div class="row small mb-1">
                                     <div class="col-5 text-muted">Số tiền:</div>
-                                    <div class="col-7 fw-bold text-danger">{{ number_format($amount, 0, ',', '.') }} đ</div>
+                                    <div class="col-7 fw-bold text-danger">{{ number_format($displayAmount, 0, ',', '.') }} đ</div>
                                 </div>
                                 <div class="row small mb-1">
                                     <div class="col-5 text-muted">Nội dung CK:</div>
@@ -127,7 +130,7 @@
                                 </div>
                             </div>
 
-                        <a href="https://img.vietqr.io/image/BIDV-8899408675-compact2.jpg?amount={{ $amount }}&addInfo=FDL-{{ $order_id }}&accountName=Tran%20Le%20Than" 
+                        <a href="https://img.vietqr.io/image/BIDV-8899408675-compact2.jpg?amount={{ $displayAmount }}&addInfo=FDL-{{ $order_id }}&accountName=Tran%20Le%20Than" 
                            target="_blank" 
                            class="btn btn-sm btn-outline-primary fw-bold mb-3 d-inline-block w-100" 
                            style="max-width: 320px;">
@@ -161,12 +164,12 @@
                     </div>
                     <div class="py-2 d-flex justify-content-between align-items-center">
                         <span class="text-muted">Số tiền cần thanh toán:</span>
-                        <span class="fs-4 fw-bold text-danger">{{ number_format($amount, 0, ',', '.') }} đ</span>
+                        <span class="fs-4 fw-bold text-danger">{{ number_format($displayAmount, 0, ',', '.') }} đ</span>
                     </div>
 
                     <div class="alert alert-warning small mt-3 border-0">
                         <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Lưu ý đối soát hệ thống:</h6>
-                        Mã QR đã tích hợp sẵn số tiền **{{ number_format($amount, 0, ',', '.') }} đ** và nội dung chuyển khoản tự động. Vui lòng không tự ý thay đổi thông tin để đơn hàng được duyệt ngay lập tức.
+                        Mã QR đã tích hợp sẵn số tiền **{{ number_format($displayAmount, 0, ',', '.') }} đ** và nội dung chuyển khoản tự động. Vui lòng không tự ý thay đổi thông tin để đơn hàng được duyệt ngay lập tức.
                     </div>
 
                     <div class="mt-4 pt-2 border-top">
@@ -235,11 +238,10 @@
             startTimer(tenMinutes, display);
 
             const poll = () => {
-                fetch('{{ route('api.orders.poll', ['since' => now()->toDateTimeString()]) }}')
+                fetch('{{ route('api.orders.payment-status', ['id' => $order_id]) }}')
                     .then(response => response.json())
                     .then(data => {
-                        const updatedOrder = (data.updates || []).find(item => item.order && item.order.id == {{ $order_id }});
-                        if (updatedOrder && updatedOrder.order.payment_status === 'paid') {
+                        if (data && data.payment_status === 'paid') {
                             document.getElementById('payment-status').className = 'alert alert-success small mb-0';
                             document.getElementById('payment-status').innerHTML = '<i class="bi bi-check-circle me-2"></i>✅ Thanh toán thành công';
                             showSuccessModal();

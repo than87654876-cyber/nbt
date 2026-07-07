@@ -185,6 +185,8 @@
                                 <span class="badge bg-warning text-dark"><i class="bi bi-pause-circle-fill me-1"></i> Tạm ngưng</span>
                                 @elseif($subscription->status === 'expired')
                                 <span class="badge bg-secondary"><i class="bi bi-exclamation-circle-fill me-1"></i> Hết hạn</span>
+                                @elseif($subscription->status === 'pending')
+                                <span class="badge bg-info"><i class="bi bi-clock-history me-1"></i> Chờ thanh toán</span>
                                 @else
                                 <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i> Đã hủy</span>
                                 @endif

@@ -71,6 +71,8 @@
                                 <span class="badge badge-warning text-dark">Tạm dừng (Còn {{ $sub->remaining_days }} ngày)</span>
                                 @elseif($sub->status === 'expired')
                                 <span class="badge badge-secondary">Hết hạn</span>
+                                @elseif($sub->status === 'pending')
+                                <span class="badge badge-info">Chờ thanh toán (Còn {{ $sub->remaining_days }} ngày)</span>
                                 @else
                                 <span class="badge badge-danger">Đã hủy</span>
                                 @endif

@@ -44,7 +44,7 @@ class AdminSubscriptionController extends Controller
         $subscription = Subscription::findOrFail($id);
 
         $request->validate([
-            'status' => 'required|string|in:active,paused,expired,cancelled',
+            'status' => 'required|string|in:pending,active,paused,expired,cancelled',
             'payment_status' => 'required|string|in:pending,paid,failed,refunded',
             'menu_day' => 'nullable|array',
         ]);
