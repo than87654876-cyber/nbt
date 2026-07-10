@@ -534,10 +534,7 @@
                     <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
                         <div class="why-box">
                             <h3>Tại sao lại chọn Foodelicious?</h3>
-                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-                                ut labore et dolore magna aliqua. Duis aute irure dolor in reprehenderit Asperiores
-                                dolores sed et. Tenetur quia eos. Autem tempore quibusdam vel necessitatibus optio ad
-                                corporis.</p>
+                            <p>Chúng tôi mang đến giải pháp ẩm thực hoàn hảo cho cuộc sống bận rộn của bạn. Không chỉ là giao đồ ăn, Foodelicious cam kết gửi gắm sự chăm chút trong từng hương vị, quy trình an toàn và tốc độ phục vụ vượt trội để mỗi bữa ăn tại gia đều là một trải nghiệm tuyệt vời.</p>
                             <div class="text-center">
                                 <a href="#" class="more-btn"><span>Learn More</span> <i
                                         class="bi bi-chevron-right"></i></a>
@@ -551,23 +548,21 @@
                                 <div class="icon-box d-flex flex-column justify-content-center align-items-center">
                                     <i class="bi bi-gem"></i>
                                     <h4>Chất lượng cao</h4>
-                                    <p>Consequuntur sunt aut quasi enim aliquam quae harum pariatur laboris nisi ut
-                                        aliquip</p>
+                                    <p>Món ăn được chế biến từ nguồn nguyên liệu tươi sạch mỗi ngày bởi đội ngũ đầu bếp tâm huyết. Hương vị chuẩn vị, nóng sốt và trọn vẹn dinh dưỡng khi giao đến tay bạn.</p>
                                 </div>
                             </div>
                             <div class="col-xl-4" data-aos="fade-up" data-aos-delay="300">
                                 <div class="icon-box d-flex flex-column justify-content-center align-items-center">
                                     <i class="bi bi-heart"></i>
                                     <h4>An toàn</h4>
-                                    <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
-                                        deserunt</p>
+                                    <p>Quy trình chế biến và đóng gói khép kín, nghiêm ngặt, đảm bảo tuyệt đối các tiêu chuẩn vệ sinh an toàn thực phẩm. Hộp đựng thân thiện, bảo vệ sức khỏe người dùng.</p>
                                 </div>
                             </div>
                             <div class="col-xl-4" data-aos="fade-up" data-aos-delay="400">
                                 <div class="icon-box d-flex flex-column justify-content-center align-items-center">
                                     <i class="bi bi-inboxes"></i>
                                     <h4>Giao hàng tận nơi</h4>
-                                    <p>Aut suscipit aut cum nemo deleniti aut omnis. Doloribus ut maiores omnis facere
+                                    <p>Đội ngũ giao hàng nhanh chóng, chuyên nghiệp. Đồ ăn được bảo quản trong túi giữ nhiệt chuyên dụng, đảm bảo luôn nóng hổi và giữ nguyên hình thức đẹp mắt như tại nhà hàng.
                                     </p>
                                 </div>
                             </div>
