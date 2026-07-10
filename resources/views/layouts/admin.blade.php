@@ -82,7 +82,8 @@
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Quản lý thực đơn</h6>
                         <a class="collapse-item {{ Route::is('quanly_danhmuc') ? 'active' : '' }}" href="{{ route('quanly_danhmuc') }}">Danh mục món ăn</a>
-                        <a class="collapse-item {{ Route::is('quanly_monandon') ? 'active' : '' }}" href="{{ route('quanly_monandon') }}">Món ăn đơn</a>
+                        <a class="collapse-item {{ Route::is('quanly_monandon') && request('category_id') == 1 ? 'active' : '' }}" href="{{ route('quanly_monandon', ['category_id' => 1]) }}">Món ăn sáng</a>
+                        <a class="collapse-item {{ Route::is('quanly_monandon') && request('category_id') == 2 ? 'active' : '' }}" href="{{ route('quanly_monandon', ['category_id' => 2]) }}">Món tráng miệng</a>
                         <a class="collapse-item {{ Route::is('quanly_goidichvu') ? 'active' : '' }}" href="{{ route('quanly_goidichvu') }}">Gói dịch vụ</a>
                         @if(Auth::user()->role === 'admin')
                         <a class="collapse-item {{ Route::is('quanly_khuyenmai') ? 'active' : '' }}" href="{{ route('quanly_khuyenmai') }}">Chương trình khuyến mãi</a>

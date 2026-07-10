@@ -48,7 +48,7 @@
                                  </div>
                              @endif
 
-                             <form class="user" action="{{ route('dangky.post') }}" method="POST">
+                             <form class="user" action="{{ route('admin.dangky.post') }}" method="POST">
                                  @csrf
                                  <div class="form-group">
                                      <input type="text" class="form-control form-control-user" id="exampleFullName"

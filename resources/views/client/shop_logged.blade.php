@@ -61,13 +61,12 @@
             transform: scale(1.02);
         }
 
-        .menu-item {
-            cursor: pointer;
-            transition: transform 0.2s ease-in-out;
-        }
-
-        .menu-item:hover {
-            transform: scale(1.02);
+        /* Đồng bộ kích thước hình ảnh món ăn */
+        .menu-item .menu-img {
+            width: 100% !important;
+            height: 250px !important;
+            object-fit: cover !important;
+            border-radius: 8px;
         }
 
         /* Thêm CSS cho giao diện người dùng ở Header */

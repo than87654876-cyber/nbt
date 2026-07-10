@@ -52,7 +52,7 @@ class CouponSeeder extends Seeder
         ];
 
         foreach ($coupons as $coupon) {
-            Coupon::create($coupon);
+            Coupon::updateOrCreate(['coupon_code' => $coupon['coupon_code']], $coupon);
         }
     }
 }

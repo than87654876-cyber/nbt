@@ -14,17 +14,17 @@ class AdminDishController extends Controller
         $search = $request->input('search');
         $categoryId = $request->input('category_id');
 
-        $query = Dish::with('category');
+        if (!$categoryId) {
+            return redirect()->route('quanly_monandon', ['category_id' => 1]);
+        }
+
+        $query = Dish::with('category')->where('category_id', $categoryId);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('dish_name', 'like', '%'.$search.'%')
                     ->orWhere('description', 'like', '%'.$search.'%');
             });
-        }
-
-        if ($categoryId) {
-            $query->where('category_id', $categoryId);
         }
 
         $dishes = $query->get();
@@ -42,11 +42,12 @@ class AdminDishController extends Controller
     }
 
     // Show create form
-    public function create()
+    public function create(Request $request)
     {
         $categories = Category::all();
+        $selectedCategoryId = $request->query('category_id') ?? 1;
 
-        return view('admin.single_dishes_add', compact('categories'));
+        return view('admin.single_dishes_add', compact('categories', 'selectedCategoryId'));
     }
 
     // Save new dish
@@ -72,9 +73,9 @@ class AdminDishController extends Controller
             }
         }
 
-        Dish::create($data);
+        $dish = Dish::create($data);
 
-        return redirect()->route('quanly_monandon')->with('success', 'Đã thêm món ăn mới thành công!');
+        return redirect()->route('quanly_monandon', ['category_id' => $dish->category_id])->with('success', 'Đã thêm món ăn mới thành công!');
     }
 
     // Show edit form
@@ -117,7 +118,7 @@ class AdminDishController extends Controller
 
         $dish->update($data);
 
-        return redirect()->route('quanly_monandon')->with('success', 'Đã cập nhật món ăn thành công!');
+        return redirect()->route('quanly_monandon', ['category_id' => $dish->category_id])->with('success', 'Đã cập nhật món ăn thành công!');
     }
 
     // Delete dish
@@ -130,9 +131,10 @@ class AdminDishController extends Controller
             @unlink(public_path($dish->image_url));
         }
 
+        $categoryId = $dish->category_id;
         $dish->delete();
 
-        return redirect()->route('quanly_monandon')->with('success', 'Đã xóa món ăn thành công!');
+        return redirect()->route('quanly_monandon', ['category_id' => $categoryId])->with('success', 'Đã xóa món ăn thành công!');
     }
 
     // Xuất báo cáo món ăn bán chạy (CSV UTF-8 BOM)

@@ -43,6 +43,10 @@ Route::get('/dangky', function () {
     return redirect()->route('trangchu/dangky');
 })->name('dangky');
 
+// Đăng ký cho Admin (Tài khoản Quản trị)
+Route::get('/admin/dangky', [AuthController::class, 'showAdminRegister'])->name('admin.dangky');
+Route::post('/admin/dangky', [AuthController::class, 'adminRegister'])->name('admin.dangky.post');
+
 
 Route::get('/quenmatkhau', function () {
     return view('admin.forgot_password');

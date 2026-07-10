@@ -4,9 +4,17 @@
 
 @section('content')
 <div class="row justify-content-between px-2 py-3">
-    <h1 class="h3 mb-2 text-gray-800">Danh sách Món ăn đơn</h1>
-    <a class="btn btn-primary me-auto" href="{{ route('monandon_them') }}">
-        <i class="fas fa-plus"></i> Thêm món ăn mới
+    <h1 class="h3 mb-2 text-gray-800">
+        @if($categoryId == 1)
+            Danh sách Món ăn sáng
+        @elseif($categoryId == 2)
+            Danh sách Món tráng miệng
+        @else
+            Danh sách Món ăn đơn
+        @endif
+    </h1>
+    <a class="btn btn-primary me-auto" href="{{ route('monandon_them', ['category_id' => $categoryId]) }}">
+        <i class="fas fa-plus"></i> Thêm @if($categoryId == 1) món ăn sáng @elseif($categoryId == 2) món tráng miệng @else món ăn @endif mới
     </a>
 </div>
 
@@ -21,20 +29,19 @@
 
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">Danh sách các món ăn đơn lẻ</h6>
+        <h6 class="m-0 font-weight-bold text-primary">
+            @if($categoryId == 1)
+                Danh sách các món ăn sáng
+            @elseif($categoryId == 2)
+                Danh sách các món tráng miệng
+            @else
+                Danh sách các món ăn đơn lẻ
+            @endif
+        </h6>
         
         <!-- Filter Form -->
         <form method="GET" action="{{ route('quanly_monandon') }}" class="form-inline mt-2 mt-sm-0">
-            <div class="form-group mr-2">
-                <select name="category_id" class="form-control form-control-sm" onchange="this.form.submit()">
-                    <option value="">-- Tất cả danh mục --</option>
-                    @foreach($categories as $category)
-                        <option value="{{ $category->id }}" {{ $categoryId == $category->id ? 'selected' : '' }}>
-                            {{ $category->category_name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+            <input type="hidden" name="category_id" value="{{ $categoryId }}">
             <div class="input-group input-group-sm">
                 <input type="text" name="search" class="form-control bg-light border-0 small" placeholder="Tìm tên món..." value="{{ $search }}">
                 <div class="input-group-append">

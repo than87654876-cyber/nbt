@@ -178,6 +178,38 @@ class AuthController extends Controller
         return redirect()->route('trangchu')->with('success', 'Đăng ký tài khoản thành công! Lịch sử đơn hàng trước đây của bạn đã được liên kết.');
     }
 
+    // Hiển thị trang đăng ký tài khoản Admin
+    public function showAdminRegister()
+    {
+        if (Auth::check()) {
+            return redirect()->route('quanly');
+        }
+
+        return view('admin.register');
+    }
+
+    // Xử lý đăng ký tài khoản Admin
+    public function adminRegister(Request $request)
+    {
+        $request->validate([
+            'fullname' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = User::create([
+            'fullname' => $request->fullname,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => 'admin',
+            'status' => true,
+        ]);
+
+        Auth::login($user);
+
+        return redirect()->route('quanly')->with('success', 'Đăng ký tài khoản Quản trị viên thành công!');
+    }
+
     // Đăng xuất dùng chung
     public function logout()
     {

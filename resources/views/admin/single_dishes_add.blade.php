@@ -4,8 +4,16 @@
 
 @section('content')
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Thêm món ăn đơn mới</h1>
-    <a href="{{ route('quanly_monandon') }}" class="btn btn-sm btn-secondary shadow-sm">
+    <h1 class="h3 mb-0 text-gray-800">
+        @if($selectedCategoryId == 1)
+            Thêm món ăn sáng mới
+        @elseif($selectedCategoryId == 2)
+            Thêm món tráng miệng mới
+        @else
+            Thêm món ăn đơn mới
+        @endif
+    </h1>
+    <a href="{{ route('quanly_monandon', ['category_id' => $selectedCategoryId]) }}" class="btn btn-sm btn-secondary shadow-sm">
         <i class="fas fa-undo fa-sm"></i> Quay lại
     </a>
 </div>
@@ -34,15 +42,9 @@
                 </div>
 
                 <div class="form-group col-md-6">
-                    <label for="category_id" class="font-weight-bold text-dark">Phân loại thực đơn <span class="text-danger">*</span></label>
-                    <select class="form-control" id="category_id" name="category_id" required>
-                        <option value="" disabled selected>-- Chọn danh mục --</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                {{ $category->category_name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <label for="category_id_display" class="font-weight-bold text-dark">Phân loại thực đơn <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control bg-light" id="category_id_display" value="{{ $categories->firstWhere('id', $selectedCategoryId)->category_name ?? '' }}" readonly>
+                    <input type="hidden" name="category_id" value="{{ $selectedCategoryId }}">
                 </div>
             </div>
 
@@ -77,7 +79,7 @@
             <button type="submit" class="btn btn-primary shadow-sm px-4">
                 <i class="fas fa-save fa-sm mr-1"></i> Lưu lại
             </button>
-            <a href="{{ route('quanly_monandon') }}" class="btn btn-secondary shadow-sm px-3">Hủy bỏ</a>
+            <a href="{{ route('quanly_monandon', ['category_id' => $selectedCategoryId]) }}" class="btn btn-secondary shadow-sm px-3">Hủy bỏ</a>
         </form>
     </div>
 </div>

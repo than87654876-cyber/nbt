@@ -27,7 +27,6 @@
     <link href="{{ asset('client/assets/css/main.css') }}" rel="stylesheet">
 
     <style>
-        /* Tùy chỉnh con trỏ chuột khi rê vào món ăn để khách biết là bấm được */
         .menu-item {
             cursor: pointer;
             transition: transform 0.3s;
@@ -35,6 +34,14 @@
 
         .menu-item:hover {
             transform: scale(1.02);
+        }
+
+        /* Đồng bộ kích thước hình ảnh món ăn */
+        .menu-item .menu-img {
+            width: 100% !important;
+            height: 250px !important;
+            object-fit: cover !important;
+            border-radius: 8px;
         }
 
         .modal-header-custom {

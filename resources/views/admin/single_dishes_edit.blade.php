@@ -5,7 +5,7 @@
 @section('content')
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Chỉnh sửa thông tin món ăn đơn lẻ</h1>
-    <a href="{{ route('quanly_monandon') }}" class="btn btn-sm btn-secondary shadow-sm">
+    <a href="{{ route('quanly_monandon', ['category_id' => $dish->category_id]) }}" class="btn btn-sm btn-secondary shadow-sm">
         <i class="fas fa-undo fa-sm"></i> Hủy và Quay lại
     </a>
 </div>
@@ -35,14 +35,9 @@
                 </div>
 
                 <div class="form-group col-md-6">
-                    <label for="category_id" class="font-weight-bold text-dark">Phân loại thực đơn <span class="text-danger">*</span></label>
-                    <select class="form-control" id="category_id" name="category_id" required>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id', $dish->category_id) == $category->id ? 'selected' : '' }}>
-                                {{ $category->category_name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <label for="category_id_display" class="font-weight-bold text-dark">Phân loại thực đơn <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control bg-light" id="category_id_display" value="{{ $dish->category->category_name ?? '' }}" readonly>
+                    <input type="hidden" name="category_id" value="{{ $dish->category_id }}">
                 </div>
             </div>
 
@@ -83,7 +78,7 @@
             <button type="submit" class="btn btn-primary shadow-sm px-4">
                 <i class="fas fa-save fa-sm mr-1"></i> Lưu thay đổi
             </button>
-            <a href="{{ route('quanly_monandon') }}" class="btn btn-secondary shadow-sm px-3">Hủy bỏ</a>
+            <a href="{{ route('quanly_monandon', ['category_id' => $dish->category_id]) }}" class="btn btn-secondary shadow-sm px-3">Hủy bỏ</a>
         </form>
     </div>
 </div>

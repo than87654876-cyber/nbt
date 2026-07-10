@@ -13,11 +13,8 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            ['category_name' => 'Healthy Bowls', 'description' => 'Nutritious and balanced meal bowls'],
-            ['category_name' => 'Salads', 'description' => 'Fresh and delicious salads'],
-            ['category_name' => 'Soups', 'description' => 'Warm and comforting soups'],
-            ['category_name' => 'Beverages', 'description' => 'Healthy drinks and juices'],
-            ['category_name' => 'Desserts', 'description' => 'Light and healthy desserts'],
+            ['id' => 1, 'category_name' => 'Ăn sáng', 'description' => 'Món ăn sáng bổ dưỡng'],
+            ['id' => 2, 'category_name' => 'Tráng miệng', 'description' => 'Món tráng miệng thanh mát'],
         ];
 
         foreach ($categories as $category) {
