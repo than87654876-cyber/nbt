@@ -594,20 +594,13 @@
                     </div>
                     <div class="col-lg-5" data-aos="fade-up" data-aos-delay="250">
                         <div class="content ps-0 ps-lg-5">
-                            <p class="fst-italic">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                                eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                            <p class="fst-italic">Chào mừng bạn đến với Foodelicious – nơi kết hợp hoàn hảo giữa hương vị ẩm thực tinh tế và không gian ấm cúng.</p>
                             <ul>
-                                <li><i class="bi bi-check-circle-fill"></i> <span>Ullamco laboris nisi ut aliquip ex ea
-                                        commodo consequat.</span></li>
-                                <li><i class="bi bi-check-circle-fill"></i> <span>Duis aute irure dolor in reprehenderit
-                                        in voluptate velit.</span></li>
-                                <li><i class="bi bi-check-circle-fill"></i> <span>Ullamco laboris nisi ut aliquip ex ea
-                                        commodo consequat. Duis aute irure dolor in reprehenderit in voluptate trideta
-                                        storacalaperda mastiro dolore eu fugiat nulla pariatur.</span></li>
+                                <li><i class="bi bi-check-circle-fill"></i> <span>Nguyên liệu tươi sạch 100% – Tuyển chọn nghiêm ngặt từ các trang trại hữu cơ mỗi ngày.</span></li>
+                                <li><i class="bi bi-check-circle-fill"></i> <span>Đầu bếp chuyên nghiệp – Đội ngũ nghệ nhân ẩm thực giàu kinh nghiệm, gửi gắm tâm huyết vào từng món ăn.</span></li>
+                                <li><i class="bi bi-check-circle-fill"></i> <span>Đặt món dễ dàng, giao hàng nhanh chóng – Giải pháp hoàn hảo cho những bữa tiệc gia đình ấm cúng hay buổi hẹn hò xem phim tại gia đầy lãng mạn.</span></li>
                             </ul>
-                            <p>Ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-                                reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-                                sint occaecat cupidatat non proident</p>
+                            <p>Dù bạn đang bận rộn với công việc tại văn phòng, muốn quây quần bên người thân, hay đơn giản là tự thưởng cho mình một bữa tối lười biếng, chúng tôi luôn sẵn sàng phục vụ. Không cần đi xa, chỉ cần một cú click, món ngon đã sẵn sàng trên bàn ăn của bạn!</p>
                             <div class="position-relative mt-4">
                                 <img src="{{ asset('client/assets/img/about-2.jpg') }}" class="img-fluid" alt="">
                                 <a href="https://www.youtube.com/watch?v=Y7f98aduVJ8"
