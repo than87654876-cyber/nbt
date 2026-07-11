@@ -11,6 +11,19 @@ class AdminDishController extends Controller
     // List all dishes
     public function index(Request $request)
     {
+        // Tự động chuyển đổi giá từ USD/số nhỏ sang VNĐ nếu phát hiện giá nhỏ hơn 100
+        $smallPriceDishes = Dish::where('price', '<', 100)->get();
+        if ($smallPriceDishes->isNotEmpty()) {
+            foreach ($smallPriceDishes as $dish) {
+                if ($dish->price < 15) {
+                    $dish->price = $dish->price * 10000;
+                } else {
+                    $dish->price = $dish->price * 1000;
+                }
+                $dish->save();
+            }
+        }
+
         $search = $request->input('search');
         $categoryId = $request->input('category_id');
 

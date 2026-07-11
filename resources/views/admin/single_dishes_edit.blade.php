@@ -43,8 +43,8 @@
 
             <div class="row">
                 <div class="form-group col-md-6">
-                    <label for="price" class="font-weight-bold text-dark">Giá bán ($) <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ old('price', $dish->price) }}" required min="0">
+                    <label for="price" class="font-weight-bold text-dark">Giá bán (VNĐ) <span class="text-danger">*</span></label>
+                    <input type="number" step="1000" class="form-control" id="price" name="price" value="{{ old('price', (int)$dish->price) }}" required min="0">
                 </div>
 
                 <div class="form-group col-md-6">

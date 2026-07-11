@@ -9,6 +9,19 @@ class ShopController extends Controller
 {
     public function index(Request $request)
     {
+        // Tự động chuyển đổi giá từ USD/số nhỏ sang VNĐ nếu phát hiện giá nhỏ hơn 100
+        $smallPriceDishes = \App\Models\Dish::where('price', '<', 100)->get();
+        if ($smallPriceDishes->isNotEmpty()) {
+            foreach ($smallPriceDishes as $dish) {
+                if ($dish->price < 15) {
+                    $dish->price = $dish->price * 10000;
+                } else {
+                    $dish->price = $dish->price * 1000;
+                }
+                $dish->save();
+            }
+        }
+
         $query = $request->input('search');
 
         // Lấy các danh mục và các món ăn thuộc danh mục đó
